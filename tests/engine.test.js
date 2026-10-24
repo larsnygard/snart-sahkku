@@ -328,6 +328,61 @@ for (let g = 0; g < 300; g++) {
   // verifiser invariant: fanget soldat kan ikke stå på brettet
   st.pieces.forEach(p => { if (p.captured && p.t === 's') ok(p.at > -1000, 'fanget soldat har ryddet plass'); });
 }
+/* ---- Kongen: ALLE VEGER (dokumentet: «både til høyre og venstre, og opp
+   og ned... bare begge veier», ikkje snuing undervegs). Merk: kongen
+   landar aldri på linje med brikker — på startbrettet er H1/H3 tetta,
+   så opp/ned krev tomme felt. ---- */
+{
+  function nameIdx(nm) { for (let i = 0; i < 45; i++) if (SS.name(i) === nm) return i; return -1; }
+  function clearAt(st, idxs) {
+    st.pieces.forEach(p => {
+      if (p.captured || p.t === 'k') return;
+      const a = p.t === 's' ? SS.soldierAt(p.o, p.at) : p.at;
+      if (idxs.includes(a)) p.captured = true;
+    });
+  }
+  let st = SS.newGame({ first: 0 });
+  let k = SS.king(st);
+  st.turn = 0; st.phase = 'move';
+  k.o = 0;
+  // X (1 steg): H2 -> R/L frie; H1 (koners heimrad) og H3 (menns heimrad)
+  // er tetta -> landing nektast. Tommer H1+H3: da er alle fire frie.
+  k.at = nameIdx('H2');
+  st.dice = ['III', 'II', 'X']; st.used = [true, true, false];
+  let lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
+  ok(lm.some(m => m.dir === 'R') && lm.some(m => m.dir === 'L'), 'X H2: høgre/venstre lovlege');
+  eq(lm.length, 2, 'X H2 på startbrett: opp/ned nektast (landar på brikkelinjer)');
+  clearAt(st, [nameIdx('H1'), nameIdx('H3')]);
+  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
+  eq(lm.length, 4, 'X H2 med tomme H1/H3: ALLE fire retningar (R, L, opp, ned)');
+  // II (2 steg, same veg, ingen snuing): H2 -> J2, F2, H3 (via H3? nei: H2->H3? F frå midtraden)
+  st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
+  clearAt(st, [nameIdx('I2'), nameIdx('J2'), nameIdx('G2'), nameIdx('F2'), nameIdx('H1')]);
+  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id && m.v === 2);
+  const dests = lm.map(m => SS.name(SS.pathFor(st, k, m.dir, 2).path.slice(-1)[0])).sort().join(',');
+  eq(lm.length, 2, 'II H2: R2+L2 (opp/ned er 1 felt mellom radene: II treffer vegg)');
+  ok(!dests.split(',').includes('H2'), 'II: inga 1-opp-1-ned-snuing tilbake til H2');
+  // O3-hjørnet: «opp» (mot O2) er nedstigen på åttetalsruta — lovleg
+  k.at = nameIdx('O3');
+  st.dice = ['III', 'II', 'X']; st.used = [true, true, false];
+  clearAt(st, [nameIdx('O2')]);
+  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
+  ok(lm.some(m => m.dir === 'B'), 'O3: konge kan opp til O2 (hjørnet er ikkje vegg)');
+  // A2: rett opp til A3
+  k.at = nameIdx('A2');
+  clearAt(st, [nameIdx('A3')]);
+  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
+  ok(lm.some(m => m.dir === 'F'), 'A2: konge kan rett opp til A3');
+  // slipp ikkje snuing: III frå H2, berre heile 3-stegar i éin veg
+  k.at = nameIdx('H2');
+  clearAt(st, [nameIdx('H1'), nameIdx('H3'), nameIdx('I2'), nameIdx('J2'), nameIdx('K2'), nameIdx('G2'), nameIdx('F2'), nameIdx('E2')]);
+  st.dice = ['III', 'II', 'X']; st.used = [false, true, true];
+  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id && m.v === 3);
+  eq(lm.length, 2, 'III H2: K2+E2 (vegg etter 1 steg opp/ned)');
+  const d3 = lm.map(m => SS.name(SS.pathFor(st, k, m.dir, 3).path.slice(-1)[0])).sort().join(',');
+  eq(d3, 'E2,K2', 'III: berre heile 3-stegar i éin veg, inga snuing');
+}
+
 /* ---- REGRADERING: CPU-sløyfe (main.js-mønster) — vaksen må ikkje utarmast.
    Bug: applyMove kallar endTurn på siste terning (turn snudd, phase='roll');
    settle passerte DÅ en gong til og snudde turen tilbake -> CPU-en kastade

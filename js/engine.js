@@ -64,12 +64,12 @@
       return c > 0 ? idx(c - 1, r) : null;                        // A1/A3: stopper
     }
     if (dir === 'F') {
-      if (r === 0) return idx(c, 1);                              // A1 -> A2, O1 -> O2
-      if (r === 1) return c > 0 ? idx(c, 2) : null;               // A2 -> A3 er L
+      if (r === 0) return idx(c, 1);                              // opp: A1 -> A2, O1 -> O2
+      if (r === 1) return idx(c, 2);                              // opp: B2 -> B3 (dok: kongen kan «rett opp»), A2 -> A3 (loddrett)
       return null;
     }
     if (dir === 'B') {
-      if (r === 2) return c < 14 ? idx(c, 1) : null;              // O3 -> O2 er R
+      if (r === 2) return idx(c, 1);                               // opp: A3->A2 … O3->O2 (fremst høgre hjørnet: nedstigen på ruta)
       if (r === 1) return idx(c, 0);
       return null;
     }
