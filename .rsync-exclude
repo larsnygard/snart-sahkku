@@ -1,0 +1,31 @@
+# never publish VCS data, dev tooling, or build caches
+.git/
+.github/
+node_modules/
+.playwright/
+__pycache__/
+
+# development-only files (the app itself is static)
+tests/
+tools/
+.vscode/
+.idea/
+*.log
+*.tmp
+tests/*.png
+
+# net/: the browser needs only the built wasm package (net/pkg)
+net/src/
+net/target/
+net/tests/
+net/Cargo.toml
+net/Cargo.lock
+net/README.md
+net/smoke.html
+net/smoke-p2p.html
+net/build.sh
+net/.cargo/
+
+# deploy machinery
+.rsync-exclude
+sendsahkku.sh

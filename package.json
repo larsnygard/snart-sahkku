@@ -1,0 +1,19 @@
+{
+  "name": "snartsahkku",
+  "version": "1.0.0",
+  "description": "Lágesvuotna-sáhkku (the Sámi strategy game) as an installable PWA: CPU opponent, local two-player, and online P2P via iroh.",
+  "main": "sw.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests/engine.test.js"
+  },
+  "keywords": ["sahkku", "sámi", "board-game", "pwa", "iroh", "wasm"],
+  "author": "Lars Christian Nygård <lars@snart.com>",
+  "license": "AGPL-3.0-or-later",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright-core": "^1.64.1"
+  }
+}

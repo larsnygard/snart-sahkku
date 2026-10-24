@@ -1,0 +1,42 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>snart-sahkku-net smoke test</title>
+<body>
+<h1>snart-sahkku-net smoke</h1>
+<pre id="log"></pre>
+<script type="module">
+import init, { Net } from './pkg/snart_sahkku_net.js';
+
+const log = (m) => {
+  document.getElementById('log').textContent += m + '\n';
+  console.log(m);
+};
+
+await init();
+log('wasm initialized');
+
+const net = await Net.new();
+log('node id: ' + net.node_id());
+// To join an existing room as a newcomer, pass a known peer's node id via
+// the URL: smoke.html?boot=<node-hex> (copy it from the other tab's log).
+const boot = new URLSearchParams(location.search).getAll('boot');
+if (boot.length) log('bootstrapping via: ' + boot.map(x => x.slice(0, 8)).join(', '));
+
+net.set_on_message((json) => {
+  const msg = JSON.parse(json);
+  log('recv from ' + msg.from.slice(0, 8) + ': ' + msg.data);
+});
+
+net.set_on_peers((json) => {
+  const p = JSON.parse(json);
+  log('peers: ' + p.peers.map(x => x.slice(0, 8)).join(', '));
+});
+
+await net.joinWith('test12', boot);
+log('joined seed test12');
+
+const ping = () => net.send('test12', JSON.stringify({ t: 'ping', ts: Date.now() }));
+await ping();
+setInterval(ping, 3000);
+log('sending pings every 3s — open this page in a second tab (same seed) to see p2p messages');
+</script>

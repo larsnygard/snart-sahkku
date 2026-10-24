@@ -1,0 +1,72 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>snart-sahkku-net P2P loopback test</title>
+<body>
+<h1>P2P loopback: two Net endpoints in one page</h1>
+<pre id="log"></pre>
+<script type="module">
+import init, { Net } from './pkg/snart_sahkku_net.js';
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const out = (m) => {
+  document.getElementById('log').textContent += m + '\n';
+  console.log(m);
+};
+const fatal = (m) => { document.title = 'FAIL'; out('FAIL: ' + m); };
+
+await init();
+out('wasm initialized');
+
+const a = await Net.new();
+const b = await Net.new();
+out('A node: ' + a.node_id());
+out('B node: ' + b.node_id());
+if (!/^[0-9a-f]{64}$/.test(a.node_id())) fatal('node_id not 64-hex');
+
+let peersA = [], peersB = [], msgA = [], msgB = [];
+a.set_on_peers((j) => { peersA = JSON.parse(j).peers; out('A peers: ' + peersA.map(p => p.slice(0,8)).join(',')); });
+b.set_on_peers((j) => { peersB = JSON.parse(j).peers; out('B peers: ' + peersB.map(p => p.slice(0,8)).join(',')); });
+a.set_on_message((j) => { const m = JSON.parse(j); msgA.push(m); out('A recv from ' + m.from.slice(0,8) + ': ' + m.data); });
+b.set_on_message((j) => { const m = JSON.parse(j); msgB.push(m); out('B recv from ' + m.from.slice(0,8) + ': ' + m.data); });
+
+// Wait until both endpoints have a connected relay (pkarr publish also
+// settles in this window; dialing a bootstrap peer before its pkarr record
+// is live fails and gossip does not retry bootstrap dials).
+const relayOnline = (n) => JSON.parse(n.relay_status()).relays.some(x => x.connected);
+const t0 = Date.now();
+while (!(relayOnline(a) && relayOnline(b)) && Date.now() - t0 < 30000) await sleep(1000);
+if (!(relayOnline(a) && relayOnline(b))) { fatal('relay never connected'); }
+else out('both on relays after ' + ((Date.now()-t0)/1000) + 's: ' + a.relay_status());
+
+// B bootstraps into the swarm via A's node id, retrying until linked.
+await a.join('loopback');
+for (let i = 0; i < 6 && peersA.length === 0; i++) {
+  await b.joinWith('loopback', [a.node_id()]);
+  out('B joinWith attempt ' + (i + 1));
+  const t1 = Date.now();
+  while (peersA.length === 0 && Date.now() - t1 < 12000) await sleep(1000);
+}
+if (peersA.length === 0) {
+  out('diag resolve: ' + await b.resolve(a.node_id()));
+  out('diag dial: ' + await b.dial(a.node_id()));
+  fatal('no peer connection after 6 bootstrap attempts');
+} else {
+  out('peers linked after ' + ((Date.now()-t0)/1000) + 's');
+  await b.send('loopback', JSON.stringify({ hello: 'from B' }));
+  const t2 = Date.now();
+  while (msgA.length === 0 && Date.now() - t2 < 15000) await sleep(500);
+  if (msgA.length === 0) fatal('A got no message within 15s');
+  else {
+    const m = msgA[0];
+    if (m.from !== b.node_id()) fatal('from != B node id');
+    if (JSON.parse(m.data).hello !== 'from B') fatal('payload mismatch');
+    a.leave();
+    const t3 = Date.now();
+    while (peersB.length > 0 && Date.now() - t3 < 20000) await sleep(1000);
+    if (peersB.length > 0) out('WARN: B still sees peers 20s after A.leave()');
+    else out('leave verified: B peer set emptied after A.leave()');
+    document.title = 'PASS';
+    out('PASS: full gossip round-trip (join, peers, send/recv, leave)');
+  }
+}
+</script>

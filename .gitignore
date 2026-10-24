@@ -1,0 +1,7 @@
+node_modules/
+net/target/
+.playwright/
+*.log
+*.tmp
+tests/e2e-desktop.png
+tests/e2e-mobile.png

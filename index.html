@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>SnartSáhkku — Lágesvuotna-sáhkku</title>
+<meta name="description" content="Sáhkku fra Laksefjorden — samisk brettspill som PWA: spill mot CPU eller over nett (iroh P2P).">
+<meta name="theme-color" content="#0c1730">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Snart<b>Sáhkku</b></span></div>
+  <div class="topbtns">
+    <button id="btn-net" class="ghost" title="Nettspill">🌐 <span id="net-status">frakoblet</span></button>
+    <button id="btn-help" class="ghost" title="Regler">?</button>
+  </div>
+</header>
+
+<main>
+  <!-- MAINMENY -->
+  <section id="menu" class="screen">
+    <div class="hero">
+      <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
+      <h1>Lágesvuotna-sáhkku</h1>
+      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.0.0 · AGPL-3.0</span></p>
+      <div class="menu-grid">
+        <button id="btn-cpu" class="big">⚔︎ Spill mot CPU</button>
+        <button id="btn-local" class="big">👥 To spillere her</button>
+        <button id="btn-online" class="big">🌐 Spill på nett</button>
+        <button id="btn-install" class="big hidden">⬇︎ Legg til på skjermen</button>
+      </div>
+      <div class="difficulty">
+        <label>CPU:
+          <select id="cpu-level">
+            <option value="1">Lett</option>
+            <option value="2" selected>Litt harder</option>
+            <option value="3">Tøff</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ONLINEMENY -->
+  <section id="room" class="screen hidden">
+    <h2>Nettspill</h2>
+    <p>Del et <b>romnavn</b> med motspilleren. Begge åpner spillet og skriver det samme navnet — dere finner hverandre via iroh (kryptert over relay).</p>
+    <div class="room-form">
+      <input id="room-seed" type="text" placeholder="romnavn, eller lim inn invitasjonskoden" autocomplete="off" spellcheck="false" maxlength="200" autocapitalize="off">
+      <button id="btn-join">Bli med i rommet</button>
+    </div>
+    <div id="room-info" class="room-info">
+      <div>Din node: <code id="my-node">—</code></div>
+      <div id="invite-row" style="display:none">Invitasjonskode (del denne): <code id="invite-code"></code> <button id="btn-copy-invite" class="ghost" style="min-height:32px;padding:5px 10px">Kopier</button></div>
+      <div>Medspillere: <span id="peer-list">ingen</span></div>
+      <div id="room-hint"></div>
+      <details id="netdiag" style="margin-top:8px">
+        <summary style="cursor:pointer;color:var(--muted)">Nettdiagnostikk ( Relay·pkarr·dial )</summary>
+        <div id="diag-out" style="font-size:12px;line-height:1.6;color:var(--muted);word-break:break-all"></div>
+        <div class="room-form" style="margin:8px 0">
+          <input id="diag-peer" type="text" placeholder="motspillers node-id (valgfritt)" spellcheck="false">
+          <button id="btn-diag" class="ghost">Kjør</button>
+        </div>
+      </details>
+    </div>
+    <button id="btn-back-menu" class="ghost">Til hovedmenyen</button>
+  </section>
+
+  <!-- SPILLSKJERM -->
+  <section id="game" class="screen hidden">
+    <div class="boardwrap" id="boardwrap">
+      <div class="board" id="board"></div>
+      <div class="edge edge-p0"><span id="label-p0">Menn · olbmát</span></div>
+      <div class="edge edge-p1"><span id="label-p1">Koner · gálgut</span></div>
+    </div>
+    <div class="hud">
+      <div class="turnbox">
+        <span id="turn-indicator" class="chip p0">Tur: menn</span>
+        <span id="king-chip" class="chip neutral">Kongen løs</span>
+      </div>
+      <div class="dicebox" id="dicebox"></div>
+      <div class="actionbox" id="actionbox"></div>
+    </div>
+    <div id="log" class="log" aria-live="polite"></div>
+    <div class="gamebtns">
+      <button id="btn-menu" class="ghost">Meny</button>
+      <button id="btn-surrender" class="ghost">Gi seg</button>
+    </div>
+  </section>
+</main>
+
+<!-- REGLEPANEL -->
+<dialog id="rules">
+  <h3>Slik spiller du</h3>
+  <ul>
+    <li><b>Brettet</b>: 3 rekker, 15 linjer (A–O). Midtfeltet H2 er <i>Slottet</i>; D2 og L2 er X-merker.</li>
+    <li><b>Brikkene</b>: 15 soldater hver (olbmát/gálgut), ei dronning (dronnet) hver, og en felles konge (gonagas) på Slottet.</li>
+    <li><b>Terningene</b> (birccut): X, II, III og blank. X tel som 1. Har du ei X du ikkje kan bruke, kan du kaste henne om igjen til du får noko anna; II, III og blank er faste.</li>
+    <li><b>X</b> løser den fremste soldaten i rekkja di. Du kan òg bruke X til å flytte ein allereie løsgjort brikke eitt felt (eller kongen/dronninga di om de er i spel). II/III flytter ei løsgjort brikke to/tre felt.</li>
+    <li>Soldater går kun <b>framover</b> i syklusen (din rekke → midtraden → fiendens rekke → midtraden → heim). Dei kan passere alle brikker undervegs, men kan <b>aldri lande</b> på linjer der det står brikker som ikkje er løsgjorte.</li>
+    <li>Konge og dronning går <b>rett</b>: høgre/venstre langs linjene (hjørna svingar «rett fram»), eller opp/ned i same kolonne — utan å snu underveis. Begge kan gå begge vegar. Kongen landar aldri på ei linje med andre brikker; dronninga slår fiender som ein soldat og kaprar kongen.</li>
+    <li>Soldater slår fiender dei landar på. Landar du på kongen, <b>kaprar</b> du han. Eigne soldatar kan stå saman på same linje.</li>
+    <li>Rekkjefølgje: bruk X-ene først, så III-ane, så II-ane. Kan du ikkje gjere noko lovleg med den aktuele terningen, går resten av kastet tapt.</li>
+    <li><b>Vinn</b>: slå ut fiendens dronning, eller utrydd alle soldatane hans (sjølv om han har kongen).</li>
+  </ul>
+  <button data-close>Lukk</button>
+</dialog>
+
+<dialog id="endscore">
+  <h3 id="end-title">Spallet er slutt</h3>
+  <p id="end-reason"></p>
+  <div class="gamebtns">
+    <button id="btn-rematch" class="big">Omkamp</button>
+    <button id="btn-endmenu" class="ghost">Meny</button>
+  </div>
+</dialog>
+
+<script src="js/engine.js"></script>
+<script src="js/cpu.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/online.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

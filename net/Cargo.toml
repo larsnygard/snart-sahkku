@@ -1,0 +1,43 @@
+[package]
+name = "snart-sahkku-net"
+version = "1.0.0"
+edition = "2021"
+description = "iroh-powered P2P networking for the SnartSahkku browser PWA (gossip rooms via room seeds)"
+license = "AGPL-3.0-or-later"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anyhow = "1"
+# tls-ring is required: without a crypto provider the N0 relay preset does not exist.
+# default-features=false (drops metrics); tls-ring needed for the presets::N0
+# default-relay endpoint on wasm32-unknown-unknown.
+iroh = { version = "1.4", default-features = false, features = ["tls-ring"] }
+iroh-gossip = { version = "0.101", default-features = false, features = ["net"] }
+# Pin to the wasm-bindgen version bundled in wasm-pack 0.13.1 (cli-support 0.2.122).
+wasm-bindgen = "=0.2.122"
+wasm-bindgen-futures = "=0.4.72"
+js-sys = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+futures = "0.3"
+bytes = "1"
+gloo-timers = { version = "0.3", features = ["futures"] }
+console_error_panic_hook = "0.1"
+# Needed for wasm32-unknown-unknown RNG (see .cargo/config.toml rustflags)
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-Oz", "--enable-nontrapping-float-to-int", "--enable-bulk-memory"]
