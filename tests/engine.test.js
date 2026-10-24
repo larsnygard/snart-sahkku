@@ -328,6 +328,73 @@ for (let g = 0; g < 300; g++) {
   // verifiser invariant: fanget soldat kan ikke stå på brettet
   st.pieces.forEach(p => { if (p.captured && p.t === 's') ok(p.at > -1000, 'fanget soldat har ryddet plass'); });
 }
+/* ---- REGRADERING: CPU-sløyfe (main.js-mønster) — vaksen må ikkje utarmast.
+   Bug: applyMove kallar endTurn på siste terning (turn snudd, phase='roll');
+   settle passerte DÅ en gong til og snudde turen tilbake -> CPU-en kastade
+   i det uendelege. Verifiser: (a) settle på 'roll'-fase snur IKKJE turen,
+   (b) full main.js-liknande køyrløkke: begge sider kastar jevleg. ---- */
+{
+  let st = SS.newGame({ first: 1 });
+  st.phase = 'move'; st.dice = ['X', 'II', '_']; st.used = [false, false, true];
+  // CPU (side 1) losnar front-soldaten med X og brukar II -> siste terning
+  let rel = SS.legalMoves(st, 1).find(m => m.kind === 'rel' && m.v === 1);
+  ok(rel, 'reggradering: losnetrekk finst');
+  SS.applyMove(st, rel);
+  let mv2 = SS.legalMoves(st, 1).find(m => m.v === 2);
+  if (mv2) SS.applyMove(st, mv2);
+  eq(st.phase, 'roll', 'fase=rull etter siste terning');
+  eq(st.turn, 0, 'turen er no hos vaksen (side 0)');
+  let s = SS.settle(st);
+  ok(s.turnEnded === true, 'settle på roll-fase: tur slutt, ingen handling');
+  eq(st.turn, 0, 'settle snur IKKJE turen tilbake til CPU-en (sløyfe-fix)');
+}
+{
+  // main.js-køyrsløykje: CPU (1) spelar greedy, vaksen (0) spelar tilfeldig.
+  function mulberry2(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  let worst = 0, starvedGames = 0;
+  for (let g = 0; g < 60; g++) {
+    const rnd = mulberry2(g * 104729 + 11);
+    const st = SS.newGame({ first: 0 });
+    const rolls = [0, 0]; let consec = 0, last = -1, guard = 0;
+    while (st.winner === null && guard++ < 6000) {
+      if (st.phase === 'roll') {
+        SS.roll(st, rnd); st.phase = 'move';
+        rolls[st.turn]++;
+        consec = st.turn === last ? consec + 1 : 1; last = st.turn;
+        worst = Math.max(worst, consec);
+      }
+      const res = SS.settle(st);
+      if (res.over) break;
+      if (res.turnEnded) continue;
+      if (res.reroll) { SS.rerollX(st, rnd); continue; }
+      const side = st.turn;
+      let mv = null;
+      if (side === 1) {
+        // CPU-aktig greedy (forenkla): simulering, beste fangst/fremdrift
+        let bs = -1e9;
+        for (const m of res.moves) {
+          const cp = SS.deserialize(SS.serialize(st));
+          SS.applyMove(cp, m);
+          let sc = cp.kills[1] * 1000;
+          const p = SS.piece(st, m.pid);
+          if (p.t === 's' && p.o === 1) sc += (m.kind === 'rel' ? 300 : m.v * 12);
+          sc += rnd() * 50;
+          if (sc > bs) { bs = sc; mv = m; }
+        }
+      } else {
+        mv = res.moves[Math.floor(rnd() * res.moves.length)];
+      }
+      SS.applyMove(st, mv);
+      if (st.turn !== side && consec > 30) break;  // utarming oppdaga
+    }
+    const total = rolls[0] + rolls[1];
+    const share = Math.min(rolls[0], rolls[1]) / Math.max(1, total);
+    if (total > 20 && share < 0.3) starvedGames++;
+  }
+  eq(starvedGames, 0, 'CPU-sløyfe-køyring: ingen parti utarmar ei side (kastdel < 30%)');
+  ok(worst < 30, 'maks kast i strekk for ei side: ' + worst + ' (< 30)');
+}
+
 ok(overCount >= 250, '300 tilfeldige spill: ' + overCount + ' endte med seier (uavgjort-lock er sjeldent)');
 
 console.log('\n' + pass + ' pass, ' + fail + ' fail');

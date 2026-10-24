@@ -14,6 +14,7 @@
     busy: false,
     over: false
   };
+  globalThis.__APP = app;   // feilsøkingshandtak (testar + devtools)
 
   function D(ms) { return (typeof globalThis !== 'undefined' && globalThis.__FAST) ? 30 : ms; }
 

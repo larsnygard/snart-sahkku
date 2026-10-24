@@ -411,6 +411,12 @@
   // returnerer { over, reroll, moves, turnEnded, events }
   function settle(st) {
     if (st.winner != null) return { over: true };
+    // Viktig: applyMove kallar allereie endTurn når siste terning er brukt
+    // (turn snudd, phase='roll'). Da må NOT settle passere ein gong til —
+    // det ville snudd turen tilbake og ete motspelaren sin tur (CPU-en
+    // kasta i det uendelege). Fasen seier oss alt: ikkje 'move' = turen
+    // er allereie avslutta; berre meld frå om det.
+    if (st.phase !== 'move') return { turnEnded: true, events: [] };
     var rk = activeRank(st);
     if (rk == null) return { turnEnded: true, events: passRemaining(st) };
     var lm = legalMoves(st, st.turn);
