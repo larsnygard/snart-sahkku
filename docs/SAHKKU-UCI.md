@@ -35,17 +35,23 @@ Why the protocol differs from chess UCI (read this once, then write engines):
   **D2**), and one **neutral king on H2**.
 * Dice faces: `X  II  III  _` (blank). A roll of 3 dice is spent in descending
   rank order **X > III > II > _**; `_` is an immediate free pass of that slot.
-* `X` releases the **frontmost** undetached soldier of the side to move (the
-  one furthest along its number-cycle) onto the next square of its cycle, and
-  also allows a one-step release of a queen in any of the 4 straight directions.
+* `X` **only wakes a piece**: it releases the **frontmost** undetached soldier
+  of the side to move (the one furthest along its number-cycle) onto the next
+  square of its cycle — the move is *part of the wake* — and it also allows a
+  one-step release of a queen in any of the 4 straight directions. `X` never
+  moves an already-released piece, and it never moves the king (the king is
+  never inactive, so `X` has no use on him): that is what II and III are for.
 * II/III move a released soldier **v** steps forward along its cycle, a queen
   **v** straight steps (R/L/F/B, no turning mid-move), and the king **v**
   straight steps. Landing rules are enforced by the game (you can never land
   where a home-ranked piece stands; kings never share a line with pieces;
   capturing an enemy queen/king is a win).
-* **X-reroll rule:** if the active die is `X` and **no move at all** is legal
-  with the whole roll, the player may re-roll all X dice (all X dice at once),
-  optionally repeatedly. The engine signals this with the keyword `reroll`.
+* **X-reroll rule:** `X` may be re-rolled only when it **cannot be used** —
+  i.e. the active die is `X` and there is no legal wake. Re-rolling `X` to
+  avoid moving your pieces (when a wake *is* available) is **not** allowed;
+  that was the old rule and it is gone. All X dice are re-rolled at once, and
+  the rule may be used repeatedly while `X` stays unusable. The engine signals
+  it with the keyword `reroll`.
 * When no legal move exists for the remaining dice (and no X-reroll applies),
   the side plays `pass`: the remaining dice are skipped and the turn ends.
 * The turn ends when all dice slots are spent (used, passed, or skipped).
@@ -142,9 +148,9 @@ pass (a home-rank square maps to that side's home slot).
 **phase** — `roll` (dice not thrown; GUI must roll before asking for a move),
 `move` (dice present, moves pending), `over` (game finished).
 
-**dice** — the three active die faces in slot order: `X`, `2` (=II), `3`
-(=III), `_` (blank); e.g. `X 2 _`. The literal `-` when phase is `roll`
-and nothing has been thrown.
+**dice** — ONE three-character token: the active die faces in slot order,
+each `X`, `2` (=II), `3` (=III) or `_` (blank); e.g. `X2_`, `33X`, `___`.
+The literal `-` when phase is `roll` and nothing has been thrown.
 
 **used** — three chars `0`/`1` marking per-slot: 0 = not spent, 1 = spent
 (moved with, passed, or skipped because `_`). Must be `000` when dice is `-`.

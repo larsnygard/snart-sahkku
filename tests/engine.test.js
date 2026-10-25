@@ -243,9 +243,15 @@ eq(lm.length, 0, 'konge kan ikke gå 2 loddrett fra midtraden (muren)');
 // étt loddrett med X: H3 (P2-hjem) og H1 (P1-hjem) må være tomme felt:
 SS.soldiers(st, 1).forEach(x => { var b = SS.pt(SS.soldierAt(1, x.at)); if (b.col === 7 && b.row === 2) x.captured = true; });
 SS.soldiers(st, 0).forEach(x => { if (x.at === 7 && !x.released) x.captured = true; });
+// X VEKKJER berre: kongen (alltid «utløyst») får ingen trekk med X. Vertikalt
+// er han dessutan utan trekk med II/III (F/B frå midtrada går i veggen på 2
+// steg), så kongen held seg på rad 2 — han kan berre gå R/L.
 st.dice = ['X', 'X', 'X']; st.used = [false,false,false]; st.phase = 'move';
-lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id && (m.dir === 'F' || m.dir === 'B') && m.kind === 'mv');
-ok(lm.length === 2, 'konge kan gå 1 opp (F) og 1 ned (B) med X');
+lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
+eq(lm.length, 0, 'X vekkjer berre — kongen får IKKJE trekk med X');
+st.dice = ['II', '_', '_']; st.used = [false,true,true]; st.phase = 'move';
+lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id && (m.dir === 'F' || m.dir === 'B'));
+eq(lm.length, 0, 'kongen har ingen loddrett trekk med II (veggen)');
 
 /* ---- dronninga: tapt spill ---- */
 st = SS.newGame({ first: 0 });
@@ -268,12 +274,15 @@ ok(ev.some(e => e.type === 'kill'), 'dronninga ble slått ut');
 st = SS.newGame({ first: 0 });
 SS.soldiers(st, 1).forEach((s, i) => { if (i > 0) s.captured = true; });
 let last = SS.soldiers(st, 1)[0];
-last.released = true; last.at = 29;   // P2 t29 = O2 (brettidx 15)
+last.released = true; last.at = 28;   // P2 t28 står på N2 (brettidx 16)
 let f3 = null; SS.soldiers(st, 0).forEach(x => { if (!f3 || x.at > f3.at) f3 = x; });
-f3.released = true; f3.at = 14;     // O1: P1 front; X -> O2
+f3.released = true; f3.at = 14;       // O1: P1-front; II -> N2
 st.dice = ['X', 'X', '_']; st.used = [false,false,true]; st.phase = 'move';
-lm = SS.legalMoves(st, 0).filter(m => m.pid === f3.id);
-ok(lm.length >= 1, 'X-flytt mot siste fiendesoldat');
+eq(SS.legalMoves(st, 0).filter(m => m.pid === f3.id).length, 0,
+   'X flyttar ikkje ein utløyst soldat (berre vekking)');
+st.dice = ['II', '_', '_']; st.used = [false,true,true]; st.phase = 'move';
+lm = SS.legalMoves(st, 0).filter(m => m.pid === f3.id && m.v === 2);
+eq(lm.length, 1, 'II-flytt (2 steg) inn på siste fiendesoldat');
 SS.applyMove(st, lm[0]);
 eq(st.winner, 0, 'utryddelse av alle fiendens soldater = seier');
 
@@ -346,16 +355,16 @@ for (let g = 0; g < 300; g++) {
   let k = SS.king(st);
   st.turn = 0; st.phase = 'move';
   k.o = 0;
-  // X (1 steg): H2 -> R/L frie; H1 (koners heimrad) og H3 (menns heimrad)
-  // er tetta -> landing nektast. Tommer H1+H3: da er alle fire frie.
+  // X vekkjer berre: kongen er ALDRI «inaktiv», så X gjev han ingen trekk —
+  // korkje på startbrettet eller med tomme naboar. (Før 2026-10-25 flytta X
+  // kongen eitt felt; Lars presiserte at X berre vekkjer soldat/dronning.)
   k.at = nameIdx('H2');
   st.dice = ['III', 'II', 'X']; st.used = [true, true, false];
   let lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-  ok(lm.some(m => m.dir === 'R') && lm.some(m => m.dir === 'L'), 'X H2: høgre/venstre lovlege');
-  eq(lm.length, 2, 'X H2 på startbrett: opp/ned nektast (landar på brikkelinjer)');
+  eq(lm.length, 0, 'X H2: kongen får NULL trekk (X vekkjer berre)');
   clearAt(st, [nameIdx('H1'), nameIdx('H3')]);
   lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-  eq(lm.length, 4, 'X H2 med tomme H1/H3: ALLE fire retningar (R, L, opp, ned)');
+  eq(lm.length, 0, 'X H2 med tomme H1/H3: framleis 0 — X flyttar ikkje kongen');
   // II (2 steg, same veg, ingen snuing): H2 -> J2, F2, H3 (via H3? nei: H2->H3? F frå midtraden)
   st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
   clearAt(st, [nameIdx('I2'), nameIdx('J2'), nameIdx('G2'), nameIdx('F2'), nameIdx('H1')]);
@@ -363,17 +372,19 @@ for (let g = 0; g < 300; g++) {
   const dests = lm.map(m => SS.name(SS.pathFor(st, k, m.dir, 2).path.slice(-1)[0])).sort().join(',');
   eq(lm.length, 2, 'II H2: R2+L2 (opp/ned er 1 felt mellom radene: II treffer vegg)');
   ok(!dests.split(',').includes('H2'), 'II: inga 1-opp-1-ned-snuing tilbake til H2');
-  // O3-hjørnet: «opp» (mot O2) er nedstigen på åttetalsruta — lovleg
+  // Hjørnet er ikkje vegg: med II går kongen loddrett O3 -> O2 -> O1.
   k.at = nameIdx('O3');
-  st.dice = ['III', 'II', 'X']; st.used = [true, true, false];
-  clearAt(st, [nameIdx('O2')]);
+  st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
+  clearAt(st, [nameIdx('O2'), nameIdx('O1')]);
   lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-  ok(lm.some(m => m.dir === 'B'), 'O3: konge kan opp til O2 (hjørnet er ikkje vegg)');
-  // A2: rett opp til A3
+  ok(lm.some(m => m.dir === 'B'), 'O3: konge kan gå nedover med II (hjørnet er ikkje vegg)');
+  // A2: oppover er det vegg etter eitt steg — II/III kjem ingen veg.
   k.at = nameIdx('A2');
+  st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
   clearAt(st, [nameIdx('A3')]);
   lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-  ok(lm.some(m => m.dir === 'F'), 'A2: konge kan rett opp til A3');
+  eq(lm.filter(m => m.dir === 'F' || m.dir === 'B').length, 0,
+     'A2: ingen loddrett trekk med II (vegg etter eitt steg)');
   // slipp ikkje snuing: III frå H2, berre heile 3-stegar i éin veg
   k.at = nameIdx('H2');
   clearAt(st, [nameIdx('H1'), nameIdx('H3'), nameIdx('I2'), nameIdx('J2'), nameIdx('K2'), nameIdx('G2'), nameIdx('F2'), nameIdx('E2')]);
