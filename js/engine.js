@@ -263,9 +263,14 @@
     }
   }
   function activeRank(st) {
+    // Blank ('_') er eit dødt fjes: ho gjev ingen trekk og skal aldri verte
+    // vald som aktiv terning (diceLeft hoppar òg over henne). Utan dette
+    // kunne eit ubrukt blankt fjes verte lese som «II» (v=2) — t.d. rett
+    // etter eit omkast som gav blank.
     var best = 4, i;
     for (i = 0; i < 3; i++) {
-      if (!st.used[i] && RANK[st.dice[i]] < best) best = RANK[st.dice[i]];
+      if (st.used[i] || st.dice[i] === '_') continue;
+      if (RANK[st.dice[i]] < best) best = RANK[st.dice[i]];
     }
     return best === 4 ? null : best;
   }
@@ -281,7 +286,11 @@
   }
   function rerollX(st, rnd) {
     if (!canRerollX(st)) return null;
-    for (var i = 0; i < 3; i++) if (st.dice[i] === 'X') { st.dice[i] = rollDice(rnd)[0]; st.used[i] = false; }
+    for (var i = 0; i < 3; i++) if (st.dice[i] === 'X') {
+      var nf = rollDice(rnd)[0];
+      st.dice[i] = nf;
+      st.used[i] = (nf === '_');   // eit nytt blankt fjes er brukt med ein gong
+    }
     logReroll(st);
     return st.dice.slice();
   }
