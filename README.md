@@ -20,7 +20,10 @@ dronninger*):
   offline-først cache og touch-kontrollert brett for mobil
 - **UI inspirert av samisk estetikk**: dyp nordlys-blå bakgrunn, ripplinte-
   brett, rombenete brikker, rødt/blått gákti-inspirert fargesett
-- **CPU-motstander** med tre nivå (greedy med simulerte trekk)
+- **CPU-motstander** i to utgaver: *klassisk* (tre nivå, greedy med simulerte
+  trekk) og *nevral* (NN) — den trente S-UCI-motoren fra
+  [sahkku-ai](https://github.com/larsnygard/sahkku-ai), lasta lazy kun når du
+  vel henne (menyvalet «Motor: Nevral (NN)»)
 - **Nettspill** via [iroh](https://github.com/n0-computer/iroh) —
   Rust→WebAssembly, relay-basert P2P med gossip-rom; invittkoder
   (`rom#nodeid`), ingen server
@@ -28,7 +31,8 @@ dronninger*):
 ## Prosjektstruktur
 
 ```
-index.html css/ js/            appen: engine (SS), cpu, ui, main, online
+index.html css/ js/            appen: engine (SS), cpu, ui, main, online, nn-adapter
+engines/                       sahkku-ref.js (Node, S-UCI) + sahkku-nn.js (nevral, browser)
 manifest.webmanifest sw.js     PWA-manifest og service worker
 net/                           iroh-P2P-modulen (Rust, wasm-pack)
 net/pkg/                       ferdigbygd wasm-modul (skal med i publisering)

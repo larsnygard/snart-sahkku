@@ -75,6 +75,12 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .hero h1 { font-size: clamp(24px, 5.5vw, 40px); margin: 12px 0 4px; }
 .hero .tagline { color: var(--muted); margin: 0 0 26px; }
 .menu-grid { display: grid; gap: 12px; max-width: 380px; margin: 0 auto; }
+.engine-note {
+  max-width: 46ch; margin: 10px auto 0; font-size: 0.82rem; line-height: 1.45;
+  color: var(--muted); opacity: 0.9;
+}
+.engine-note a { color: var(--yellow); }
+
 .difficulty { margin-top: 18px; color: var(--muted); }
 .difficulty select {
   font: inherit; color: var(--ink); background: var(--wood);

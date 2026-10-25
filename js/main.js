@@ -8,7 +8,8 @@
   var app = {
     mode: 'cpu',       // 'cpu' | 'local' | 'online'
     me: 0,             // min spiller (online)
-    level: 2,
+    level: 2,          // klassisk CPU: 1-3
+    engine: 'classic', // 'classic' (js/cpu.js) | 'nn' (engines/sahkku-nn.js)
     st: null,
     host: false,       // online: vert = P0, autoritativ
     busy: false,
@@ -125,7 +126,21 @@
     if (app.over) return;
     app.busy = true;
     UI.render();
-    var mv = CPU.pick(app.st, app.level);
+    // Den nevrale motoren tenkjer ~0,5 s; lat UI-en male «tenkjer …» fyrst.
+    if (app.engine === 'nn' && global.SahkkuNN && global.SahkkuNN.ready()) {
+      setTimeout(cpuPlay, 20);
+    } else {
+      cpuPlay();
+    }
+  }
+
+  function cpuPlay() {
+    if (app.over) return;
+    var mv = null;
+    if (app.engine === 'nn' && global.SahkkuNN && global.SahkkuNN.ready()) {
+      mv = global.SahkkuNN.move(app.st);      // {pid,dir,v,kind} | null
+    }
+    if (!mv) mv = CPU.pick(app.st, app.level); // klassisk CPU (òg reserve)
     if (!mv) { app.busy = false; settleAndContinue(); return; }
     var ev = SS.applyMove(app.st, mv);
     app.busy = false;
@@ -189,6 +204,9 @@
       if (op.rolls.length > 1) UI.log('Åpning ' + (ix+1) + ': Menn ' + r.p0.join(' ') + ' · Koner ' + r.p1.join(' '));
     });
     UI.log('Åpning: ' + (op.first === 0 ? 'Menn' : 'Koner') + ' begynner (flegst X-er)');
+    if (app.mode === 'cpu') {
+      UI.log('CPU: ' + (app.engine === 'nn' ? 'nevral (NN)' : 'klassisk nivå ' + app.level));
+    }
     UI.flip = (app.mode === 'cpu' || app.mode === 'local') ? false : (app.me === 1);
     show('game');
     refresh();
@@ -421,7 +439,7 @@
     try {
       if (!app.st || app.mode === 'menu') return;
       var rec = {
-        v: 2, mode: app.mode, level: app.level, me: app.me, host: app.host,
+        v: 2, mode: app.mode, level: app.level, engine: app.engine, me: app.me, host: app.host,
         over: app.over, flip: UI.flip,
         room: (global.NET && NET.seed) ? NET.seed : null,
         st: JSON.parse(SS.serialize(app.st))
@@ -443,6 +461,12 @@
     var rec = peekSave();
     if (!rec) return false;
     app.mode = rec.mode; app.level = rec.level || 2;
+    app.engine = rec.engine === 'nn' ? 'nn' : 'classic';
+    if (app.engine === 'nn' && global.SahkkuNN && !global.SahkkuNN.ready()) {
+      global.SahkkuNN.load().catch(function () { app.engine = 'classic'; });
+    }
+    if ($('cpu-engine')) $('cpu-engine').value = app.engine;
+    if ($('cpu-level')) $('cpu-level').value = String(app.level);
     app.me = rec.me || 0; app.host = !!rec.host; app.over = !!rec.over;
     app.onlineStarted = (rec.mode === 'online');
     app.st = SS.deserialize(rec.st);
@@ -488,9 +512,34 @@
       onMove: onMove, onSurrender: onSurrender
     });
     $('btn-cpu').addEventListener('click', function () {
-      app.mode = 'cpu'; app.level = parseInt($('cpu-level').value, 10) || 2;
+      app.mode = 'cpu';
+      app.level = parseInt($('cpu-level').value, 10) || 2;
+      app.engine = ($('cpu-engine') && $('cpu-engine').value === 'nn') ? 'nn' : 'classic';
+      if (app.engine === 'nn' && !(global.SahkkuNN && global.SahkkuNN.ready())) {
+        UI.toast('Lastar nevral motor …');
+        global.SahkkuNN.load().then(function () {
+          UI.toast('Nevral motor klar');
+          newGame();
+        }, function (e) {
+          UI.toast('Nevral motor feila — spelar med klassisk CPU');
+          if (global.console) console.warn('NN-last feila:', e);
+          app.engine = 'classic';
+          newGame();
+        });
+        return;
+      }
       newGame();
     });
+    if ($('cpu-engine')) {
+      $('cpu-engine').addEventListener('change', function () {
+        var nn = $('cpu-engine').value === 'nn';
+        if (nn) global.SahkkuNN.load().catch(function (e) {
+          UI.toast('Nevral motor feila — klassisk CPU vert brukt');
+          if (global.console) console.warn('NN-last feila:', e);
+          $('cpu-engine').value = 'classic';
+        });
+      });
+    }
     $('btn-local').addEventListener('click', function () { app.mode = 'local'; newGame(); });
     $('btn-resume').addEventListener('click', function () {
       if (!resumeGame()) { UI.toast('Fann ikje noko lagra parti'); show('menu'); }
