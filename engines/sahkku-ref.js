@@ -92,6 +92,7 @@ function parsePosition(words) {
     st = SS.fromFEN(fen);
     i = mIx >= 0 ? i + 1 + mIx + 1 : words.length;
   } else throw new Error('position: startpos|fen');
+  if (words[i] === 'moves') i++;      // spec §5: "position startpos moves <t…>" er lovleg
   while (i < words.length) i += applyToken(st, words[i], words, i);
   return st;
 }

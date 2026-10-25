@@ -125,12 +125,17 @@ Piece tokens (case = side, letter = kind, home pieces are lowercase):
 | `M'` / `G'` | released soldier standing on the **middle rank (rank 2)** on its **second pass** of the number-cycle (rank-2 squares are visited twice by each side's cycle: plain = first pass, `'` = second pass) |
 | `Q` / `q` | Menn queen released (anywhere) / on home square L2 |
 | `D` / `d` | Giera queen released (anywhere) / on home square D2 |
-| `N` | neutral king |
+| `N` | king, **neutral** (never movable, capturable by any side) |
+| `NM` / `NK` | king **seized by Menn / Giera** (rides for that side) |
 
-Captured pieces simply do not appear. A soldier's exact number-cycle position
-is implied by its square plus the pass marker: each square lies on at most one
-released-soldier cycle position per side per pass (a home-rank square maps to
-that side's home slot).
+A seized king is NOT encoded as a soldier: the king is a piece of its own,
+and the engine's legality (the king never lands on occupied squares, the
+soldier/queen king-capture at `§`) turns on his ownership. Omitting it from
+FEN produced illegal positions after a king seizure — the three king tokens
+are required. Captured pieces simply do not appear. A soldier's exact
+number-cycle position is implied by its square plus the pass marker: each
+square lies on at most one released-soldier cycle position per side per
+pass (a home-rank square maps to that side's home slot).
 
 **side** — `w` (Menn to act) or `b` (Giera).
 

@@ -50,7 +50,8 @@
       return base + (prime ? "'" : '');
     }
     if (p.t === 'q') return p.o === 0 ? (p.released ? 'Q' : 'q') : (p.released ? 'D' : 'd');
-    return 'N';
+    // king: N neutral · NM seized by menn · NK seized by giera
+    return p.o === 0 ? 'NM' : p.o === 1 ? 'NK' : 'N';
   }
 
   function toFEN(st) {
@@ -78,9 +79,10 @@
 
   function parseToken(tok, st, sq, assigned) {
     var pl, rel, i, p;
-    if (tok === 'N') {
+    if (tok === 'N' || tok === 'NM' || tok === 'NK') {
       var k = SS.king(st);
       k.at = sq;
+      k.o = tok === 'NM' ? 0 : tok === 'NK' ? 1 : null;
       return true;
     }
     if (tok === 'M' || tok === 'm' || tok === 'G' || tok === 'g' ||
