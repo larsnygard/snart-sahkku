@@ -24,6 +24,15 @@
   function idx(col, row) { return row === 0 ? col : row === 1 ? 29 - col : 30 + col; }
   function name(i) { var p = pt(i); return String.fromCharCode(65 + p.col) + (p.row + 1); }
   function rowLine(row) { var o = []; for (var c = 0; c < 15; c++) o.push(idx(c, row)); return o; }
+  // felt som «A1»..«O3» (kolonne A–O, rekkje 1–3; rekkje 2 speilt frå P1-venstre)
+  function sqName(i, flip) {
+    var c, r;
+    if (i < 15) { c = i; r = 1; }
+    else if (i < 30) { c = 29 - i; r = 2; }
+    else { c = i - 30; r = 3; }
+    if (flip) c = 14 - c;
+    return String.fromCharCode(65 + c) + r;
+  }
   function mod(i, m) { i = i % m; return i < 0 ? i + m : i; }
 
   // tallsyklusen: t(0..74) -> brettindeks, per spiller
@@ -166,7 +175,7 @@
     pieces.push({ id: id++, t: 'k', o: null, seq: -1, at: CASTLE, t0: CASTLE, released: true, captured: false });
     return {
       v: 1, pieces: pieces, turn: opts.first != null ? opts.first : 0,
-      phase: 'roll', dice: [], used: [],
+      phase: 'roll', dice: [], used: [], diceBy: null, log: [],
       winner: null, winReason: '', lastMove: null,
       kings: 0, kills: [0, 0], moves: 0,
       queenMode: opts.queenMode !== false
@@ -213,19 +222,45 @@
     for (i = 0; i < 3; i++) d.push(DICE[Math.floor((rnd || Math.random)() * 4)]);
     return d;
   }
-  function openingRoll(rnd) {
-    for (;;) {
-      var a = rollDice(rnd), b = rollDice(rnd);
-      var xa = a.filter(function (d) { return d === 'X'; }).length;
-      var xb = b.filter(function (d) { return d === 'X'; }).length;
-      if (xa !== xb) return { rolls: [a, b], first: xa > xb ? 0 : 1 };
-    }
-  }
   function roll(st, rnd) {
     if (st.phase !== 'roll') return null;
     st.dice = rollDice(rnd);
     st.used = st.dice.map(function (d) { return d === '_'; }); // blank = ingenting å gjøre
+    st.diceBy = st.turn;
+    logPly(st).roll = (logPly(st).roll || []).concat([st.dice.slice()]);
     return st.dice.slice();
+  }
+  // ---------- spellog (for notasjon + gjenopptak) ----------
+  // Eitt «ply» per kast: {t: side, roll: [terningkast...], mv: [hendings-objekt...]}
+  function logPly(st) {
+    if (!st.log) st.log = [];
+    var last = st.log[st.log.length - 1];
+    if (last && last.t === st.turn && last.closed !== true) return last;
+    var ply = { t: st.turn, roll: [], mv: [], closed: false };
+    st.log.push(ply);
+    return ply;
+  }
+  function closePly(st) {
+    var last = st.log && st.log[st.log.length - 1];
+    if (last) last.closed = true;
+  }
+  function logReroll(st) {
+    var ply = logPly(st);
+    ply.roll.push(st.dice.slice());
+    ply.rerolls = (ply.rerolls || 0) + 1;
+  }
+  function openingRoll(st, rnd) {
+    var ev = [];
+    for (;;) {
+      var a = rollDice(rnd), b = rollDice(rnd);
+      var xa = a.filter(function (d) { return d === 'X'; }).length;
+      var xb = b.filter(function (d) { return d === 'X'; }).length;
+      ev.push({ p0: a, p1: b });
+      if (xa !== xb) {
+        st.log = [{ t: 'open', rolls: ev, first: xa > xb ? 0 : 1 }];
+        return { rolls: ev, first: xa > xb ? 0 : 1 };
+      }
+    }
   }
   function activeRank(st) {
     var best = 4, i;
@@ -247,6 +282,7 @@
   function rerollX(st, rnd) {
     if (!canRerollX(st)) return null;
     for (var i = 0; i < 3; i++) if (st.dice[i] === 'X') { st.dice[i] = rollDice(rnd)[0]; st.used[i] = false; }
+    logReroll(st);
     return st.dice.slice();
   }
   // X-OMKAST — sahkku.no-reglen, ordrett: «kan du velge om du vil bruke
@@ -358,6 +394,8 @@
     }
     if (mv.kind === 'rel') p.released = true;
     ev.push({ type: 'mv', pid: p.id, from: fromIdx, to: land, by: me, v: mv.v, dir: mv.dir, rel: mv.kind === 'rel' });
+    var lg = { pid: p.id, t: p.t, o: p.o, from: fromIdx, to: land, v: mv.v, dir: mv.dir, rel: mv.kind === 'rel', k: 0, kg: false };
+    logPly(st).mv.push(lg);
     st.lastMove = { pid: p.id, from: fromIdx, to: land, by: me };
     st.moves++;
     // landingseffekter
@@ -367,6 +405,7 @@
       if (q === p) continue;
       if (q.t === 'k') {
         q.o = me; st.kings++;
+        lg.kg = true;
         ev.push({ type: 'king', by: me, at: land });
         continue;
       }
@@ -374,10 +413,12 @@
       if (q.t === 's') {
         q.captured = true; q.released = true;
         st.kills[me]++;
+        lg.k++; lg.cap = (lg.cap || []).concat([sqName(land) + (q.o === 0 ? 'M' : 'K')]);
         ev.push({ type: 'kill', pid: q.id, at: land, by: me });
       } else if (q.t === 'q') {
         q.captured = true;
         st.kills[me]++;
+        lg.k++; lg.cap = (lg.cap || []).concat(['Q']);
         ev.push({ type: 'kill', pid: q.id, at: land, by: me });
         st.winner = me; st.winReason = 'dronning';
       }
@@ -397,7 +438,8 @@
     return soldiers(st, o).filter(function (s) { return !s.captured; });
   }
   function endTurn(st, ev) {
-    st.dice = []; st.used = [];
+    st.dice = []; st.used = []; st.diceBy = null;
+    closePly(st);
     st.turn = 1 - st.turn;
     st.phase = 'roll';
     ev.push({ type: 'turn', next: st.turn });
@@ -431,6 +473,7 @@
   function serialize(st) {
     return JSON.stringify({
       v: st.v, turn: st.turn, phase: st.phase, dice: st.dice, used: st.used,
+      diceBy: st.diceBy, log: st.log || [],
       winner: st.winner, winReason: st.winReason, queenMode: st.queenMode,
       kings: st.kings, kills: st.kills, moves: st.moves, lastMove: st.lastMove,
       pieces: st.pieces.map(function (p) {
@@ -442,6 +485,7 @@
     var o = typeof s === 'string' ? JSON.parse(s) : s;
     return {
       v: o.v, turn: o.turn, phase: o.phase, dice: o.dice, used: o.used,
+      diceBy: o.diceBy != null ? o.diceBy : o.turn, log: o.log || [],
       winner: o.winner, winReason: o.winReason, queenMode: o.queenMode,
       kings: o.kings, kills: o.kills, moves: o.moves, lastMove: o.lastMove || null,
       pieces: o.pieces.map(function (p) { return { id: p.id, t: p.t, o: p.o, seq: p.seq, at: p.at, released: p.released, captured: p.captured }; })
@@ -455,7 +499,9 @@
     pathFor: pathFor, canLand: canLand, soldierLandingOk: soldierLandingOk,
     newGame: newGame, occ: occ, piece: piece, soldiers: soldiers, queen: queen,
     king: king, isHome: isHome, atIdx: atIdx, aliveSoldiers: aliveSoldiers,
+    sqName: sqName,
     rollDice: rollDice, openingRoll: openingRoll, roll: roll,
+    logPly: logPly, closePly: closePly, logReroll: logReroll,
     activeRank: activeRank, activeValue: activeValue, diceLeft: diceLeft,
     rerollX: rerollX, canRerollX: canRerollX, legalMoves: legalMoves,
     applyMove: applyMove, settle: settle, passRemaining: passRemaining,

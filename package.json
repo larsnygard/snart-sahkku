@@ -1,6 +1,6 @@
 {
   "name": "snartsahkku",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Lágesvuotna-sáhkku (the Sámi strategy game) as an installable PWA: CPU opponent, local two-player, and online P2P via iroh.",
   "main": "sw.js",
   "directories": {

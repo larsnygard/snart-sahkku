@@ -35,6 +35,7 @@
     UI.render();
     UI.markLastMove();
     UI.setInteractive(!app.busy && !app.over && app.st.winner == null && humanTurn());
+    saveGame();
   }
   function describeMv(mv) {
     var st = app.st, p = SS.piece(st, mv.pid);
@@ -95,9 +96,10 @@
 
   function afterTurnChange() {
     UI.clearSelection();
-    if (checkEnd()) { if (app.mode === 'online') NET.send(snapshotMsg()); return; }
+    saveGame();
+    if (checkEnd()) { if (app.mode === 'online' && app.host) onlineSnapshot(); return; }
     rollPhase();
-    if (app.mode === 'online' && app.host) NET.send(snapshotMsg());
+    if (app.mode === 'online' && app.host) onlineSnapshot();
   }
 
   function rollPhase() {
@@ -153,16 +155,7 @@
     settleAndContinue();
   }
   function onPass() {
-    if (app.mode === 'online') {
-      if (app.host) {
-        // vert: anvend pass lokalt, send autoritativ snapshot
-        var ev = SS.passRemaining(app.st);
-        announceEvents(ev);
-        NET.send(snapshotMsg());
-        afterTurnChange();
-      } else NET.send({ t: 'pass' });
-      return;
-    }
+    if (app.mode === 'online') return onlinePass();
     var ev = SS.passRemaining(app.st);
     UI.log('Gjenværende terninger ble sprunget over');
     announceEvents(ev);
@@ -170,7 +163,7 @@
   }
   function onSurrender() {
     if (app.over) return;
-    if (app.mode === 'online') { NET.send({ t: 'resign' }); }
+    if (app.mode === 'online') return onlineResign();
     app.st.winner = 1 - app.st.turn; app.st.winReason = 'overgivelse';
     app.st.phase = 'over';
     checkEnd();
@@ -188,10 +181,14 @@
   // ---------- oppstart ----------
   function newGame() {
     app.over = false;
-    var first = SS.openingRoll().first;
-    app.st = SS.newGame({ first: first });
+    app.st = SS.newGame({ first: 0 });
+    var op = SS.openingRoll(app.st);
+    app.st.turn = op.first;
     UI.clearLog();
-    UI.log('Åpning: ' + (first === 0 ? 'Menn' : 'Koner') + ' begynner');
+    op.rolls.forEach(function (r, ix) {
+      if (op.rolls.length > 1) UI.log('Åpning ' + (ix+1) + ': Menn ' + r.p0.join(' ') + ' · Koner ' + r.p1.join(' '));
+    });
+    UI.log('Åpning: ' + (op.first === 0 ? 'Menn' : 'Koner') + ' begynner (flegst X-er)');
     UI.flip = (app.mode === 'cpu' || app.mode === 'local') ? false : (app.me === 1);
     show('game');
     refresh();
@@ -201,80 +198,148 @@
   function newOnlineGame() {
     app.over = false;
     app.st = SS.newGame({ first: 0 });
-    UI.clearLog();
     UI.flip = app.me === 1;
     show('game');
-    refresh();
-    app.st.phase = 'roll'; app.st.dice = []; app.st.used = [];
     if (app.host) {
-      // vert: kast åpning
-      SS.roll(app.st);
-      app.st.phase = 'move';
-      NET.send({ t: 'roll', dice: app.st.dice.slice() });
-      UI.log('Du kastet ' + app.st.dice.join(' '));
-      settleAndContinue();
+      // vert: opningsritual — kappkast for begge sider (same terning-RNG)
+      var op = SS.openingRoll(app.st);
+      app.st.turn = op.first;
+      UI.clearLog();
+      op.rolls.forEach(function (r, ix) {
+        if (op.rolls.length > 1) UI.log('Åpning ' + (ix + 1) + ': Menn ' + r.p0.join(' ') + ' · Koner ' + r.p1.join(' '));
+      });
+      UI.log('Åpning: ' + (op.first === 0 ? 'Menn' : 'Koner') + ' begynner (flest X-er)');
+      refresh();
+      onlineSnapshot();
+      // om verten vann opninga: eigen tur; elles: gjesten sin tur
+      if (app.st.turn === app.me) {
+        refresh();
+      } else {
+        $('room-hint').textContent = '';
+        refresh();   // gjesten ser Kast-knappen sin via sin eigen rendering
+      }
+      saveGame();
     }
+    // gjesten: ventar på snapshot — ingen eiga terning-tilstand
+    refresh();
   }
 
   // ---------- nettverk ----------
-  function snapshotMsg() {
-    var s = JSON.parse(SS.serialize(app.st));
-    s.phase = 'roll';   // tur-oversyting: gjesten skal kaste selv
-    return { t: 'state', s: s };
+  // Autoritativ protokoll: VERTEN eig all tilstand (terning-RNG hjå vert).
+  // Gjesten sender intensjonar (rollreq/move/reroll/pass/resign), vert
+  // validerer, utfører, og sender FULLT autoritativt snapshot — aldri
+  // faselaugner. Gjesten renderar berre snapshot. Éin sanning, ingen desync.
+  function onlineSnapshot() {
+    NET.send({ t: 'state', s: JSON.parse(SS.serialize(app.st)) });
   }
   function applySnapshot(s) {
     app.st = SS.deserialize(s.s);
     app.over = app.st.winner != null;
+    app.busy = false;
+    clearTimeout(app._rt);
     UI.clearSelection();
+    renderLogFromState(app.st);
     refresh();
     UI.markLastMove();
     if (app.over) checkEnd();
   }
   function onlineRoll() {
-    if (app.st.turn !== app.me) return;
-    SS.roll(app.st);
-    app.st.phase = 'move';
-    NET.send({ t: 'roll', dice: app.st.dice.slice() });
-    UI.log('Du kastet ' + app.st.dice.join(' '));
-    settleAndContinue();
+    if (app.st.turn !== app.me || app.st.phase !== 'roll') return;
+    if (app.host) {
+      SS.roll(app.st);
+      app.st.phase = 'move';
+      UI.log('Du kastet ' + app.st.dice.join(' '));
+      onlineSnapshot();
+      settleAndContinue();
+    } else {
+      app.busy = true; refresh();
+      NET.send({ t: 'rollreq' });
+      clearTimeout(app._rt);
+      app._rt = setTimeout(function () {
+        if (app.busy) { app.busy = false; NET.send({ t: 'sync' }); refresh(); }
+      }, 6000);
+    }
   }
   function onlineReroll() {
-    var r = SS.rerollX(app.st);
-    if (r) { NET.send({ t: 'roll', dice: app.st.dice.slice() }); UI.log('Kastet om X-ene'); }
-    settleAndContinue();
+    if (app.st.turn !== app.me) return;
+    if (app.host) {
+      var r = SS.rerollX(app.st);
+      if (r) { UI.log('Kastet om X-ene: ' + r.join(' ')); onlineSnapshot(); }
+      settleAndContinue();
+    } else {
+      app.busy = true; refresh();
+      NET.send({ t: 'reroll' });
+      clearTimeout(app._rt);
+      app._rt = setTimeout(function () { if (app.busy) { app.busy = false; NET.send({ t: 'sync' }); refresh(); } }, 6000);
+    }
   }
   function onlineMove(mv) {
     if (app.st.turn !== app.me) return;
     if (app.host) {
-      // vert: valider og anvend, send snapshot
       var legal = SS.legalMoves(app.st, app.st.turn).some(function (m) {
         return m.pid === mv.pid && m.v === mv.v && m.kind === mv.kind && (m.dir === mv.dir);
       });
-      if (!legal) { UI.toast('Ulovlig trekk'); return; }
+      if (!legal) { UI.toast('Ulovleg trekk'); return; }
       var ev = SS.applyMove(app.st, mv);
       announceEvents(ev);
-      NET.send(snapshotMsg());
+      UI.clearSelection();
+      onlineSnapshot();
       refresh(); UI.markLastMove();
       settleAndContinue();
     } else {
-      NET.send({ t: 'move', mv: mv });
       UI.setInteractive(false);
+      NET.send({ t: 'move', mv: mv });
     }
   }
   function onlinePass() {
-    NET.send({ t: 'pass' });
+    if (app.st.turn !== app.me) return;
+    if (app.host) {
+      var ev = SS.passRemaining(app.st);
+      announceEvents(ev);
+      onlineSnapshot();
+      afterTurnChange();
+    } else {
+      app.busy = true; refresh();
+      NET.send({ t: 'pass' });
+      clearTimeout(app._rt);
+      app._rt = setTimeout(function () { if (app.busy) { app.busy = false; NET.send({ t: 'sync' }); refresh(); } }, 6000);
+    }
   }
-  function onlineNetApplyMove(mv) {
-    // vert mottar trekk fra gjest: valider
-    var legal = SS.legalMoves(app.st, app.st.turn).some(function (m) {
-      return m.pid === mv.pid && m.v === mv.v && m.kind === mv.kind && (m.dir === mv.dir);
+  function onlineResign() {
+    if (app.host) {
+      app.st.winner = 1 - app.st.turn; app.st.winReason = 'overgivelse'; app.st.phase = 'over';
+      onlineSnapshot(); checkEnd();
+    } else {
+      NET.send({ t: 'resign' });
+      UI.setInteractive(false);
+      app.st.winner = 1 - app.me; app.st.winReason = 'overgivelse'; app.st.phase = 'over';
+      checkEnd();
+    }
+  }
+  function renderLogFromState(st) {
+    // gjenoppbygg loggvisa frå spelloggen (for gjest + gjenopptak)
+    UI.clearLog();
+    (st.log || []).forEach(function (p) {
+      if (p.t === 'open') {
+        var lastR = p.rolls[p.rolls.length - 1];
+        var x = function (d) { return d.filter(function (v) { return v === 'X'; }).length; };
+        p.rolls.forEach(function (r, ix) {
+          if (p.rolls.length > 1) UI.log('Åpning ' + (ix + 1) + ': Menn ' + r.p0.join(' ') + ' · Koner ' + r.p1.join(' '));
+        });
+        UI.log('Åpning: ' + (x(lastR.p0) > x(lastR.p1) ? 'Menn' : 'Koner') + ' begynner (flest X-er)');
+        return;
+      }
+      var side = p.t === 0 ? 'Menn' : 'Koner';
+      p.roll.forEach(function (d, ix) {
+        UI.log(side + (ix > 0 ? ' kasta om X-ene: ' : ': kast ') + d.join(' '));
+      });
+      p.mv.forEach(function (m) {
+        var nm = m.t === 'k' ? 'Kongen' : m.t === 'q' ? 'Dronninga' : (m.o === 0 ? 'Menn' : 'Koner');
+        if (m.rel) UI.log(nm + ' løsna på ' + SS.sqName(m.to));
+        else UI.log(nm + ' ' + SS.sqName(m.from) + '→' + SS.sqName(m.to) + (m.k > 0 ? ' slo ' + m.k : '') + (m.kg ? ' — kongen kapra!' : ''));
+      });
     });
-    if (!legal) { NET.send(snapshotMsg()); return; }   // resynk
-    var ev = SS.applyMove(app.st, mv);
-    announceEvents(ev);
-    NET.send(snapshotMsg());
-    refresh(); UI.markLastMove();
-    settleAndContinue();
+    if (st.winner != null) UI.log('SEIER: ' + (st.winner === 0 ? 'Menn' : 'Koner') + '! ' + (st.winReason || ''), 'win');
   }
   function wireNet() {
     NET.handlers.onStatus = function (s) {
@@ -292,56 +357,128 @@
           app.me = app.host ? 0 : 1;
           app.onlineStarted = true;
           newOnlineGame();
-          if (app.host) {
-            NET.send({ t: 'start', s: JSON.parse(SS.serialize(app.st)) });
-            $('room-hint').textContent = 'Du er vert — du kaster først.';
-          } else {
-            $('room-hint').textContent = 'Motspilleren er vert og starter.';
-          }
           return;
         }
-        if (!connected && app.st && !app.over) UI.toast('Motspiller forsvant');
+        if (connected && app.onlineStarted && app.st) {
+          // gjenkopling: vert sender autoritativt snapshot, gjest be om det
+          if (app.host) onlineSnapshot(); else NET.send({ t: 'sync' });
+          return;
+        }
+        if (!connected && app.st && !app.over) UI.toast('Motspillar forsvann — spelet er redda, vent på gjenoppkopling');
       }
     };
     NET.handlers.onMsg = function (m) {
       var d = m.data;
-      if (d.t === 'roll') {
-        app.st.dice = d.dice; app.st.used = d.dice.map(function (x) { return x === '_'; });
-        app.st.phase = 'move';
-        UI.log('Motspiller kastet ' + d.dice.join(' '));
-        refresh();
-      } else if (d.t === 'move') {
-        if (app.host) onlineNetApplyMove(d.mv);
-      } else if (d.t === 'state') {
-        if (!app.host) {
-          applySnapshot(d);
-          // om vertens snapshot sier det er min tur men jeg mangler terninger:
-          // be om kast (defensiv re-synk mot tapte roll-beskeder)
-          var st = app.st;
-          if (st.phase === 'roll' && st.turn === app.me && !st.dice.length && !app.busy) {
-            app.busy = true;
-            SS.roll(st);
-            app.st.phase = 'move';
-            app.busy = false;
-            NET.send({ t: 'roll', dice: st.dice.slice() });
-            UI.log('Du kastet ' + st.dice.join(' '));
-            settleAndContinue();
-          }
+      if (d.t === 'state') {
+        if (!app.host) applySnapshot(d);
+        return;
+      }
+      if (!app.host) return;   // berre verten utfører
+      var foe = 1;              // gjesten sin side
+      if (d.t === 'rollreq') {
+        if (app.st.phase === 'roll' && app.st.turn === foe) {
+          SS.roll(app.st);
+          app.st.phase = 'move';
+          UI.log('Koner kastet ' + app.st.dice.join(' '));
+          onlineSnapshot();
         }
-      } else if (d.t === 'start') {
-        if (!app.host) { app.onlineStarted = true; applySnapshot(d); }
+      } else if (d.t === 'reroll') {
+        if (app.st.turn === foe && SS.canRerollX(app.st)) {
+          SS.rerollX(app.st);
+          UI.log('Koner kasta om X-ene: ' + app.st.dice.join(' '));
+          onlineSnapshot();
+        }
+      } else if (d.t === 'move') {
+        var legal = SS.legalMoves(app.st, foe).some(function (mm) {
+          return mm.pid === d.mv.pid && mm.v === d.mv.v && mm.kind === d.mv.kind && (mm.dir === d.mv.dir);
+        });
+        if (legal) {
+          var ev = SS.applyMove(app.st, d.mv);
+          announceEvents(ev);
+          onlineSnapshot();
+          refresh(); UI.markLastMove();
+          settleAndContinue();
+        } else onlineSnapshot();   // resynk
       } else if (d.t === 'pass') {
-        if (app.host) {
-          var ev = SS.passRemaining(app.st);
-          UI.log('Motspiller hoppet over resten');
-          NET.send(snapshotMsg());
+        if (app.st.turn === foe) {
+          var ev2 = SS.passRemaining(app.st);
+          UI.log('Koner hoppa over resten');
+          onlineSnapshot();
           afterTurnChange();
         }
       } else if (d.t === 'resign') {
-        app.st.winner = app.me; app.st.winReason = 'overgivelse'; app.st.phase = 'over';
-        checkEnd();
+        app.st.winner = 0; app.st.winReason = 'overgivelse'; app.st.phase = 'over';
+        onlineSnapshot(); checkEnd();
+      } else if (d.t === 'sync') {
+        onlineSnapshot();
       }
     };
+  }
+
+  // ---------- lagring: alt tilstand overlev ein attladden nettlesar ----------
+  var SAVE_KEY = 'sahkku.save.v2';
+  function saveGame() {
+    try {
+      if (!app.st || app.mode === 'menu') return;
+      var rec = {
+        v: 2, mode: app.mode, level: app.level, me: app.me, host: app.host,
+        over: app.over, flip: UI.flip,
+        room: (global.NET && NET.seed) ? NET.seed : null,
+        st: JSON.parse(SS.serialize(app.st))
+      };
+      global.localStorage.setItem(SAVE_KEY, JSON.stringify(rec));
+    } catch (e) { /* localStorage full eller utilgjengeleg — ikkje kritisk */ }
+  }
+  function peekSave() {
+    try {
+      var raw = global.localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      var rec = JSON.parse(raw);
+      if (!rec || !rec.st) return null;
+      return rec;
+    } catch (e) { return null; }
+  }
+  function clearSave() { try { global.localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+  function resumeGame() {
+    var rec = peekSave();
+    if (!rec) return false;
+    app.mode = rec.mode; app.level = rec.level || 2;
+    app.me = rec.me || 0; app.host = !!rec.host; app.over = !!rec.over;
+    app.onlineStarted = (rec.mode === 'online');
+    app.st = SS.deserialize(rec.st);
+    UI.flip = !!rec.flip;
+    UI.clearLog();
+    show('game');
+    renderLogFromState(app.st);
+    refresh();
+    UI.markLastMove();
+    if (app.over) checkEnd();
+    return true;
+  }
+
+  // ---------- SPG-notasjon: last ned / kopier ----------
+  function spgMeta() {
+    var m = { event: { cpu: 'Parti mot CPU', local: 'Parti ved same skjerm', online: 'Parti på nett' }[app.mode] || 'Sáhkku-parti' };
+    return m;
+  }
+  function exportSpg() {
+    if (!app.st) return;
+    var txt = global.SPG.toSPG(app.st, spgMeta());
+    var fname = 'sahkku-' + new Date().toISOString().slice(0, 10) + '.spg';
+    try {
+      var blob = new Blob([txt], { type: 'text/plain' });
+      var a = doc.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fname;
+      doc.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      UI.log('Notasjon eksportert: ' + fname);
+    } catch (e) {
+      // fallback: kopier til utklippstavla
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function () { UI.log('Notasjon kopiert til utklippstavla'); });
+      }
+    }
   }
 
   // ---------- knytters ----------
@@ -355,6 +492,11 @@
       newGame();
     });
     $('btn-local').addEventListener('click', function () { app.mode = 'local'; newGame(); });
+    $('btn-resume').addEventListener('click', function () {
+      if (!resumeGame()) { UI.toast('Fann ikje noko lagra parti'); show('menu'); }
+    });
+    $('btn-spg').addEventListener('click', exportSpg);
+    $('btn-export-spg').addEventListener('click', exportSpg);
     $('btn-online').addEventListener('click', function () {
       app.mode = 'online'; app.onlineStarted = false;
       show('room');
@@ -433,7 +575,8 @@
     $('btn-rematch').addEventListener('click', function () {
       $('endscore').close();
       if (app.mode === 'online') {
-        if (app.host) { newOnlineGame(); NET.send({ t: 'start', s: JSON.parse(SS.serialize(app.st)) }); }
+        if (app.host) newOnlineGame();   // vert: nytt oppningsritual + snapshot
+        // gjesten: ventar på verten sin snapshot
       } else newGame();
     });
     $('btn-endmenu').addEventListener('click', function () {
@@ -452,6 +595,34 @@
     wireNet();
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(function () {});
+    }
+    var rec = peekSave();
+    if (rec && rec.st && rec.st.winner == null) {
+      $('btn-resume').classList.remove('hidden');
+      var what = { cpu: 'CPU-parti', local: 'to spelarar', online: 'nettparti' }[rec.mode] || 'parti';
+      $('btn-resume').textContent = '▶ Fortsett ' + what + ' (' + SS.name(SS.king(rec.st).at) + ' · ' + (rec.st.turn === 0 ? 'Menn' : 'Koner') + ' i trekket)';
+      // nettparti: gjenopprett rommet automatisk — sessiona skal halde fram åleine
+      if (rec.mode === 'online' && rec.room) {
+        app.mode = 'online'; app.onlineStarted = false;
+        show('room');
+        $('room-seed').value = rec.room;
+        $('btn-join').disabled = true;
+        $('room-hint').textContent = 'Koplar til rommet att…';
+        NET.load().then(function () {
+          $('my-node').textContent = NET.short(NET.myId);
+          return NET.join(rec.room);
+        }).then(function () {
+          $('invite-code').textContent = NET.seed + '#' + NET.myId;
+          $('invite-row').style.display = '';
+          $('room-hint').textContent = 'Rommet er attopna. Del invitasjonskoden om motspillar manglar.';
+          $('btn-join').disabled = false;
+          $('btn-resume').click();   // gjenopprett partiet frå lagring
+        }).catch(function (e) {
+          $('room-hint').textContent = 'Klarte ikje å kople til att: ' + e.message;
+          $('btn-join').disabled = false;
+        });
+        return;
+      }
     }
     show('menu');
   }

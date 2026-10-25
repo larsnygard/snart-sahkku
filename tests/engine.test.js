@@ -47,9 +47,10 @@ ok(st.pieces.every(p => p.t === 'k' || p.released === false), 'alle andre er hje
 let seen = {};
 for (let i = 0; i < 4000; i++) SS.rollDice().forEach(d => seen[d] = 1);
 eq(Object.keys(seen).sort(), ['II', 'III', 'X', '_'], 'terningene lander på X, II, III, blank');
-let op = SS.openingRoll();
-ok(op.rolls[0].filter(d => d === 'X').length !== op.rolls[1].filter(d => d === 'X').length, 'åpning: ulikt antall X');
+let op = SS.openingRoll(SS.newGame({}));
+ok(op.rolls[op.rolls.length - 1].p0.filter(d => d === 'X').length !== op.rolls[op.rolls.length - 1].p1.filter(d => d === 'X').length, 'åpning: ulikt antall X i avgjerande runde');
 ok(op.first === 0 || op.first === 1, 'åpning velger førstespiller');
+eq(SS.openingRoll(SS.newGame({})).rolls.length >= 1, true, 'åpning loggar alle omkast-rundene');
 
 /* ---- X: løsne fremste soldat ---- */
 st = SS.newGame({ first: 0 });
@@ -311,7 +312,7 @@ function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var 
 let overCount = 0, stucks = 0;
 for (let g = 0; g < 300; g++) {
   let rnd = mulberry(g * 7919 + 3);
-  let st = SS.newGame({ first: SS.openingRoll(rnd).first });
+  let st = SS.newGame({ first: 0 }); SS.openingRoll(st, rnd); st.turn = st.log[0].first;
   let guard = 0;
   while (st.phase !== 'over' && guard++ < 4000) {
     if (st.phase === 'roll') { SS.roll(st, rnd); st.phase = 'move'; }
@@ -451,6 +452,67 @@ for (let g = 0; g < 300; g++) {
 }
 
 ok(overCount >= 250, '300 tilfeldige spill: ' + overCount + ' endte med seier (uavgjort-lock er sjeldent)');
+
+/* ---- spellog + SPG-notasjon ---- */
+{
+  let rnd = mulberry(4242);
+  let st = SS.newGame({ first: 0 }); SS.openingRoll(st, rnd); st.turn = st.log[0].first;
+  let guard = 0;
+  while (st.phase !== 'over' && guard++ < 4000) {
+    if (st.phase === 'roll') { SS.roll(st, rnd); st.phase = 'move'; }
+    let lm = SS.legalMoves(st, st.turn);
+    if (!lm.length) { SS.passRemaining(st); continue; }
+    SS.applyMove(st, lm[Math.floor(rnd() * lm.length)]);
+  }
+  ok(st.log.length >= 2, 'spellog: minst opning + eitt kast');
+  ok(st.log[0].t === 'open' && Array.isArray(st.log[0].rolls), 'spellog: opningsritual loggført');
+  {
+    let ser = SS.deserialize(SS.serialize(st));
+    ok(JSON.stringify(ser.log) === JSON.stringify(st.log), 'serialize/deserialize tek med spelloggen');
+  }
+  let rollSeen = 0, mvSeen = 0, rerollSeen = 0;
+  st.log.forEach(p => { if (p.t === 'open') return; rollSeen += p.roll.length; mvSeen += p.mv.length; if (p.roll.length > 1) rerollSeen++; });
+  // eitt kast (3 terningar) kan gi inntil 3 flyttar — same spelar kan òg
+  // flytte kongen fleire gonger per kast. Invariant: flyttar ≤ 3×kast.
+  ok(mvSeen <= rollSeen * 3 && rollSeen >= 1, 'spellog: flyttar innanfor 3×kast (' + rollSeen + ' kast, ' + mvSeen + ' flytt)');
+  // X-omkast loggført (same kast-ply får begge kasta)
+  let st2 = SS.newGame({ first: 0 });
+  SS.roll(st2, rnd); st2.phase = 'move';
+  SS.logReroll(st2, rnd);
+  ok(st2.log[st2.log.length - 1].roll.length === 2, 'X-omkast: begge kast i same kast-logg');
+  let st3 = SS.newGame({ first: 0 });
+  st3.phase = 'move'; st3.dice = ['X', '_', '_']; st3.used = [false, true, true];
+  ok(SS.canRerollX(st3) === false, 'X-omkast nektast når X kan brukast (løysing finst)');
+  // serialisering rundreise med log (midt i parti: diceBy er sett)
+  {
+    let stm = SS.newGame({ first: 0 }); SS.openingRoll(stm, rnd); stm.turn = stm.log[0].first;
+    SS.roll(stm, rnd); stm.phase = 'move';
+    let serm = SS.deserialize(SS.serialize(stm));
+    ok(serm.diceBy === stm.diceBy && serm.diceBy === stm.turn, 'serialize/deserialize tek med diceBy');
+  }
+  // SPG-utskrift — Finn seed med faktisk vinnar (dei låste endar med *)
+  let spg = null;
+  for (let seed = 1; seed < 200 && !spg; seed++) {
+    let stw = SS.newGame({ first: 0 }); let rw = mulberry(seed * 131);
+    SS.openingRoll(stw, rw); stw.turn = stw.log[0].first;
+    let g = 0;
+    while (stw.phase !== 'over' && g++ < 4000) {
+      if (stw.phase === 'roll') { SS.roll(stw, rw); stw.phase = 'move'; }
+      let lm = SS.legalMoves(stw, stw.turn);
+      if (!lm.length) { SS.passRemaining(stw); continue; }
+      SS.applyMove(stw, lm[Math.floor(rw() * lm.length)]);
+    }
+    if (stw.winner !== null) { global.SahkkuCore = SS; require(path.join(__dirname, '..', 'js', 'spg.js')); spg = global.SPG.toSPG(stw, { event: 'Testparti' }); }
+  }
+  ok(spg !== null, 'fann parti med vinnar for SPG-test');
+  if (spg) {
+    ok(spg.includes('[Event "Testparti"]') && spg.includes('SPG-V1'), 'SPG: PGN-header');
+    ok((spg.includes('1. open:') && (spg.includes('-> M') || spg.includes('-> K'))) || /\n\s*1\. (M|K)( \(omkast( #\d+)?\))?: /.test(spg), 'SPG: opningsritual-linje (eller direkte start) med vinnar');
+    ok(/\n\s*\d+\. (M|K)( \(omkast( #\d+)?\))?: (_|X|II|III)( (_|X|II|III)){2}/.test(spg), 'SPG: kast-linjer med terningar');
+    ok(spg.includes('X->') || spg.includes('->'), 'SPG: flyttlinjer');
+    ok(/(1-0|0-1) \{/.test(spg), 'SPG: resultatlinje');
+  }
+}
 
 console.log('\n' + pass + ' pass, ' + fail + ' fail');
 process.exit(fail ? 1 : 0);

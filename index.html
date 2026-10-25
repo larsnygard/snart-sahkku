@@ -26,8 +26,9 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.0.2 · AGPL-3.0</span></p>
+      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.0.3 · AGPL-3.0</span></p>
       <div class="menu-grid">
+        <button id="btn-resume" class="big hidden">▶ Fortsett lagra parti</button>
         <button id="btn-cpu" class="big">⚔︎ Spill mot CPU</button>
         <button id="btn-local" class="big">👥 To spillere her</button>
         <button id="btn-online" class="big">🌐 Spill på nett</button>
@@ -82,12 +83,22 @@
         <span id="turn-indicator" class="chip p0">Tur: menn</span>
         <span id="king-chip" class="chip neutral">Kongen løs</span>
       </div>
-      <div class="dicebox" id="dicebox"></div>
+      <div class="dicerow">
+        <div class="dicepanel" id="dice-p0">
+          <span class="dicelabel">Menn · olbmát</span>
+          <div class="dicebox" id="dicebox-p0"></div>
+        </div>
+        <div class="dicepanel" id="dice-p1">
+          <span class="dicelabel">Koner · gálgut</span>
+          <div class="dicebox" id="dicebox-p1"></div>
+        </div>
+      </div>
       <div class="actionbox" id="actionbox"></div>
     </div>
     <div id="log" class="log" aria-live="polite"></div>
     <div class="gamebtns">
       <button id="btn-menu" class="ghost">Meny</button>
+      <button id="btn-spg" class="ghost" title="Notasjonsfil (SPG) for partiet">📜 Notasjon</button>
       <button id="btn-surrender" class="ghost">Gi seg</button>
     </div>
   </section>
@@ -114,12 +125,15 @@
   <h3 id="end-title">Spallet er slutt</h3>
   <p id="end-reason"></p>
   <div class="gamebtns">
+    <button id="btn-export-spg" class="big">💾 Last ned notasjon (SPG)</button>
     <button id="btn-rematch" class="big">Omkamp</button>
     <button id="btn-endmenu" class="ghost">Meny</button>
   </div>
 </dialog>
 
 <script src="js/engine.js"></script>
+<script src="js/fen.js"></script>
+<script src="js/spg.js"></script>
 <script src="js/cpu.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/online.js"></script>

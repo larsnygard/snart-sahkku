@@ -204,6 +204,19 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .chip.active { outline: 2px solid currentColor; }
 
 .dicebox { display: flex; gap: 8px; }
+.dicerow { display: flex; gap: 10px; flex-wrap: wrap; }
+.dicepanel {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 14px;
+  background: rgba(255,255,255,.03); opacity: .55; transition: opacity .2s, box-shadow .2s;
+}
+.dicepanel.active-dice {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--yellow), 0 4px 18px rgba(255,209,102,.18);
+}
+.dicelabel { font-size: 12px; letter-spacing: .4px; opacity: .85; }
+.die.roll { font-size: 22px; padding: 8px 18px; }
+.die.empty { opacity: .25; }
 .die {
   width: 44px; height: 44px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;

@@ -20,7 +20,7 @@
   var boardEl, diceEl, actionEl, turnEl, kingEl, logEl, label0, label1, wrapEl;
   function $(id) { return doc.getElementById(id); }
   function initEls() {
-    boardEl = $('board'); diceEl = $('dicebox'); actionEl = $('actionbox');
+    boardEl = $('board'); actionEl = $('actionbox');
     turnEl = $('turn-indicator'); kingEl = $('king-chip'); logEl = $('log');
     label0 = $('label-p0'); label1 = $('label-p1'); wrapEl = $('boardwrap');
   }
@@ -127,25 +127,51 @@
 
   function renderDice() {
     var st = ui.st;
-    diceEl.innerHTML = '';
-    if (st.phase === 'roll') {
-      var b = doc.createElement('button');
-      b.className = 'die';
-      b.textContent = '🎲';
-      b.id = 'die-roll';
-      b.title = 'Kast terningene';
-      b.addEventListener('click', function () { if (ui.interactive && ui.onRoll) ui.onRoll(); });
-      diceEl.appendChild(b);
-      return;
+    // to sett — eitt per spelar. Det aktive panelet har kast-knappen og
+    // viser gjeldande terningar; det inaktive viser sist kast for si side.
+    var by = [null, null];
+    var log = st.log || [];
+    for (var i = log.length - 1; i >= 0; i--) {
+      var p = log[i];
+      if (p.t === 'open' || p.t == null) continue;
+      if (by[p.t] == null && p.roll && p.roll.length) by[p.t] = p.roll[p.roll.length - 1];
+      if (by[0] != null && by[1] != null) break;
     }
-    var rank = SS.activeRank(st);
-    st.dice.forEach(function (d, ix) {
-      var el = doc.createElement('div');
-      el.className = 'die ' + (d === 'X' ? 'X' : d === '_' ? '' : '');
-      if (st.used[ix]) el.classList.add('used');
-      el.textContent = d === '_' ? '·' : d;
-      el.dataset.ix = ix;
-      diceEl.appendChild(el);
+    if (st.dice && st.dice.length) by[st.diceBy != null ? st.diceBy : st.turn] = st.dice;
+    [0, 1].forEach(function (o) {
+      var panel = doc.getElementById(o === 0 ? 'dice-p0' : 'dice-p1');
+      var box = doc.getElementById(o === 0 ? 'dicebox-p0' : 'dicebox-p1');
+      if (!panel || !box) return;
+      panel.classList.toggle('active-dice', st.turn === o && st.winner == null);
+      box.innerHTML = '';
+      var isMineTurn = (st.turn === o) && st.winner == null;
+      if (isMineTurn && st.phase === 'roll') {
+        var b = doc.createElement('button');
+        b.className = 'die roll';
+        b.textContent = '🎲';
+        b.id = 'die-roll';
+        b.title = 'Kast terningene';
+        b.addEventListener('click', function () { if (ui.interactive && ui.onRoll) ui.onRoll(); });
+        box.appendChild(b);
+        return;
+      }
+      var d = by[o];
+      if (!d) {
+        var ph = doc.createElement('div');
+        ph.className = 'die empty';
+        ph.textContent = '·';
+        box.appendChild(ph);
+        return;
+      }
+      var isCurrent = (st.diceBy != null ? st.diceBy : st.turn) === o && st.phase === 'move' && !!st.dice.length;
+      d.forEach(function (face, ix) {
+        var el = doc.createElement('div');
+        el.className = 'die' + (face === 'X' ? ' X' : '');
+        var used = isCurrent && st.used && st.used[ix];
+        if (used) el.classList.add('used');
+        el.textContent = face === '_' ? '·' : face;
+        box.appendChild(el);
+      });
     });
   }
 
