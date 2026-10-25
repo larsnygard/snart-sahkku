@@ -211,7 +211,7 @@ not assume any randomness of its own.
 | `position startpos` | set canonical start position |
 | `position fen <fen>` | set the given FEN (§3) |
 | `position startpos moves <t...>` / `position fen <f> moves <t...>` | set base, then replay tokens (below) |
-| `diceroll <d1> <d2> <d3>` | deliver this turn's roll for the **side to move** in the current position: sets dice/used (`000`), phase `move`. Faces are `X`, `2`, `3`, `_`. Sent **once per turn**, right after the `position` that ends the previous turn; mid-turn `position` commands carry the dice (and used-mask) via replay `roll` tokens — the GUI never re-sends `diceroll` mid-turn |
+| `diceroll <d1> <d2> <d3>` | deliver this turn's roll for the **side to move** in the current position: sets dice/used (`000`), phase `move`. Faces are `X`, `2`, `3`, `_`. Sent at **turn start**, right after the `position` that ends the previous turn, and once more immediately after a `reroll` (new faces, turn does not end). Mid-turn `position` commands (after a move) carry the dice and used-mask via replay `roll` tokens — the GUI never sends `diceroll` at any other time |
 | `go [movetime <ms>] [depth <n>] [nodes <n>]` | play the best move for the side to move. All parameters optional; engines that ignore all of them (instant engines) are conformant. Answer: `bestmove <move>` (§4) |
 | `movelist` | print the current move pool (§7), then `movepool done`. Handy for debugging new engines |
 | `stop` | only meaningful for long searches; engine finishes the move and prints `bestmove` quickly. Instant engines may ignore |
