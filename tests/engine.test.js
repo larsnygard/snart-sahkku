@@ -508,5 +508,46 @@ ok(overCount >= 250, '300 tilfeldige spill: ' + overCount + ' endte med seier (u
   }
 }
 
+
+/* ---- Nesseby-regelen (valfri): kongen er ikkje kaprbar ved landing før
+   nokon har nådd motstandarens heimrad; fyrste soldat dit kaprar kongen. ---- */
+{
+  // (a) utan Nesseby: landingskapring verkar som før
+  let stA = SS.newGame({ first: 0 });
+  let kA = SS.king(stA);
+  SS.queen(stA, 0).captured = true; SS.queen(stA, 1).captured = true;
+  SS.soldiers(stA, 0).forEach(x => { x.captured = true; });
+  let fA = SS.soldiers(stA, 0)[0];
+  fA.captured = false; fA.released = true; fA.at = 20;      // t20 -> t22 = H2
+  stA.dice = ['II', 'II', 'II']; stA.used = [false, false, false]; stA.phase = 'move'; stA.turn = 0;
+  let mvA = SS.legalMoves(stA, 0).filter(m => m.pid === fA.id);
+  ok(mvA.length === 1, 'utan Nesseby: soldat kan lande på kongen (kapring)');
+
+  // (b) med Nesseby: same stilling gjev INGA landingskapring
+  let stB = SS.newGame({ first: 0, nesseby: true });
+  SS.queen(stB, 0).captured = true; SS.queen(stB, 1).captured = true;
+  SS.soldiers(stB, 0).forEach(x => { x.captured = true; });
+  let fB = SS.soldiers(stB, 0)[0];
+  fB.captured = false; fB.released = true; fB.at = 20;
+  stB.dice = ['II', 'II', 'II']; stB.used = [false, false, false]; stB.phase = 'move'; stB.turn = 0;
+  ok(SS.legalMoves(stB, 0).filter(m => m.pid === fB.id).length === 0,
+     'Nesseby: kongen kan IKKJE kaprast ved landing før han er aktivert');
+
+  // (c) soldat som når motstandarens heimrad kaprar kongen
+  let stC = SS.newGame({ first: 0, nesseby: true });
+  SS.queen(stC, 0).captured = true; SS.queen(stC, 1).captured = true;
+  SS.soldiers(stC, 0).forEach(x => { x.captured = true; });
+  // gjer rad 3 (konenes heimrad) tom so landingsfeltet er fritt
+  SS.soldiers(stC, 1).forEach(x => { x.captured = true; });
+  let fC = SS.soldiers(stC, 0)[0];
+  fC.captured = false; fC.released = true; fC.at = 28;    // P1 t28 + II -> t30 (rad 3 = konenes heimrad)
+  stC.dice = ['II', 'II', 'II']; stC.used = [false, false, false]; stC.phase = 'move'; stC.turn = 0;
+  let mvC = SS.legalMoves(stC, 0).filter(m => m.pid === fC.id);
+  ok(mvC.length === 1, 'soldat kan gå inn på motstandarens heimrad');
+  SS.applyMove(stC, mvC[0]);
+  ok(SS.king(stC).o === 0, 'heimrad-treff kaprar kongen for den sida');
+  ok(stC.kings === 1, 'konge-kapringa vert talt');
+}
+
 console.log('\n' + pass + ' pass, ' + fail + ' fail');
 process.exit(fail ? 1 : 0);

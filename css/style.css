@@ -1,3 +1,6 @@
+.difficulty .nesseby-label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.difficulty .nesseby-label input { width: 16px; height: 16px; accent-color: var(--yellow); }
+
 .arch-note { max-width: 62ch; margin: 0 auto 14px; font-size: 0.9rem; color: var(--muted); }
 .arch-list { display: flex; flex-direction: column; gap: 8px; max-width: 720px; margin: 0 auto; }
 .arch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -138,14 +141,48 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
   padding: 10px;
   border-radius: 16px;
   border: 1px solid rgba(255, 209, 102, .28);
-  background:
-    repeating-linear-gradient(90deg, transparent 0 calc(var(--cell) + var(--gap) - 1px), rgba(238,242,255,.10) calc(var(--cell) + var(--gap) - 1px) calc(var(--cell) + var(--gap))),
+  /* Linjene ligg på CELLESENTRUM (sárgát), og vert forskyvne med boardets
+     padding slik at dei treffer rutenettet på alle skjermstorleikar — før
+     stod dei fast 10px skeive, som var tydelegast på mobil. */
+  background-image:
+    repeating-linear-gradient(90deg,
+      transparent 0 calc(var(--cell) * .5),
+      rgba(238,242,255,.10) calc(var(--cell) * .5) calc(var(--cell) * .5 + 1px),
+      transparent calc(var(--cell) * .5 + 1px) calc(var(--cell) + var(--gap))),
     linear-gradient(180deg, #1a2a56, #101d3f);
+  background-position: 10px 0, 0 0;
   box-shadow: 0 14px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
   position: relative;
+  /* Brettet skal vere NØYAKTIG so breitt som rutenettet — elles vert
+     bakgrunnslinjene sentrerte på eit breiare felt og hamnar utanfor
+     brikkene (det var «brikkene mellom linjene»). */
+  width: max-content;
+  margin: 0 auto;
 }
 @media (max-width: 430px) { .board { --cell: 19px; } }
 @media (max-width: 380px) { .board { --cell: 17px; } }
+
+/* Skrivebord: ikkje noko tomt på sidene — brettet får plassen sin.
+   --cell skalerer med vindauget, so brikkene vert merkbart større. */
+#game.screen { max-width: min(1500px, 96vw); }
+@media (min-width: 700px) { .board { --cell: clamp(24px, 4.1vw, 54px); } }
+
+/* Landskap på mobil/nettbrett: brettet til venstre, HUD/logg til høgre,
+   og større ruter av di høgda er den knappe ressursen. */
+@media (orientation: landscape) and (max-height: 620px) {
+  #game.screen {
+    display: grid; grid-template-columns: auto minmax(180px, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    gap: 6px 14px; align-items: start; max-width: none; padding: 4px 10px;
+  }
+  #game .boardwrap { grid-column: 1; grid-row: 1 / span 4; padding: 22px 6px; }
+  #game .board { --cell: clamp(16px, min(9.2vh, 3.4vw), 44px); }
+  #game .hud { grid-column: 2; grid-row: 1; }
+  #game #replay-bar { grid-column: 2; grid-row: 2; }
+  #game #log { grid-column: 2; grid-row: 3; max-height: 100%; overflow: auto; font-size: 0.82rem; }
+  #game .gamebtns { grid-column: 2; grid-row: 4; }
+  #game .dicerow { flex-wrap: wrap; gap: 4px; }
+}
 
 .cell {
   position: relative;

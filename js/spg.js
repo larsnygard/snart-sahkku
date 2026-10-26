@@ -42,8 +42,11 @@
     var L = [];
     L.push('[Event "' + (meta.event || 'Sáhkku-parti') + '"]');
     L.push('[Date "' + (meta.date || new Date().toISOString().slice(0, 10)) + '"]');
-    L.push('[White "' + (meta.white || 'Menn (bieljet)') + '"]');
-    L.push('[Black "' + (meta.black || 'Koner (giera)') + '"]');
+    // SPG 1.1: sídene heiter Menn og Koner (ikkje White/Black). Namn på
+    // forma «Etternamn, Fornamn». Ukjende namn: dei samiske side-namna
+    // (olbmát = menn, gálgut = koner). Datamaskin: «(c) <motor>».
+    L.push('[Menn "' + (meta.menn || meta.white || 'Olbmát') + '"]');
+    L.push('[Koner "' + (meta.koner || meta.black || 'Gálgut') + '"]');
     L.push('[Result "' + (st.winner === 0 ? '1-0' : st.winner === 1 ? '0-1' : '*') + '"]');
     if (st.winReason) L.push('[Termination "' + st.winReason + '"]');
     L.push('SPG-V1');

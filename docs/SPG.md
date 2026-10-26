@@ -22,8 +22,8 @@ An SPG file is UTF-8, LF line endings, extension `.spg`. It has three parts:
 ```
 [Event "Kapplanginga 3. rundar"]      # PGN-style header tags
 [Date "2026-10-25"]
-[White "Menn (bieljet)"]
-[Black "Koner (giera)"]
+[Menn "Olbmát"]
+[Koner "Gálgut"]
 [Result "0-1"]
 [Termination "dronning"]
 SPG-V1                                 # format marker, always present
@@ -42,8 +42,24 @@ PGN syntax: `[Tag "value"]`, one per line, before the `SPG-V1` marker.
 |---|---|
 | `Event` | name of the event/match, e.g. `"Parti mot CPU"`, `"Parti på nett"` |
 | `Date` | `YYYY-MM-DD` |
-| `White` | Menn (bieljet) player name — always the "white" side |
-| `Black` | Giera (konar) player name |
+| `Menn` | Menn player name, form `"Etternamn, Fornamn"`; default `"Olbmát"` (sámi for *menn*) |
+| `Koner` | Koner player name, form `"Etternamn, Fornamn"`; default `"Gálgut"` (sámi for *koner*) |
+
+
+There are no "white/black" sides in sáhkku — the sides are **Menn** (men) and
+**Koner** (women). The tags are therefore `[Menn "..."]` and `[Koner "..."]`,
+not `[White]`/`[Black]`.
+
+A computer opponent is marked with `(c)` followed by the engine, so a game
+against the neural engine on the Koner side reads:
+
+```
+[Menn "Olbmát"]
+[Koner "Gálgut (c) sahkku-nn"]
+```
+
+The classic engine writes `(c) klassisk nivå 2` (level 1–3). Unknown human
+names fall back to the sámi side names `Olbmát` / `Gálgut`.
 | `Result` | `1-0` Menn won · `0-1` Giera won · `*` game not finished |
 | `Termination` | how the game ended: `dronning` (queen captured) · `utryddelse` (annihilation — opponent has no soldiers left) · `overgivelse` (resignation). Omitted for unfinished games |
 
@@ -198,8 +214,8 @@ capture on the tower (`§`), king rides, queen rides, prison list (`x [Q]`):
 ```
 [Event "Parti mot CPU"]
 [Date "2026-10-25"]
-[White "Menn (bieljet)"]
-[Black "Koner (giera)"]
+[Menn "Olbmát"]
+[Koner "Gálgut"]
 [Result "1-0"]
 [Termination "dronning"]
 SPG-V1

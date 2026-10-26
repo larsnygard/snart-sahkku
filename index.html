@@ -26,7 +26,7 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.1.0 · AGPL-3.0</span></p>
+      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.2.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden">▶ Fortsett lagra parti</button>
         <button id="btn-cpu" class="big">⚔︎ Spill mot CPU</button>
@@ -42,6 +42,9 @@
             <option value="2" selected>Litt harder</option>
             <option value="3">Tøff</option>
           </select>
+        </label>
+        <label class="nesseby-label" title="Valfri regel: kongen kan ikkje kaprast ved landing før nokon har nådd motstandarens heimrad; den fyrste soldaten som når dit kaprar kongen.">
+          <input type="checkbox" id="chk-nesseby"> Nesseby
         </label>
         <label>Motor:
           <select id="cpu-engine">
@@ -130,6 +133,7 @@
     <div class="gamebtns">
       <button id="btn-menu" class="ghost">Meny</button>
       <button id="btn-spg" class="ghost" title="Notasjonsfil (SPG) for partiet">📜 Notasjon</button>
+      <button id="btn-fen" class="ghost" title="Kopier stillinga som S-UCI-FEN">📋 Kopier FEN</button>
       <button id="btn-surrender" class="ghost">Gi seg</button>
     </div>
   </section>

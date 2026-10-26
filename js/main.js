@@ -206,7 +206,7 @@
   // ---------- oppstart ----------
   function newGame() {
     app.over = false;
-    app.st = SS.newGame({ first: 0 });
+    app.st = SS.newGame({ first: 0, nesseby: !!app.nesseby });
     var op = SS.openingRoll(app.st);
     app.st.turn = op.first;
     app.first = op.first;          // kven som byrja (for arkiv-avspeling)
@@ -228,7 +228,7 @@
   }
   function newOnlineGame() {
     app.over = false;
-    app.st = SS.newGame({ first: 0 });
+    app.st = SS.newGame({ first: 0, nesseby: !!app.nesseby });
     UI.flip = app.me === 1;
     show('game');
     if (app.host) {
@@ -452,7 +452,8 @@
     try {
       if (!app.st || app.mode === 'menu') return;
       var rec = {
-        v: 2, mode: app.mode, level: app.level, engine: app.engine, me: app.me, host: app.host,
+        v: 2, mode: app.mode, level: app.level, engine: app.engine,
+        nesseby: !!app.nesseby, me: app.me, host: app.host,
         over: app.over, flip: UI.flip,
         room: (global.NET && NET.seed) ? NET.seed : null,
         st: JSON.parse(SS.serialize(app.st))
@@ -475,6 +476,8 @@
     if (!rec) return false;
     app.mode = rec.mode; app.level = rec.level || 2;
     app.engine = rec.engine === 'nn' ? 'nn' : 'classic';
+    app.nesseby = !!rec.nesseby;
+    if ($('chk-nesseby')) $('chk-nesseby').checked = app.nesseby;
     if (app.engine === 'nn' && global.SahkkuNN && !global.SahkkuNN.ready()) {
       global.SahkkuNN.load().catch(function () { app.engine = 'classic'; });
     }
@@ -496,6 +499,11 @@
   // ---------- SPG-notasjon: last ned / kopier ----------
   function spgMeta() {
     var m = { event: { cpu: 'Parti mot CPU', local: 'Parti ved same skjerm', online: 'Parti på nett' }[app.mode] || 'Sáhkku-parti' };
+    // Datamaskin-merke etter standarden: «(c) <motor>». Koner er CPU-en.
+    if (app.mode === 'cpu') {
+      m.koner = 'Gálgut (c) ' + (app.engine === 'nn' ? 'sahkku-nn' : 'klassisk nivå ' + app.level);
+    }
+    if (app.nesseby) m.event += ' — Nesseby';
     return m;
   }
   function exportSpg() {
@@ -542,6 +550,7 @@
     app.archived = true;
     var rec = {
       mode: app.mode, engine: app.engine, level: app.level, first: app.first,
+      nesseby: !!app.nesseby,
       result: app.st.winner == null ? '*' : (app.st.winner === 0 ? '1-0' : '0-1'),
       reason: app.st.winReason || '', plies: app.st.moves,
       steps: (app.fens && app.fens.length > 1) ? [] : steps,
@@ -617,6 +626,7 @@
   function renderReplay() {
     if (!review) return;
     var r = global.ARCH.replay(review.rec, review.at);
+    if (review.rec.nesseby) r.st.nesseby = true;   // modus ligg ikkje i FEN
     app.st = r.st;
     app.over = true;                       // ingen CPU/human-flyt i avspeling
     UI.st = app.st;
@@ -668,6 +678,7 @@
       app.mode = 'cpu';
       app.level = parseInt($('cpu-level').value, 10) || 2;
       app.engine = ($('cpu-engine') && $('cpu-engine').value === 'nn') ? 'nn' : 'classic';
+      app.nesseby = !!($('chk-nesseby') && $('chk-nesseby').checked);
       if (app.engine === 'nn' && !(global.SahkkuNN && global.SahkkuNN.ready())) {
         UI.toast('Lastar nevral motor …');
         global.SahkkuNN.load().then(function () {
@@ -699,6 +710,19 @@
     });
     $('btn-spg').addEventListener('click', exportSpg);
     $('btn-export-spg').addEventListener('click', exportSpg);
+    $('btn-fen').addEventListener('click', function () {
+      if (!app.st) return;
+      var fen = SS.toFEN(app.st);
+      function done() { UI.toast('FEN kopiert'); UI.log('FEN: ' + fen); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fen).then(done, function () { UI.log('FEN: ' + fen); UI.toast('Kunne ikkje kopiere — sjå loggen'); });
+      } else {
+        var ta = doc.createElement('textarea');
+        ta.value = fen; doc.body.appendChild(ta); ta.select();
+        try { doc.execCommand('copy'); done(); } catch (e) { UI.log('FEN: ' + fen); }
+        ta.remove();
+      }
+    });
     wireArchive();
     $('btn-online').addEventListener('click', function () {
       app.mode = 'online'; app.onlineStarted = false;
