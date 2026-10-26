@@ -593,5 +593,24 @@ ok(overCount >= 250, '300 tilfeldige spill: ' + overCount + ' endte med seier (u
   eq(st3.winner, 0, 'konge tek dronning = siger for menn');
 }
 
+
+/* ---- X-omkast med BLOKKERT aktiv brikke (Lars 2026-10-26) ----
+   Har du éi aktiv brikke, kan X alltid kastast om — òg når ho ikkje har noko
+   lovleg trekk. Berre utan aktive brikker må du vekkje. */
+{
+  let st = SS.newGame({ first: 0, queenMode: false });
+  st.phase = 'move'; st.turn = 0;
+  st.pieces.forEach(p => { if (p.t === 's') p.captured = true; });
+  const s = SS.soldiers(st, 0)[0];
+  s.captured = false; s.released = true; s.at = 17;          // M2 -> L2 (eiga dronning)
+  const q = SS.queen(st, 0); q.captured = false; q.released = false; q.at = 18;
+  st.dice = ['X', '_', '_']; st.used = [false, true, true];
+  eq(SS.legalMoves(st, 0).length, 0, 'blokkert: ingen lovlege trekk');
+  ok(SS.canRerollX(st), 'blokkert aktiv brikke => X kan kastast om');
+  const st2 = SS.newGame({ first: 0 });
+  st2.dice = ['X', '_', '_']; st2.used = [false, true, true]; st2.phase = 'move'; st2.turn = 0;
+  ok(!SS.canRerollX(st2), 'utan aktive brikker er X-omkast forbode');
+}
+
 console.log('\n' + pass + ' pass, ' + fail + ' fail');
 process.exit(fail ? 1 : 0);
