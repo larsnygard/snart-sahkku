@@ -24,6 +24,15 @@
       "weights": "engines/ail0.2.weights.json",
       "lookahead": 4,
       "note": "Nevral S-UCI-motor, 12 syklusar / 152 000 prøver (val-xent 0.840). Trena med same reglar som AIL0.1."
+    },
+    {
+      "id": "ail0.3",
+      "name": "AIL0.3",
+      "type": "nn",
+      "script": "engines/ail0.3.js",
+      "weights": "engines/ail0.3.weights.json",
+      "lookahead": 4,
+      "note": "Nevral S-UCI-motor trena med MCTS-mål (25 simuleringar per avgjerd), 3 syklusar / 156 000 prøver."
     }
   ]
 }
