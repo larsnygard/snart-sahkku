@@ -16,7 +16,19 @@ rsync -avz --delete \
   --exclude-from="$(git rev-parse --show-toplevel)/.rsync-exclude" \
   "$(git rev-parse --show-toplevel)/" "$HOST":"$DEST"/
 
+# Varnish står framfor webrota og cache-lagrar index.html lenge. Utan ein purge
+# får folk den GAMLE appen sjølv om filene på serveren er nye (han kan ikkje
+# purgast utanfrå: PURGE frå internett gjev 401/405, og 404 på enkeltfiler
+# tyder berre «ikkje i cache»). Difor: purg frå verten sjølv etter rsync.
+echo
+echo -n "Varnish-purge /sahkku/ → "
+ssh -o BatchMode=yes "$HOST" \
+  'curl -s -o /dev/null -w "%{http_code}\n" -X PURGE "https://snart.com/sahkku/"'
+
 echo
 echo "Deployed to: https://snart.com/sahkku/"
 echo "  remote:    $DEST"
 echo "  files:     $(ssh "$HOST" "find '$DEST' -type f | wc -l")"
+echo -n "  live no:   "
+curl -s https://snart.com/sahkku/ | grep -oE 'v1[.][0-9]+[.][0-9]+' | head -1
+
