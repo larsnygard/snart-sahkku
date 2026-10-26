@@ -33,6 +33,15 @@
       "weights": "engines/ail0.3.weights.json",
       "lookahead": 4,
       "note": "Nevral S-UCI-motor trena med MCTS-mål (25 simuleringar per avgjerd), 3 syklusar / 156 000 prøver."
+    },
+    {
+      "id": "ail0.4",
+      "name": "AIL0.4",
+      "type": "nn",
+      "script": "engines/ail0.4.js",
+      "weights": "engines/ail0.4.weights.json",
+      "lookahead": 4,
+      "note": "Trena mot klassisk CPU nivå 3 (ikkje sjølvspel), med MCTS-mål og nye globale trekk: utløyste (ikkje «levande») brikker, POV-relative."
     }
   ]
 }
