@@ -164,9 +164,16 @@
         return;
       }
       var isCurrent = (st.diceBy != null ? st.diceBy : st.turn) === o && st.phase === 'move' && !!st.dice.length;
+      // Kan X kastast om? Gjer då terningane klikkbare — det er den mest
+      // opplagde måten å kaste om på (Lars 2026-10-26).
+      var canRe = isCurrent && ui.interactive && SS.canRerollX(st);
+      box.classList.toggle('rerollable', !!canRe);
+      box.title = canRe ? 'Klikk for å kaste om X-ene' : '';
+      box.onclick = canRe ? function () { if (ui.onReroll) ui.onReroll(); } : null;
       d.forEach(function (face, ix) {
         var el = doc.createElement('div');
         el.className = 'die' + (face === 'X' ? ' X' : '');
+        if (canRe && face === 'X') el.classList.add('rerollable');
         var used = isCurrent && st.used && st.used[ix];
         if (used) el.classList.add('used');
         el.textContent = face === '_' ? '·' : face;

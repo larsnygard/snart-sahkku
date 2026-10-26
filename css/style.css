@@ -1,6 +1,17 @@
 .difficulty .nesseby-label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
 .difficulty .nesseby-label input { width: 16px; height: 16px; accent-color: var(--yellow); }
 
+.dicebox.rerollable { cursor: pointer; }
+.dicebox.rerollable .die.rerollable {
+  outline: 2px solid var(--yellow); outline-offset: 1px;
+  animation: diePulse 1.6s ease-in-out infinite;
+}
+.dicebox.rerollable .die.rerollable::after {
+  content: "↻"; position: absolute; right: -2px; top: -6px;
+  font-size: 10px; color: var(--yellow);
+}
+@keyframes diePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,209,102,.45); } 50% { box-shadow: 0 0 0 5px rgba(255,209,102,0); } }
+
 .arch-note { max-width: 62ch; margin: 0 auto 14px; font-size: 0.9rem; color: var(--muted); }
 .arch-list { display: flex; flex-direction: column; gap: 8px; max-width: 720px; margin: 0 auto; }
 .arch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -300,8 +311,10 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 }
 .actionbox { display: flex; gap: 8px; flex-wrap: wrap; }
 .actionbox button { min-height: 40px; font-size: 14px; padding: 8px 14px; }
-#btn-reroll { display: none; }
-#btn-pass { display: none; }
+/* Merk: desse to KAN IKKJE ha display:none her. JS styrer synlegheit ved å
+   setje style.display = '' (synleg) eller 'none' (skjult) — ein regel i
+   stilarket slår gjennom når inline-verdien er '' og knappane vart aldri
+   synlege. (Det var derfor X-omkast og «Hopp over» ikkje fanst i UI-en.) */
 
 .log {
   margin-top: 10px; font-size: 13px; color: var(--muted);
