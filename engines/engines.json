@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "engines": [
+    {
+      "id": "classic",
+      "name": "Klassisk CPU",
+      "type": "classic",
+      "note": "Innebygd. Tre nivå: lett, litt hardare, tøff. Rask, ingen nedlasting."
+    },
+    {
+      "id": "ail0.1",
+      "name": "AIL0.1",
+      "type": "nn",
+      "script": "engines/ail0.1.js",
+      "weights": "engines/ail0.1.weights.json",
+      "lookahead": 4,
+      "note": "Nevral S-UCI-motor trena med sjølvspel (sahkku-ai). Tenkjer ~0,5 s per trekk."
+    }
+  ]
+}

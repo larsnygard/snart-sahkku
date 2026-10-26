@@ -9,7 +9,7 @@
     mode: 'cpu',       // 'cpu' | 'local' | 'online'
     me: 0,             // min spiller (online)
     level: 2,          // klassisk CPU: 1-3
-    engine: 'classic', // 'classic' (js/cpu.js) | 'nn' (engines/sahkku-nn.js)
+    engine: 'classic', // motor-id frå engines/engines.json (t.d. 'classic', 'ail0.1')
     st: null,
     host: false,       // online: vert = P0, autoritativ
     busy: false,
@@ -136,8 +136,8 @@
     if (app.over) return;
     app.busy = true;
     UI.render();
-    // Den nevrale motoren tenkjer ~0,5 s; lat UI-en male «tenkjer …» fyrst.
-    if (app.engine === 'nn' && global.SahkkuNN && global.SahkkuNN.ready()) {
+    // Ein NN-motor tenkjer ~0,5 s; lat UI-en male «tenkjer …» fyrst.
+    if (global.ENG && global.ENG.ready(app.engine)) {
       setTimeout(cpuPlay, 20);
     } else {
       cpuPlay();
@@ -147,8 +147,8 @@
   function cpuPlay() {
     if (app.over) return;
     var mv = null;
-    if (app.engine === 'nn' && global.SahkkuNN && global.SahkkuNN.ready()) {
-      mv = global.SahkkuNN.move(app.st);      // {pid,dir,v,kind} | null
+    if (global.ENG && global.ENG.ready(app.engine)) {
+      mv = global.ENG.move(app.engine, app.st);   // {pid,dir,v,kind} | null
     }
     if (!mv) mv = CPU.pick(app.st, app.level); // klassisk CPU (òg reserve)
     if (!mv) { app.busy = false; settleAndContinue(); return; }
@@ -218,7 +218,8 @@
     });
     UI.log('Åpning: ' + (op.first === 0 ? 'Menn' : 'Koner') + ' begynner (flegst X-er)');
     if (app.mode === 'cpu') {
-      UI.log('CPU: ' + (app.engine === 'nn' ? 'nevral (NN)' : 'klassisk nivå ' + app.level));
+      UI.log('CPU: ' + (global.ENG ? global.ENG.name(app.engine) : app.engine) +
+             (app.engine === 'classic' ? ' (nivå ' + app.level + ')' : ''));
     }
     UI.flip = (app.mode === 'cpu' || app.mode === 'local') ? false : (app.me === 1);
     show('game');
@@ -475,11 +476,11 @@
     var rec = peekSave();
     if (!rec) return false;
     app.mode = rec.mode; app.level = rec.level || 2;
-    app.engine = rec.engine === 'nn' ? 'nn' : 'classic';
+    app.engine = rec.engine || 'classic';
     app.nesseby = !!rec.nesseby;
     if ($('chk-nesseby')) $('chk-nesseby').checked = app.nesseby;
-    if (app.engine === 'nn' && global.SahkkuNN && !global.SahkkuNN.ready()) {
-      global.SahkkuNN.load().catch(function () { app.engine = 'classic'; });
+    if (global.ENG && !global.ENG.ready(app.engine)) {
+      global.ENG.load(app.engine).catch(function () { app.engine = 'classic'; });
     }
     if ($('cpu-engine')) $('cpu-engine').value = app.engine;
     if ($('cpu-level')) $('cpu-level').value = String(app.level);
@@ -501,7 +502,9 @@
     var m = { event: { cpu: 'Parti mot CPU', local: 'Parti ved same skjerm', online: 'Parti på nett' }[app.mode] || 'Sáhkku-parti' };
     // Datamaskin-merke etter standarden: «(c) <motor>». Koner er CPU-en.
     if (app.mode === 'cpu') {
-      m.koner = 'Gálgut (c) ' + (app.engine === 'nn' ? 'sahkku-nn' : 'klassisk nivå ' + app.level);
+      m.koner = 'Gálgut (c) ' + (app.engine === 'classic'
+        ? 'klassisk nivå ' + app.level
+        : (global.ENG ? global.ENG.name(app.engine) : app.engine));
     }
     if (app.nesseby) m.event += ' — Nesseby';
     return m;
@@ -524,6 +527,34 @@
         navigator.clipboard.writeText(txt).then(function () { UI.log('Notasjon kopiert til utklippstavla'); });
       }
     }
+  }
+
+  // ---------- motorar (fleire samtidig) ----------
+  function engName(id) { return global.ENG ? global.ENG.name(id) : id; }
+  function engReady() { return global.ENG && global.ENG.ready(app.engine); }
+  function syncLevelSelect() {
+    var lv = $('cpu-level');
+    if (!lv) return;
+    var classic = ($('cpu-engine') ? $('cpu-engine').value : 'classic') === 'classic';
+    lv.disabled = !classic;
+    lv.parentNode.style.opacity = classic ? '' : '.45';
+  }
+  function fillEngines() {
+    var sel = $('cpu-engine');
+    if (!sel || !global.ENG) { syncLevelSelect(); return; }
+    global.ENG.list().then(function (engines) {
+      sel.innerHTML = '';
+      engines.forEach(function (e) {
+        var o = doc.createElement('option');
+        o.value = e.id;
+        o.textContent = e.name + (e.type === 'nn' ? ' (nevral)' : '');
+        if (e.note) o.title = e.note;
+        sel.appendChild(o);
+      });
+      if (!engines.some(function (e) { return e.id === app.engine; })) app.engine = engines[0].id;
+      sel.value = app.engine;
+      syncLevelSelect();
+    });
   }
 
   // ---------- last stilling frå FEN ----------
@@ -590,7 +621,7 @@
     var dateStr = when.toLocaleDateString() + ' ' + String(when.getHours()).padStart(2, '0') + ':' +
                   String(when.getMinutes()).padStart(2, '0');
     var mode = g.mode === 'cpu'
-      ? ('CPU ' + (g.engine === 'nn' ? 'NN' : 'nivå ' + (g.level || 2)))
+      ? ('CPU ' + (g.engine && g.engine !== 'classic' ? g.engine : 'nivå ' + (g.level || 2)))
       : (g.mode === 'local' ? 'to spillere' : 'nett');
     var res = g.result === '1-0' ? 'Menn vann' : (g.result === '0-1' ? 'Koner vann' : 'ikkje avslutta');
     var row = doc.createElement('div');
@@ -737,16 +768,16 @@
     $('btn-cpu').addEventListener('click', function () {
       app.mode = 'cpu';
       app.level = parseInt($('cpu-level').value, 10) || 2;
-      app.engine = ($('cpu-engine') && $('cpu-engine').value === 'nn') ? 'nn' : 'classic';
+      app.engine = ($('cpu-engine') && $('cpu-engine').value) || 'classic';
       app.nesseby = !!($('chk-nesseby') && $('chk-nesseby').checked);
-      if (app.engine === 'nn' && !(global.SahkkuNN && global.SahkkuNN.ready())) {
-        UI.toast('Lastar nevral motor …');
-        global.SahkkuNN.load().then(function () {
-          UI.toast('Nevral motor klar');
+      if (app.engine !== 'classic' && !engReady()) {
+        UI.toast('Lastar ' + engName(app.engine) + ' …');
+        global.ENG.load(app.engine).then(function () {
+          UI.toast(engName(app.engine) + ' klar');
           newGame();
         }, function (e) {
-          UI.toast('Nevral motor feila — spelar med klassisk CPU');
-          if (global.console) console.warn('NN-last feila:', e);
+          UI.toast(engName(app.engine) + ' feila — spelar med klassisk CPU');
+          if (global.console) console.warn('motor-last feila:', e);
           app.engine = 'classic';
           newGame();
         });
@@ -756,12 +787,16 @@
     });
     if ($('cpu-engine')) {
       $('cpu-engine').addEventListener('change', function () {
-        var nn = $('cpu-engine').value === 'nn';
-        if (nn) global.SahkkuNN.load().catch(function (e) {
-          UI.toast('Nevral motor feila — klassisk CPU vert brukt');
-          if (global.console) console.warn('NN-last feila:', e);
-          $('cpu-engine').value = 'classic';
-        });
+        var id = $('cpu-engine').value;
+        syncLevelSelect();
+        if (id && id !== 'classic') {
+          global.ENG.load(id).catch(function (e) {
+            UI.toast(engName(id) + ' feila — klassisk CPU vert brukt');
+            if (global.console) console.warn('motor-last feila:', e);
+            $('cpu-engine').value = 'classic';
+            syncLevelSelect();
+          });
+        }
       });
     }
     $('btn-local').addEventListener('click', function () { app.mode = 'local'; newGame(); });
@@ -783,6 +818,7 @@
         ta.remove();
       }
     });
+    if (global.ENG && global.ENG.list) { global.ENG.list().then(fillEngines, fillEngines); }
     wireArchive();
     $('btn-online').addEventListener('click', function () {
       app.mode = 'online'; app.onlineStarted = false;

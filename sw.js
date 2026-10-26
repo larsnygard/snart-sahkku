@@ -3,7 +3,8 @@ const CACHE = 'sahkku-v24';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css', './js/engine.js', './js/fen.js', './js/spg.js', './js/cpu.js', './js/ui.js',
-  './js/online.js', './js/archive.js', './js/nn-adapter.js', './js/main.js', './icons/icon.svg',
+  './js/online.js', './js/archive.js', './js/engines.js', './js/main.js',
+  './engines/engines.json', './engines/ail0.1.js', './icons/icon.svg',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png',
   './net/pkg/snart_sahkku_net.js', './net/pkg/snart_sahkku_net_bg.wasm'
 ];
