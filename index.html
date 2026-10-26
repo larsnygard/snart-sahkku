@@ -26,12 +26,13 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.0.4 · AGPL-3.0</span></p>
+      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.1.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden">▶ Fortsett lagra parti</button>
         <button id="btn-cpu" class="big">⚔︎ Spill mot CPU</button>
         <button id="btn-local" class="big">👥 To spillere her</button>
         <button id="btn-online" class="big">🌐 Spill på nett</button>
+        <button id="btn-archive" class="big">📜 Arkiv</button>
         <button id="btn-install" class="big hidden">⬇︎ Legg til på skjermen</button>
       </div>
       <div class="difficulty">
@@ -80,6 +81,19 @@
     <button id="btn-back-menu" class="ghost">Til hovedmenyen</button>
   </section>
 
+  <!-- ARKIV: lagra parti, med avspeling -->
+  <section id="archive" class="screen hidden">
+    <h2>📜 Partiarkiv</h2>
+    <p class="arch-note">Avslutta parti vert lagra her (berre i denne nettlesaren).
+       Vel <b>Vis</b> for å bla gjennom partiet trekk for trekk, <b>SPG</b> for å
+       laste ned notasjonen, eller <b>Slett</b>.</p>
+    <div id="arch-list" class="arch-list"></div>
+    <div class="arch-actions">
+      <button id="btn-arch-clear" class="ghost">Tøm alt</button>
+      <button id="btn-arch-back" class="ghost">Til hovedmenyen</button>
+    </div>
+  </section>
+
   <!-- SPILLSKJERM -->
   <section id="game" class="screen hidden">
     <div class="boardwrap" id="boardwrap">
@@ -103,6 +117,14 @@
         </div>
       </div>
       <div class="actionbox" id="actionbox"></div>
+    </div>
+    <div id="replay-bar" class="replay-bar hidden">
+      <button id="btn-rw" class="ghost" title="Til start">⏮</button>
+      <button id="btn-prev" class="ghost" title="Førre trekk">◀</button>
+      <span id="replay-count" class="replay-count">0 / 0</span>
+      <button id="btn-next" class="ghost" title="Neste trekk">▶</button>
+      <button id="btn-ff" class="ghost" title="Til slutt">⏭</button>
+      <button id="btn-replay-back" class="ghost">Til arkivet</button>
     </div>
     <div id="log" class="log" aria-live="polite"></div>
     <div class="gamebtns">
@@ -146,6 +168,7 @@
 <script src="js/cpu.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/online.js"></script>
+<script src="js/archive.js"></script>
 <script src="js/nn-adapter.js"></script>
 <script src="js/main.js"></script>
 </body>

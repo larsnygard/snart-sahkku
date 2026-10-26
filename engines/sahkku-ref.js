@@ -25,6 +25,7 @@ function encode(st, mv) {
     const to = SS.soldierAt(p.o, p.at + (mv.kind === 'rel' ? 1 : mv.v));
     return SS.name(from) + '-' + SS.name(to);
   }
+  if (mv.to !== undefined && mv.to !== null) return SS.name(p.at) + '-' + SS.name(mv.to);
   const r = SS.pathFor(st, p, mv.dir, mv.v);
   if (!r.legal || !r.path.length) return null;
   return SS.name(p.at) + '-' + SS.name(r.path[r.path.length - 1]);

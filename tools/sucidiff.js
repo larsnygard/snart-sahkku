@@ -16,9 +16,7 @@ function encMove(st, mv) {
     const to = SS.soldierAt(p.o, p.at + (mv.kind === 'rel' ? 1 : mv.v));
     return SS.name(from) + '-' + SS.name(to);
   }
-  const r = SS.pathFor(st, p, mv.dir, mv.v);
-  if (!r.legal || !r.path.length) return null;
-  return SS.name(p.at) + '-' + SS.name(r.path[r.path.length - 1]);
+  return SS.name(p.at) + '-' + SS.name(SS.moveDest(st, mv));
 }
 function findMove(st, str) {
   for (const mv of SS.legalMoves(st, st.turn)) if (encMove(st, mv) === str) return mv;

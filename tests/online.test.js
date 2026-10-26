@@ -65,7 +65,7 @@ const path = require('path');
         const p = SS.piece(st, mv.pid);
         let destIdx;
         if (p.t === 's') destIdx = SS.soldierAt(p.o, p.at + mv.v);
-        else { const res = SS.pathFor(st, p, mv.dir, mv.v); destIdx = res.path[res.path.length - 1]; }
+        else { destIdx = SS.moveDest(st, mv); }
         let cell = targets.find(c => parseInt(c.dataset.idx, 10) === destIdx) || targets[0];
         cell.click();
         moves++;

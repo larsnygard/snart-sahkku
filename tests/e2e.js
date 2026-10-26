@@ -60,9 +60,7 @@ const path = require('path');
         continue;
       }
       // bruk target som tilsvarer valgt trekk (cellIdx-match)
-      const res = SS.pathFor(st, p, mv.dir, mv.v);
-      const destIdx = p.t === 's' ? SS.soldierAt(p.o, p.at + mv.v)
-                                   : res.path[res.path.length - 1];
+      const destIdx = SS.moveDest(st, mv);
       let cell = targets.find(c => parseInt(c.dataset.idx, 10) === destIdx);
       if (!cell) cell = targets[0];
       cell.click();

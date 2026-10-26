@@ -46,7 +46,7 @@
         var f = foeSold[j];
         if (!f.released || f.captured) continue;
         for (var v = 1; v <= 3; v++) {
-          if (SS.soldierAt(1 - me, f.at + v) === SS.pathFor(st, p, mv.dir, mv.v).path[SS.pathFor(st, p, mv.dir, mv.v).path.length - 1]) s -= 800;
+          if (SS.soldierAt(1 - me, f.at + v) === SS.moveDest(st, mv)) s -= 800;
         }
       }
     }

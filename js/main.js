@@ -21,7 +21,7 @@
 
   // ---------- skjermbytter ----------
   function show(id) {
-    ['menu', 'room', 'game'].forEach(function (s) {
+    ['menu', 'room', 'game', 'archive'].forEach(function (s) {
       $(s).classList.toggle('hidden', s !== id);
     });
   }
@@ -32,6 +32,15 @@
     return app.mode === 'local' || (app.mode === 'cpu' && app.st.turn === 0);
   }
   function refresh() {
+    // FEN-augefrysing: arkivet spelar partiet opp att ved å laste stillingane
+    // direkte (eksakt, uavhengig av korleis trekka vert tolka på nytt).
+    try {
+      if (app.st && app.mode !== 'review') {
+        var fen = SS.toFEN(app.st);
+        if (!app.fens) app.fens = [];
+        if (app.fens[app.fens.length - 1] !== fen) app.fens.push(fen);
+      }
+    } catch (e) { /* FEN skal alltid gå, men arkivet er ikkje kritisk */ }
     UI.st = app.st;
     UI.render();
     UI.markLastMove();
@@ -41,8 +50,8 @@
   function describeMv(mv) {
     var st = app.st, p = SS.piece(st, mv.pid);
     var who = p.o === 0 ? 'Menn' : 'Koner';
-    if (p.t === 'k') return who + ': kongen ' + SS.name(p.at) + ' → ' + SS.name(SS.pathFor(st, p, mv.dir, mv.v).path.slice(-1)[0]);
-    if (p.t === 'q') return who + ': dronninga ' + SS.name(p.at) + ' → ' + SS.name(SS.pathFor(st, p, mv.dir, mv.v).path.slice(-1)[0]);
+    if (p.t === 'k') return who + ': kongen ' + SS.name(p.at) + ' → ' + SS.name(SS.moveDest(st, mv));
+    if (p.t === 'q') return who + ': dronninga ' + SS.name(p.at) + ' → ' + SS.name(SS.moveDest(st, mv));
     return who + ': soldat ' + (mv.kind === 'rel' ? 'løses fra ' : 'fra ') + SS.name(SS.soldierAt(p.o, p.at)) + ' (' + mv.v + ')';
   }
   function announceEvents(ev) {
@@ -66,6 +75,7 @@
     $('end-title').textContent = 'Seier: ' + who + '!';
     $('end-reason').textContent = why;
     $('endscore').showModal();
+    archiveCurrentGame();
     UI.render();
     return true;
   }
@@ -199,6 +209,9 @@
     app.st = SS.newGame({ first: 0 });
     var op = SS.openingRoll(app.st);
     app.st.turn = op.first;
+    app.first = op.first;          // kven som byrja (for arkiv-avspeling)
+    app.archived = false;
+    app.fens = [];                 // FEN etter kvar endring (arkiv/avspeling)
     UI.clearLog();
     op.rolls.forEach(function (r, ix) {
       if (op.rolls.length > 1) UI.log('Åpning ' + (ix+1) + ': Menn ' + r.p0.join(' ') + ' · Koner ' + r.p1.join(' '));
@@ -506,6 +519,146 @@
   }
 
   // ---------- knytters ----------
+
+  // ---------- arkiv: lagre, liste, avspele, slette ----------
+  var review = null, prevMode = 'cpu';
+
+  function downloadText(txt, fname) {
+    try {
+      var blob = new Blob([txt], { type: 'text/plain' });
+      var a = doc.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fname;
+      doc.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    } catch (e) { UI.toast('Kunne ikkje laste ned'); }
+  }
+
+  function archiveCurrentGame() {
+    if (!app.st || app.archived || app.mode === 'review') return;
+    if (app.st.moves === 0) return;
+    var steps = global.ARCH.stepsFrom(app.st);
+    if (!steps.length) return;
+    app.archived = true;
+    var rec = {
+      mode: app.mode, engine: app.engine, level: app.level, first: app.first,
+      result: app.st.winner == null ? '*' : (app.st.winner === 0 ? '1-0' : '0-1'),
+      reason: app.st.winReason || '', plies: app.st.moves,
+      steps: (app.fens && app.fens.length > 1) ? [] : steps,
+      fens: (app.fens || []).slice(),
+      spg: (global.SPG && global.SPG.toSPG) ? global.SPG.toSPG(app.st, spgMeta()) : ''
+    };
+    if (global.ARCH.save(rec)) UI.log('Partiet er lagra i arkivet');
+  }
+
+  function archRow(g) {
+    var when = new Date(g.ts);
+    var dateStr = when.toLocaleDateString() + ' ' + String(when.getHours()).padStart(2, '0') + ':' +
+                  String(when.getMinutes()).padStart(2, '0');
+    var mode = g.mode === 'cpu'
+      ? ('CPU ' + (g.engine === 'nn' ? 'NN' : 'nivå ' + (g.level || 2)))
+      : (g.mode === 'local' ? 'to spillere' : 'nett');
+    var res = g.result === '1-0' ? 'Menn vann' : (g.result === '0-1' ? 'Koner vann' : 'ikkje avslutta');
+    var row = doc.createElement('div');
+    row.className = 'arch-row';
+    row.innerHTML = '<div class="arch-info"><b>' + res + '</b><span class="arch-sub">' + dateStr +
+                    ' · ' + mode + ' · ' + (g.plies || 0) + ' trekk' +
+                    (g.reason ? ' · ' + g.reason : '') + '</span></div>';
+    var acts = doc.createElement('div');
+    acts.className = 'arch-btns';
+    function mkBtn(txt, cls, fn) {
+      var b = doc.createElement('button');
+      b.textContent = txt; if (cls) b.className = cls;
+      b.addEventListener('click', fn);
+      acts.appendChild(b);
+    }
+    mkBtn('Vis', '', function () { openReplay(g.id); });
+    mkBtn('SPG', 'ghost', function () {
+      downloadText(g.spg || '', 'sahkku-' + String(g.ts).slice(0, 10) + '.spg');
+    });
+    mkBtn('Slett', 'ghost', function () { global.ARCH.remove(g.id); renderArchive(); });
+    row.appendChild(acts);
+    return row;
+  }
+
+  function renderArchive() {
+    var box = $('arch-list');
+    box.innerHTML = '';
+    var games = global.ARCH.list();
+    if (!games.length) {
+      box.innerHTML = '<p class="arch-empty">Ingen parti i arkivet enno. Spel eit parti ferdig, so dukkar det opp her.</p>';
+      return;
+    }
+    games.forEach(function (g) { box.appendChild(archRow(g)); });
+  }
+
+  function openArchive() {
+    renderArchive();
+    show('archive');
+  }
+
+  function totalMoves(rec) {
+    // arkivet veit kva format posten har (FEN-auge eller steg)
+    return global.ARCH.totalMoves(rec);
+  }
+
+  function openReplay(id) {
+    var rec = global.ARCH.get(id);
+    if (!rec) return;
+    if (app.mode !== 'review') prevMode = app.mode;
+    app.mode = 'review';
+    review = { rec: rec, total: totalMoves(rec), at: totalMoves(rec) };
+    $('replay-bar').classList.remove('hidden');
+    show('game');
+    UI.clearLog();
+    renderReplay();
+  }
+
+  function renderReplay() {
+    if (!review) return;
+    var r = global.ARCH.replay(review.rec, review.at);
+    app.st = r.st;
+    app.over = true;                       // ingen CPU/human-flyt i avspeling
+    UI.st = app.st;
+    UI.render();
+    UI.setInteractive(false);
+    $('replay-count').textContent = r.at + ' / ' + r.total;
+  }
+
+  function replayStep(d) {
+    if (!review) return;
+    var at = review.at + d;
+    if (at < 0) at = 0;
+    if (at > review.total) at = review.total;
+    if (at === review.at) return;
+    review.at = at;
+    renderReplay();
+  }
+
+  function closeReplay() {
+    review = null;
+    $('replay-bar').classList.add('hidden');
+    app.mode = prevMode;
+    openArchive();
+  }
+
+  function wireArchive() {
+    $('btn-archive').addEventListener('click', openArchive);
+    $('btn-arch-back').addEventListener('click', function () { show('menu'); });
+    $('btn-arch-clear').addEventListener('click', function () {
+      if (!global.ARCH.list().length) { UI.toast('Arkivet er tomt'); return; }
+      if (global.confirm && !global.confirm('Slette alle lagra parti?')) return;
+      global.ARCH.clear(); renderArchive(); UI.toast('Arkivet er tømt');
+    });
+    $('btn-prev').addEventListener('click', function () { replayStep(-1); });
+    $('btn-next').addEventListener('click', function () { replayStep(1); });
+    $('btn-rw').addEventListener('click', function () { review && (review.at = 0, renderReplay()); });
+    $('btn-ff').addEventListener('click', function () {
+      if (review) { review.at = review.total; renderReplay(); }
+    });
+    $('btn-replay-back').addEventListener('click', closeReplay);
+  }
+
   function wireUI() {
     UI.init({
       onRoll: onRoll, onReroll: onReroll, onPass: onPass,
@@ -546,6 +699,7 @@
     });
     $('btn-spg').addEventListener('click', exportSpg);
     $('btn-export-spg').addEventListener('click', exportSpg);
+    wireArchive();
     $('btn-online').addEventListener('click', function () {
       app.mode = 'online'; app.onlineStarted = false;
       show('room');

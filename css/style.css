@@ -1,3 +1,18 @@
+.arch-note { max-width: 62ch; margin: 0 auto 14px; font-size: 0.9rem; color: var(--muted); }
+.arch-list { display: flex; flex-direction: column; gap: 8px; max-width: 720px; margin: 0 auto; }
+.arch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px; padding: 10px 12px; text-align: left; }
+.arch-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.arch-sub { font-size: 0.78rem; color: var(--muted); }
+.arch-btns { display: flex; gap: 6px; flex: 0 0 auto; }
+.arch-btns button { min-height: 34px; padding: 4px 12px; font-size: 0.85rem; }
+.arch-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+.arch-empty { color: var(--muted); text-align: center; padding: 20px; }
+.replay-bar { display: flex; align-items: center; gap: 8px; justify-content: center; margin: 8px 0 0; }
+.replay-bar button { min-height: 34px; padding: 4px 12px; }
+.replay-count { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 72px; text-align: center; }
+
 /* SnartSáhkku — samisk-inspirert tema (gákti-farger: rødt, blått, gull, grønt) */
 :root {
   --navy: #0c1730;

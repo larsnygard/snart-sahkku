@@ -274,6 +274,7 @@
     ui.targets = lm.map(function (m) {
       var dest;
       if (p.t === 's') dest = SS.soldierAt(p.o, p.at + m.v);
+      else if (m.to !== undefined && m.to !== null) dest = m.to;
       else {
         var res = SS.pathFor(st, p, m.dir, m.v);
         dest = res.path[res.path.length - 1];

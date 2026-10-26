@@ -169,49 +169,26 @@ let sbx = SS.soldiers(st, 0)[5]; sbx.released = true; sbx.at = 5;
 lm = SS.legalMoves(st, 0).filter(m => m.pid === sbx.id);
 ok(lm.length === 0, 'soldat kan ikke lande på rad der egne uutløste soldater står');
 
-/* ---- kongen: kapring, deler ikke felt, rette trekk i 4 retninger ---- */
+/* ---- kongen: kapring, deler ikke felt, går langs tallsyklusen ---- */
 st = SS.newGame({ first: 0 });
 let k = SS.king(st);
-// fjern dronningene fra banen (stå hjemme på D2/L2 og blokkerer; testene
-// stykker brettet selv):
 SS.queen(st, 0).captured = true; SS.queen(st, 1).captured = true;
 st.queenMode = false;
 k.o = 0;   // P1 har kapret kongen og rører den
-st.dice = ['II', 'II', 'II']; st.used = [false,false,false]; st.phase = 'move';
-// kongen H2 (rad1, kol7). II: R: H2->I2->J2, L: H2->G2->F2. F: H3 stopp. B: H1 stopp.
+st.pieces.forEach(p => { if (p.t !== 'k') p.captured = true; });   // tomt brett
+st.dice = ['II', 'II', 'II']; st.used = [false,false,false]; st.phase = 'move'; st.turn = 0;
+// H2 med II: syklusen gjev to steg kvar veg -> F2 (fram) og J2 (bak)
 let kMoves = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-eq(kMoves.length, 2, 'kongen på H2 har nøyaktig R og L med II');
+eq(kMoves.length, 2, 'kongen på H2 har nøyaktig to II-trekk (kvar veg)');
 ok(kMoves.every(m => m.v === 2), 'II-trekk');
-// dokumentets eksempel: B2 med II -> D2 (R) eller A3 (L: B2->A2->A3).
-// A3 er P2s hjemrad: P2-soldaten som starter der (syklusstart 14) må bort:
-SS.soldiers(st, 1).forEach(x => { if (x.at === SS.startT(1, 0)) x.captured = true; });
-k.at = SS.idx(1, 1);      // B2
-st.dice = ['II', 'II', 'II']; st.used = [false,false,false]; st.phase = 'move';
+eq(kMoves.map(m => SS.name(m.to)).sort().join(','), 'F2,J2', 'II H2 -> F2/J2 langs åttetalet');
+// M2 med III er Lars sitt skjermbilde: J2 og O1
+k.at = SS.idx(12, 1);      // M2
+st.dice = ['III', 'II', 'X']; st.used = [false, true, true];
 kMoves = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-let landings = kMoves.map(m => SS.name(SS.pathFor(st, k, m.dir, 2).path[1])).sort();
-eq(landings, ['D2', 'A3'].sort(), 'dok-eksemplet: B2 med II -> D2 eller A3');
-// ulovlige II (per dokumentet): «1 opp + 1 ned» (tilbake til start),
-// «1 opp + 1 sideveis» (L-form). Fra H2 med II: kun R og L — ingen
-// landing på H3, H1, G3, I3, G1, I1:
-k.at = SS.idx(7, 1);
-st.dice = ['II', 'II', 'II']; st.used = [false,false,false]; st.phase = 'move';
-kMoves = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-var kLand = kMoves.map(m => SS.name(SS.pathFor(st, k, m.dir, 2).path[1]));
-ok(!kLand.includes('H3') && !kLand.includes('H1'), 'ikke 2 loddrett fra H2');
-ok(!kLand.includes('G3') && !kLand.includes('I3') && !kLand.includes('G1') && !kLand.includes('I1'), 'ikke L-formet 1-opp-1-side');
-// hjørnet teller som «rett»: B2 -II-> A3 er dokumentert lovlig (venstre)
-// A2: «opp» (F) finnes ikke (A2->A3 er venstre); R: B2->C2 lovlig:
-k.at = SS.idx(0, 1);
-st.dice = ['II', 'II', 'II']; st.used = [false,false,false]; st.phase = 'move';
-kMoves = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-ok(kMoves.length === 1 && kMoves[0].dir === 'R', 'fra A2 med II: kun R (B2->C2)');
-// O1: R wrapper videre over i midtraden (O1->O2->O3): O3 er P2-hjørnefelt
-// — P2-soldaten som starter der må bort:
-SS.soldiers(st, 1).forEach(x => { if (SS.pt(SS.soldierAt(1, x.at)).col === 14 && SS.pt(SS.soldierAt(1, x.at)).row === 2) x.captured = true; });
-k.at = SS.idx(14, 0);
-st.dice = ['II', 'II', 'II']; st.used = [false,false,false]; st.phase = 'move';
-kMoves = SS.legalMoves(st, 0).filter(m => m.pid === k.id && m.dir === 'R');
-eq(kMoves.length, 1, 'fra O1: R II = O1->O2->O3 (hjørnet fortsetter rett)');
+eq(kMoves.map(m => SS.name(m.to)).sort().join(','), 'J2,O1',
+   'M2 med III: J2 og O1 (syklusen snor seg ned i hjørnet)');
+eq(kMoves.length, 2, 'kongen har to trekk kvar veg langs åttetalet');
 // kapring: P1-soldat på linje H2 (idx 22). P1-syklus: t slik at soldierAt(0,t)=22:
 // t: rad1 t=15..29 => idx(29-t,1): 29-t=7 => t=22. P1 front t20 + 2 = t22 = H2.
 st = SS.newGame({ first: 0 });
@@ -238,8 +215,9 @@ ok(lm.every(m => {
 // 2 steg loddrett fra midtraden: H2 F: H3 -> stopp -> umulig. II: ingen F/B:
 st.dice = ['II', 'II', 'II']; st.used = [false,false,false]; st.phase = 'move';
 k.at = 22; k.o = 0;
-lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id && (m.dir === 'F' || m.dir === 'B'));
-eq(lm.length, 0, 'konge kan ikke gå 2 loddrett fra midtraden (muren)');
+lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
+eq(lm.map(m => SS.name(m.to)).sort().join(','), 'F2,J2',
+   'II frå H2: syklusen held seg på midtrekka (F2/J2), ingen loddrett snarveg');
 // étt loddrett med X: H3 (P2-hjem) og H1 (P1-hjem) må være tomme felt:
 SS.soldiers(st, 1).forEach(x => { var b = SS.pt(SS.soldierAt(1, x.at)); if (b.col === 7 && b.row === 2) x.captured = true; });
 SS.soldiers(st, 0).forEach(x => { if (x.at === 7 && !x.released) x.captured = true; });
@@ -250,8 +228,9 @@ st.dice = ['X', 'X', 'X']; st.used = [false,false,false]; st.phase = 'move';
 lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
 eq(lm.length, 0, 'X vekkjer berre — kongen får IKKJE trekk med X');
 st.dice = ['II', '_', '_']; st.used = [false,true,true]; st.phase = 'move';
-lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id && (m.dir === 'F' || m.dir === 'B'));
-eq(lm.length, 0, 'kongen har ingen loddrett trekk med II (veggen)');
+lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
+eq(lm.map(m => SS.name(m.to)).sort().join(','), 'F2,J2',
+   'II: kongen går langs tallsyklusen (F2/J2), ikkje loddrett');
 
 /* ---- dronninga: tapt spill ---- */
 st = SS.newGame({ first: 0 });
@@ -338,61 +317,65 @@ for (let g = 0; g < 300; g++) {
   // verifiser invariant: fanget soldat kan ikke stå på brettet
   st.pieces.forEach(p => { if (p.captured && p.t === 's') ok(p.at > -1000, 'fanget soldat har ryddet plass'); });
 }
-/* ---- Kongen: ALLE VEGER (dokumentet: «både til høyre og venstre, og opp
-   og ned... bare begge veier», ikkje snuing undervegs). Merk: kongen
-   landar aldri på linje med brikker — på startbrettet er H1/H3 tetta,
-   så opp/ned krev tomme felt. ---- */
+/* ---- Kongen og dronninga: langs TALLSYKLUSEN (åttetalet) ----
+   Lars 2026-10-26: kongen (og dronninga) går v steg framover eller bakover i
+   si eiga side sin syklus — ikkje rette linjer. Ho hoppar over brikker (berre
+   landingsfeltet er regulert) og snur ikkje undervegs; syklusen snor seg sjølv
+   rundt hjørna. X vekkjer framleis berre. ---- */
 {
   function nameIdx(nm) { for (let i = 0; i < 45; i++) if (SS.name(i) === nm) return i; return -1; }
-  function clearAt(st, idxs) {
-    st.pieces.forEach(p => {
+  function clearAt(st_, idxs) {
+    st_.pieces.forEach(p => {
       if (p.captured || p.t === 'k') return;
       const a = p.t === 's' ? SS.soldierAt(p.o, p.at) : p.at;
       if (idxs.includes(a)) p.captured = true;
     });
   }
-  let st = SS.newGame({ first: 0 });
-  let k = SS.king(st);
-  st.turn = 0; st.phase = 'move';
-  k.o = 0;
-  // X vekkjer berre: kongen er ALDRI «inaktiv», så X gjev han ingen trekk —
-  // korkje på startbrettet eller med tomme naboar. (Før 2026-10-25 flytta X
-  // kongen eitt felt; Lars presiserte at X berre vekkjer soldat/dronning.)
+  function kingLand(st_, k_, v) {
+    return SS.legalMoves(st_, st_.turn).filter(m => m.pid === k_.id && m.v === v)
+      .map(m => SS.name(m.to)).sort().join(',');
+  }
+  let st = SS.newGame({ first: 0 }), k = SS.king(st);
+  st.turn = 0; st.phase = 'move'; k.o = 0;
+  st.pieces.forEach(p => { if (p.t !== 'k') p.captured = true; });   // tomt brett
+
+  // X vekkjer berre: kongen er ALDRI «inaktiv», so X gjev han ingen trekk.
   k.at = nameIdx('H2');
   st.dice = ['III', 'II', 'X']; st.used = [true, true, false];
-  let lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-  eq(lm.length, 0, 'X H2: kongen får NULL trekk (X vekkjer berre)');
-  clearAt(st, [nameIdx('H1'), nameIdx('H3')]);
-  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-  eq(lm.length, 0, 'X H2 med tomme H1/H3: framleis 0 — X flyttar ikkje kongen');
-  // II (2 steg, same veg, ingen snuing): H2 -> J2, F2, H3 (via H3? nei: H2->H3? F frå midtraden)
-  st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
-  clearAt(st, [nameIdx('I2'), nameIdx('J2'), nameIdx('G2'), nameIdx('F2'), nameIdx('H1')]);
-  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id && m.v === 2);
-  const dests = lm.map(m => SS.name(SS.pathFor(st, k, m.dir, 2).path.slice(-1)[0])).sort().join(',');
-  eq(lm.length, 2, 'II H2: R2+L2 (opp/ned er 1 felt mellom radene: II treffer vegg)');
-  ok(!dests.split(',').includes('H2'), 'II: inga 1-opp-1-ned-snuing tilbake til H2');
-  // Hjørnet er ikkje vegg: med II går kongen loddrett O3 -> O2 -> O1.
-  k.at = nameIdx('O3');
-  st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
-  clearAt(st, [nameIdx('O2'), nameIdx('O1')]);
-  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-  ok(lm.some(m => m.dir === 'B'), 'O3: konge kan gå nedover med II (hjørnet er ikkje vegg)');
-  // A2: oppover er det vegg etter eitt steg — II/III kjem ingen veg.
-  k.at = nameIdx('A2');
-  st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
-  clearAt(st, [nameIdx('A3')]);
-  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-  eq(lm.filter(m => m.dir === 'F' || m.dir === 'B').length, 0,
-     'A2: ingen loddrett trekk med II (vegg etter eitt steg)');
-  // slipp ikkje snuing: III frå H2, berre heile 3-stegar i éin veg
+  eq(SS.legalMoves(st, 0).filter(m => m.pid === k.id).length, 0,
+     'X H2: kongen får NULL trekk (X vekkjer berre)');
+
+  // II frå H2: to steg kvar veg i syklusen -> F2 og J2
   k.at = nameIdx('H2');
-  clearAt(st, [nameIdx('H1'), nameIdx('H3'), nameIdx('I2'), nameIdx('J2'), nameIdx('K2'), nameIdx('G2'), nameIdx('F2'), nameIdx('E2')]);
+  st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
+  eq(kingLand(st, k, 2), 'F2,J2', 'II H2: tallsyklusen gjev F2 og J2');
+
+  // III frå H2: E2 og K2
   st.dice = ['III', 'II', 'X']; st.used = [false, true, true];
-  lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id && m.v === 3);
-  eq(lm.length, 2, 'III H2: K2+E2 (vegg etter 1 steg opp/ned)');
-  const d3 = lm.map(m => SS.name(SS.pathFor(st, k, m.dir, 3).path.slice(-1)[0])).sort().join(',');
-  eq(d3, 'E2,K2', 'III: berre heile 3-stegar i éin veg, inga snuing');
+  eq(kingLand(st, k, 3), 'E2,K2', 'III H2: tallsyklusen gjev E2 og K2');
+
+  // Lars sitt skjermbilde: M2 med III -> J2 (bakover) og O1 (framover), for
+  // BÅDE menn og koner — syklusen snor seg ned i hjørnet (O2 -> O1).
+  k.o = 0; k.at = nameIdx('M2');
+  st.dice = ['III', 'II', 'X']; st.used = [false, true, true];
+  eq(kingLand(st, k, 3), 'J2,O1', 'M2 med III (menn): J2 og O1');
+
+  // hoppar over brikker: ein soldat på N2 (mellom M2 og O2) hindrar ikkje
+  let blocker = SS.soldiers(st, 0)[0]; blocker.captured = false; blocker.released = true; blocker.at = 16; // N2
+  eq(kingLand(st, k, 3), 'J2,O1', 'kongen hoppar over brikke på N2 og når O1');
+  // ... men han kan ikkje LANDE på henne
+  st.dice = ['III', 'II', 'X']; st.used = [true, false, true];
+  blocker.at = 17;                                            // M2-nabo? -> N2 vidare
+  ok(!kingLand(st, k, 3).split(',').includes(SS.name(SS.soldierAt(0, 16))),
+     'kongen landar ikkje på ei brikke');
+
+  // dronninga følgjer same syklus: P1-dronning L2 med II -> J2 og N2
+  let st2 = SS.newGame({ first: 0 }), q = SS.queen(st2, 0);
+  st2.turn = 0; st2.phase = 'move'; q.released = true; q.at = nameIdx('L2');
+  st2.pieces.forEach(p => { if (p.t !== 'q' || p.id !== q.id) p.captured = true; });
+  st2.dice = ['II', 'II', 'II']; st2.used = [false, false, false];
+  let qLand = SS.legalMoves(st2, 0).filter(m => m.pid === q.id).map(m => SS.name(m.to)).sort().join(',');
+  eq(qLand, 'J2,N2', 'dronninga L2 med II: J2 og N2 (tallsyklusen)');
 }
 
 /* ---- REGRADERING: CPU-sløyfe (main.js-mønster) — vaksen må ikkje utarmast.
