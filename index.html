@@ -26,7 +26,7 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.2.4 · AGPL-3.0</span></p>
+      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.2.5 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden">▶ Fortsett lagra parti</button>
         <button id="btn-cpu" class="big">⚔︎ Spill mot CPU</button>
@@ -92,8 +92,11 @@
        laste ned notasjonen, eller <b>Slett</b>.</p>
     <div id="arch-list" class="arch-list"></div>
     <div class="arch-actions">
+      <button id="btn-arch-export" class="ghost">⬇ Last ned alle</button>
+      <button id="btn-arch-import" class="ghost">⬆ Importer</button>
       <button id="btn-arch-clear" class="ghost">Tøm alt</button>
       <button id="btn-arch-back" class="ghost">Til hovedmenyen</button>
+      <input type="file" id="arch-file" accept=".json,application/json" hidden>
     </div>
   </section>
 

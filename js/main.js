@@ -655,6 +655,31 @@
   function wireArchive() {
     $('btn-archive').addEventListener('click', openArchive);
     $('btn-arch-back').addEventListener('click', function () { show('menu'); });
+    $('btn-arch-export').addEventListener('click', function () {
+      var all = global.ARCH.dumpAll();
+      if (!all.games.length) { UI.toast('Arkivet er tomt'); return; }
+      downloadText(JSON.stringify(all, null, 1),
+                   'sahkku-arkiv-' + new Date().toISOString().slice(0, 10) + '.json');
+      UI.toast(all.games.length + ' parti lasta ned');
+    });
+    $('btn-arch-import').addEventListener('click', function () { $('arch-file').click(); });
+    $('arch-file').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        var res;
+        try { res = global.ARCH.importBundle(JSON.parse(rd.result)); }
+        catch (err) { UI.toast('Kunne ikkje lese fila — er det ein arkiv-eksport?'); return; }
+        if (res.error) { UI.toast(res.error); return; }
+        renderArchive();
+        UI.toast('Importerte ' + res.added + ' parti' +
+                 (res.skipped ? ' (' + res.skipped + ' fanst alt)' : ''));
+      };
+      rd.onerror = function () { UI.toast('Kunne ikkje lese fila'); };
+      rd.readAsText(f);
+      e.target.value = '';
+    });
     $('btn-arch-clear').addEventListener('click', function () {
       if (!global.ARCH.list().length) { UI.toast('Arkivet er tomt'); return; }
       if (global.confirm && !global.confirm('Slette alle lagra parti?')) return;

@@ -40,6 +40,35 @@
   function remove(id) { return write(read().filter(function (r) { return r.id !== id; })); }
   function clear() { return write([]); }
 
+  // ---- heile arkivet som éi fil (og inn att) ---------------------------
+  function dumpAll() {
+    return { v: 1, app: 'SnartSahkku', exported: new Date().toISOString(), games: read() };
+  }
+
+  // Tek imot ei fil frå dumpAll(), eit einskilt parti, eller ein array.
+  // Postar med same id som alt ligg i arkivet vert hoppa over, so import
+  // av same fil to gonger ikkje dupliserer noko.
+  function importBundle(obj) {
+    var games = (obj && obj.games) || (Array.isArray(obj) ? obj : null) ||
+                (obj && (obj.steps || obj.fens) ? [obj] : null);
+    if (!games || !games.length) return { added: 0, skipped: 0, error: 'fann ingen parti i fila' };
+    var cur = read(), ids = {}, added = 0, skipped = 0;
+    cur.forEach(function (g) { if (g && g.id) ids[g.id] = 1; });
+    games.forEach(function (g) {
+      if (!g || (!g.steps && !g.fens)) { skipped++; return; }
+      var rec = JSON.parse(JSON.stringify(g));
+      if (rec.id && ids[rec.id]) { skipped++; return; }
+      rec.id = rec.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+      ids[rec.id] = 1;
+      cur.push(rec);
+      added++;
+    });
+    cur.sort(function (a, b) { return String(b.ts || '').localeCompare(String(a.ts || '')); });
+    if (cur.length > MAX) cur.length = MAX;
+    write(cur);
+    return { added: added, skipped: skipped };
+  }
+
   // ---- frå levande spel: st.log  ->  steps ------------------------------
   // st.log er [{t, roll:[[fjes…], …], mv:[{from,to,…}], closed}, …]: éin ply
   // per tur, med sida `t`, alle kast i turen og trekka.
@@ -154,6 +183,7 @@
 
   global.ARCH = {
     save: save, list: list, get: get, remove: remove, clear: clear,
+    dumpAll: dumpAll, importBundle: importBundle,
     stepsFrom: stepsFrom, totalMoves: totalMoves, replay: replay,
     findMove: findMove, KEY: KEY
   };
