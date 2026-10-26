@@ -15,6 +15,15 @@
       "weights": "engines/ail0.1.weights.json",
       "lookahead": 4,
       "note": "Nevral S-UCI-motor trena med sjølvspel (sahkku-ai). Tenkjer ~0,5 s per trekk."
+    },
+    {
+      "id": "ail0.2",
+      "name": "AIL0.2",
+      "type": "nn",
+      "script": "engines/ail0.2.js",
+      "weights": "engines/ail0.2.weights.json",
+      "lookahead": 4,
+      "note": "Nevral S-UCI-motor, 12 syklusar / 152 000 prøver (val-xent 0.840). Trena med same reglar som AIL0.1."
     }
   ]
 }
