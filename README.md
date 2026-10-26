@@ -20,10 +20,12 @@ dronninger*):
   offline-først cache og touch-kontrollert brett for mobil
 - **UI inspirert av samisk estetikk**: dyp nordlys-blå bakgrunn, ripplinte-
   brett, rombenete brikker, rødt/blått gákti-inspirert fargesett
-- **CPU-motstander** i to utgaver: *klassisk* (tre nivå, greedy med simulerte
-  trekk) og *nevral* (NN) — den trente S-UCI-motoren fra
-  [sahkku-ai](https://github.com/larsnygard/sahkku-ai), lasta lazy kun når du
-  vel henne (menyvalet «Motor: Nevral (NN)»)
+- **CPU-motstander med flere motorer**: klassisk (tre nivå, greedy med
+  simulerte trekk) og nevrale S-UCI-motorer fra
+  [sahkku-ai](https://github.com/larsnygard/sahkku-ai). Hvilke som finnes står
+  i `engines/engines.json` — legg til en rad for å tilby en ny modell. Bare
+  klassisk CPU lastes med appen; en NN-motor hentes lazy når du velger den
+  (menyvalget «Motor»).
 - **Nettspill** via [iroh](https://github.com/n0-computer/iroh) —
   Rust→WebAssembly, relay-basert P2P med gossip-rom; invittkoder
   (`rom#nodeid`), ingen server
