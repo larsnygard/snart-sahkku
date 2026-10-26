@@ -226,7 +226,7 @@ SS.soldiers(st, 0).forEach(x => { if (x.at === 7 && !x.released) x.captured = tr
 // steg), så kongen held seg på rad 2 — han kan berre gå R/L.
 st.dice = ['X', 'X', 'X']; st.used = [false,false,false]; st.phase = 'move';
 lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-eq(lm.length, 0, 'X vekkjer berre — kongen får IKKJE trekk med X');
+eq(lm.length, 2, 'X er eit 1-tal — kongen får 1 steg kvar veg');
 st.dice = ['II', '_', '_']; st.used = [false,true,true]; st.phase = 'move';
 lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
 eq(lm.map(m => SS.name(m.to)).sort().join(','), 'F2,J2',
@@ -257,8 +257,8 @@ last.released = true; last.at = 28;   // P2 t28 står på N2 (brettidx 16)
 let f3 = null; SS.soldiers(st, 0).forEach(x => { if (!f3 || x.at > f3.at) f3 = x; });
 f3.released = true; f3.at = 14;       // O1: P1-front; II -> N2
 st.dice = ['X', 'X', '_']; st.used = [false,false,true]; st.phase = 'move';
-eq(SS.legalMoves(st, 0).filter(m => m.pid === f3.id).length, 0,
-   'X flyttar ikkje ein utløyst soldat (berre vekking)');
+eq(SS.legalMoves(st, 0).filter(m => m.pid === f3.id).length, 1,
+   'X flyttar ein utløyst soldat eitt steg');
 st.dice = ['II', '_', '_']; st.used = [false,true,true]; st.phase = 'move';
 lm = SS.legalMoves(st, 0).filter(m => m.pid === f3.id && m.v === 2);
 eq(lm.length, 1, 'II-flytt (2 steg) inn på siste fiendesoldat');
@@ -342,8 +342,8 @@ for (let g = 0; g < 300; g++) {
   // X vekkjer berre: kongen er ALDRI «inaktiv», so X gjev han ingen trekk.
   k.at = nameIdx('H2');
   st.dice = ['III', 'II', 'X']; st.used = [true, true, false];
-  eq(SS.legalMoves(st, 0).filter(m => m.pid === k.id).length, 0,
-     'X H2: kongen får NULL trekk (X vekkjer berre)');
+  eq(SS.legalMoves(st, 0).filter(m => m.pid === k.id).map(m => SS.name(m.to)).sort().join(','),
+     'G2,I2', 'X H2: kongen går 1 steg kvar veg (X er eit 1-tal)');
 
   // II frå H2: to steg kvar veg i syklusen -> F2 og J2
   k.at = nameIdx('H2');

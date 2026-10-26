@@ -392,12 +392,11 @@
         }
       }
     }
-    // X (sáhkku) VEKKJER berre: ho løyser ei inaktiv brikke og flyttar henne
-    // eitt felt som del av vekkinga. Ho flyttar ALDRI brikker som alt er
-    // utløyste (soldat, dronning eller kongen) — det gjer II og III.
-    // Regelen er Lars si presisering: «X kan brukes til å vekke ei inaktiv
-    // brikke ... og deretter flytte ett felt. Flyttet er en del av vekkinga.»
-    if (rk === RANK.X) return out;
+    // X er eit 1-TAL (Lars 2026-10-26): ho kan vekkje ei inaktiv brikke
+    // (soldat/dronning — flyttet er ein del av vekkinga) OG flytte ei
+    // utløyst brikke eitt steg: soldat framover i tallsyklusen, dronning og
+    // konge eitt steg langs syklusen. Vekkinga er alt lagd til ovanfor; den
+    // generelle løkka nedanfor gjev 1-stegstrekka (v = activeValue = 1).
     for (i = 0; i < st.pieces.length; i++) {
       p = st.pieces[i];
       if (p.captured) continue;
