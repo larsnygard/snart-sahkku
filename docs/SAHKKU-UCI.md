@@ -44,7 +44,9 @@ Why the protocol differs from chess UCI (read this once, then write engines):
 * II/III move a released soldier **v** steps forward along its cycle, a queen
   **v** straight steps (R/L/F/B, no turning mid-move), and the king **v**
   straight steps. Landing rules are enforced by the game (you can never land
-  where a home-ranked piece stands; kings never share a line with pieces;
+  where a home-ranked piece stands; the king **captures** enemy soldiers and the
+  enemy queen (taking the queen wins), but never lands on its own pieces or on
+  an unreleased piece;
   capturing an enemy queen/king is a win).
 * **X-reroll rule:** `X` may be re-rolled only when it **cannot be used** —
   i.e. the active die is `X` and there is no legal wake. Re-rolling `X` to

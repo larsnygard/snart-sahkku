@@ -549,5 +549,49 @@ ok(overCount >= 250, '300 tilfeldige spill: ' + overCount + ' endte med seier (u
   ok(stC.kings === 1, 'konge-kapringa vert talt');
 }
 
+
+/* ---- Kongen KAPRAR (Lars 2026-10-26) ---- */
+{
+  function nameIdx(nm) { for (let i = 0; i < 45; i++) if (SS.name(i) === nm) return i; return -1; }
+  let st = SS.newGame({ first: 0 });
+  st.phase = 'move'; st.turn = 0;
+  const k = SS.king(st); k.o = 0; k.at = nameIdx('M2');
+  // berre kongen + éin fiendeleg soldat 2 steg unna (K2)
+  st.pieces.forEach(p => { if (p.t !== 'k') p.captured = true; });
+  const foe = SS.soldiers(st, 1)[0];
+  foe.captured = false; foe.released = true; foe.at = 25;      // P2 t25 -> K2
+  eq(SS.name(SS.soldierAt(1, foe.at)), 'K2', 'fienden står på K2');
+  st.dice = ['II', 'II', 'II']; st.used = [false, false, false];
+  let mv = SS.legalMoves(st, 0).filter(m => m.pid === k.id && m.to === nameIdx('K2'));
+  eq(mv.length, 1, 'kongen kan lande på og slå ut ein fiendtleg soldat');
+  SS.applyMove(st, mv[0]);
+  ok(foe.captured, 'soldaten vart slått ut');
+  eq(st.kills[0], 1, 'kapteininga vert talt for menn');
+
+  // eiga brikke: framleis nekta
+  let st2 = SS.newGame({ first: 0 });
+  st2.phase = 'move'; st2.turn = 0;
+  const k2 = SS.king(st2); k2.o = 0; k2.at = nameIdx('M2');
+  st2.pieces.forEach(p => { if (p.t !== 'k' && p.t !== 'q') p.captured = true; });
+  const own = SS.soldiers(st2, 0)[0];
+  own.captured = false; own.released = true; own.at = 19;      // P1 t19 -> K2
+  st2.dice = ['II', 'II', 'II']; st2.used = [false, false, false];
+  eq(SS.legalMoves(st2, 0).filter(m => m.pid === k2.id && m.to === nameIdx('K2')).length, 0,
+     'kongen kan ikkje lande på eiga brikke');
+
+  // dronninga: konge tek dronninga = siger
+  let st3 = SS.newGame({ first: 0 });
+  st3.phase = 'move'; st3.turn = 0;
+  const k3 = SS.king(st3); k3.o = 0; k3.at = nameIdx('M2');
+  st3.pieces.forEach(p => { if (p.t !== 'k' && p.t !== 'q') p.captured = true; });
+  const q3 = SS.queen(st3, 1);
+  q3.captured = false; q3.released = true; q3.at = nameIdx('K2');
+  st3.dice = ['II', 'II', 'II']; st3.used = [false, false, false];
+  let mv3 = SS.legalMoves(st3, 0).filter(m => m.pid === k3.id && m.to === nameIdx('K2'));
+  eq(mv3.length, 1, 'kongen kan slå ut fiendens dronning');
+  SS.applyMove(st3, mv3[0]);
+  eq(st3.winner, 0, 'konge tek dronning = siger for menn');
+}
+
 console.log('\n' + pass + ' pass, ' + fail + ' fail');
 process.exit(fail ? 1 : 0);
