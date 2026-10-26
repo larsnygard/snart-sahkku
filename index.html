@@ -26,11 +26,12 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.2.6 · AGPL-3.0</span></p>
+      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.2.7 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden">▶ Fortsett lagra parti</button>
         <button id="btn-cpu" class="big">⚔︎ Spill mot CPU</button>
         <button id="btn-local" class="big">👥 To spillere her</button>
+        <button id="btn-load-fen" class="big">📥 Last stilling (FEN)</button>
         <button id="btn-online" class="big">🌐 Spill på nett</button>
         <button id="btn-archive" class="big">📜 Arkiv</button>
         <button id="btn-install" class="big hidden">⬇︎ Legg til på skjermen</button>
@@ -141,6 +142,20 @@
     </div>
   </section>
 </main>
+
+<!-- LAST STILLING FRÅ FEN -->
+<dialog id="fenload">
+  <h3>Last stilling frå FEN</h3>
+  <p class="arch-note">Lim inn ein S-UCI-FEN — den du fekk med «Kopier FEN», eller ei
+     stilling du vil prøve. Partiet held fram herfrå.</p>
+  <textarea id="fen-text" rows="4" spellcheck="false" autocomplete="off"
+            autocapitalize="off" placeholder="g-g-g-… w roll - 000 H2 0:0 0 *"></textarea>
+  <p id="fen-error" class="fen-error"></p>
+  <div class="room-form">
+    <button id="btn-fen-do" class="big">Last stilling</button>
+    <button data-close class="ghost">Avbryt</button>
+  </div>
+</dialog>
 
 <!-- REGLEPANEL -->
 <dialog id="rules">

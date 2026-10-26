@@ -526,6 +526,31 @@
     }
   }
 
+  // ---------- last stilling frå FEN ----------
+  function loadFromFen() {
+    var txt = String($('fen-text').value || '').trim().replace(/\s+/g, ' ');
+    if (!txt) return;
+    var st;
+    try { st = SS.fromFEN(txt); }
+    catch (e) {
+      $('fen-error').textContent = 'Ugyldig FEN: ' + (e && e.message ? e.message : e);
+      return;
+    }
+    app.st = st;
+    app.fens = [];
+    app.archived = false;
+    app.over = st.winner != null;
+    if (app.mode === 'menu' || app.mode === 'online') app.mode = 'local';
+    $('fenload').close();
+    UI.clearLog();
+    UI.log('Stilling lasta frå FEN (' + (st.turn === 0 ? 'menn' : 'koner') + ' i tur)');
+    show('game');
+    if (st.winner != null) { refresh(); UI.toast('Stillinga er eit ferdigspela parti'); return; }
+    if (st.phase === 'roll') { rollPhase(); return; }
+    refresh();
+    if (!humanTurn() && app.mode === 'cpu') setTimeout(cpuStep, D(500));
+  }
+
   // ---------- knytters ----------
 
   // ---------- arkiv: lagre, liste, avspele, slette ----------
@@ -698,6 +723,16 @@
     UI.init({
       onRoll: onRoll, onReroll: onReroll, onPass: onPass,
       onMove: onMove, onSurrender: onSurrender
+    });
+    $('btn-load-fen').addEventListener('click', function () {
+      if (app.st) $('fen-text').value = SS.toFEN(app.st);
+      $('fen-error').textContent = '';
+      $('fenload').showModal();
+      setTimeout(function () { $('fen-text').focus(); }, 50);
+    });
+    $('btn-fen-do').addEventListener('click', loadFromFen);
+    $('fen-text').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) loadFromFen();
     });
     $('btn-cpu').addEventListener('click', function () {
       app.mode = 'cpu';

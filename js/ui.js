@@ -58,7 +58,9 @@
   }
   function klassOf(p) {
     var k = 'piece ' + (p.o === 0 ? 'red' : 'blue');
-    if (p.t === 'k') k = 'piece king';
+    if (p.t === 'k') {
+      k = 'piece king' + (p.o == null ? ' king-free' : (p.o === 0 ? ' king-p0' : ' king-p1'));
+    }
     if (p.t === 'q') k += ' queen';
     if (SS.isHome(p)) k += ' home';
     return k;
@@ -117,8 +119,9 @@
     turnEl.className = 'chip ' + (st.turn === 0 ? 'p0' : 'p1');
     turnEl.textContent = 'Tur: ' + (st.turn === 0 ? 'menn (olbmát)' : 'koner (gálgut)');
     var k = SS.king(st);
+    kingEl.className = 'chip ' + (k.o == null ? 'neutral' : (k.o === 0 ? 'p0' : 'p1'));
     kingEl.textContent = k.o == null ? 'Kongen løs' :
-      (k.o === 0 ? 'Kongen: menn' : 'Kongen: koner');
+      (k.o === 0 ? 'Kongen: menn (raud)' : 'Kongen: koner (blå)');
     label0.parentNode.classList.toggle('active-p0', st.turn === 0);
     label1.parentNode.classList.toggle('active-p1', st.turn === 1);
     renderDice();

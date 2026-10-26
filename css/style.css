@@ -270,6 +270,28 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
   backdrop-filter: blur(4px);
 }
 .turnbox { display: flex; gap: 8px; flex-wrap: wrap; }
+#fen-text {
+  width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px; color: var(--ink); background: var(--wood);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  resize: vertical; min-height: 76px;
+}
+.fen-error { color: var(--red); font-size: 0.85rem; min-height: 1.1em; margin: 6px 0 0; }
+
+/* Kongen: kven eig han? Raud/grøn ring + eit lite M/K-merke på brikka, so
+   det er tydeleg òg når han står midt mellom andre brikker. */
+.piece.king { position: relative; }
+.piece.king.king-p0 { box-shadow: 0 0 0 2px var(--red), 0 3px 6px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25); }
+.piece.king.king-p1 { box-shadow: 0 0 0 2px var(--blue), 0 3px 6px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25); }
+.piece.king.king-free { box-shadow: 0 0 0 2px rgba(255,209,102,.75), 0 3px 6px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25); }
+.piece.king.king-p0::after,
+.piece.king.king-p1::after {
+  position: absolute; right: 1px; bottom: 0; font-size: calc(var(--cell) * .38);
+  font-weight: 700; line-height: 1; pointer-events: none;
+}
+.piece.king.king-p0::after { content: "M"; color: var(--red); }
+.piece.king.king-p1::after { content: "K"; color: var(--blue); }
+
 .chip {
   font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);
 }
