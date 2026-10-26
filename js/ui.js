@@ -300,6 +300,8 @@
       var cellEl = e.target.closest('.cell');
       if (pieceEl) {
         var pid = parseInt(pieceEl.dataset.pid, 10);
+        // Andre klikk på same brikke = opphev valet (toggle).
+        if (pid === ui.sel) { clearSelection(); return; }
         var p = SS.piece(ui.st, pid);
         var mine = p.o === ui.st.turn ||
           (p.t === 'q' && p.o === ui.st.turn) ||
