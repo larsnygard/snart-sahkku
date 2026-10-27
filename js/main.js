@@ -114,6 +114,12 @@
           afterTurnChange();
           return;
         }
+        if (act && act.kind === 'reroll') {
+          SS.rerollX(app.st);
+          UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': kastet om X-ene');
+          setTimeout(cpuStep, D(550));
+          return;
+        }
         if (act && act.kind === 'move') {
           var evm = SS.applyMove(app.st, act.mv);
           announceEvents(evm);
@@ -121,13 +127,17 @@
           setTimeout(settleAndContinue, D(60));
           return;
         }
-        SS.rerollX(app.st);
-        UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': kastet om X-ene');
-        setTimeout(cpuStep, D(550));
+        // Klassisk CPU har ingen strategi for omkast, og omkast er eit VAL:
+        // ho gjer som eit menneske som ikkje vil kaste om — avsluttar turen.
+        // (Før kasta appen om her, heilt utan at nokon hadde valt det.)
+        UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': X utan trekk, avsluttar turen');
+        SS.passRemaining(app.st);
+        afterTurnChange();
       }
       return;
     }
     refresh();
+    maybeAutocast(400);   // tryggleiksnett: er vi i kastefasen, kast
   }
 
   function afterTurnChange() {
@@ -138,20 +148,27 @@
     if (app.mode === 'online' && app.host) onlineSnapshot();
   }
 
+  // Autokast: kast med ein gong når det er vår tur i kastefasen. Berre sjølve
+  // kastet — omkast av X er alltid manuelt. Samla i éin funksjon so han ikkje
+  // heng på éin bestemt veg gjennom koden (rollPhase, settle, gjenopptaking).
+  function maybeAutocast(delay) {
+    if (!app.autocast || app.over || app.busy) return;
+    if (!app.st || app.st.phase !== 'roll' || !humanTurn()) return;
+    clearTimeout(app._ac);
+    app._ac = setTimeout(function () {
+      // sjekk på nytt: turen kan ha endra seg, eller spelaren ha kasta sjølv
+      if (app.autocast && !app.over && !app.busy && humanTurn() &&
+          app.st && app.st.phase === 'roll') { onRoll(); }
+    }, D(delay === undefined ? 650 : delay));
+  }
+
   function rollPhase() {
     app.st.phase = 'roll';
     app.st.dice = []; app.st.used = [];
     UI.clearSelection();
     refresh();
     if (!humanTurn() && !app.over) { setTimeout(cpuTurn, D(600)); return; }
-    // Autokast: berre sjølve kastet — omkast av X er alltid manuelt.
-    if (app.autocast && !app.over && humanTurn()) {
-      setTimeout(function () {
-        // sjekk på nytt: turen kan ha endra seg, eller spelaren ha kasta sjølv
-        if (app.autocast && !app.over && !app.busy && humanTurn() &&
-            app.st && app.st.phase === 'roll') { onRoll(); }
-      }, D(650));
-    }
+    maybeAutocast(650);
   }
 
   function cpuTurn() {
@@ -825,6 +842,7 @@
     if ($('cpu-engine')) {
       $('cpu-engine').addEventListener('change', function () {
         var id = $('cpu-engine').value;
+        app.engine = id || 'classic';       // byte midt i partiet skal gjelde straks
         syncLevelSelect();
         if (id && id !== 'classic') {
           global.ENG.load(id).catch(function (e) {
@@ -844,7 +862,7 @@
       $('chk-autocast').addEventListener('change', function (e) {
         app.autocast = !!e.target.checked;
         writeAutocast(app.autocast);
-        if (app.autocast && app.st && app.st.phase === 'roll' && !app.over && !app.busy && humanTurn()) onRoll();
+        maybeAutocast(0);
       });
     }
     $('btn-resume').addEventListener('click', function () {
@@ -964,7 +982,20 @@
     wireUI();
     wireNet();
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(function () {});
+      // Når ein ny SW tek over: last sida på nytt éin gong, so ein open fane
+      // ikkje sit att med gamal kode (det var nettopp det som fekk det til å
+      // sjå ut som om retta feil var tilbake).
+      var hadSW = !!navigator.serviceWorker.controller, reloading = false;
+      if (hadSW) {
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (reloading) return;
+          reloading = true;
+          if (global.location) global.location.reload();
+        });
+      }
+      navigator.serviceWorker.register('./sw.js').then(function (reg) {
+        try { reg.update().catch(function () {}); } catch (e) {}
+      }).catch(function () {});
     }
     var rec = peekSave();
     if (rec && rec.st && rec.st.winner == null) {

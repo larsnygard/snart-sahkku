@@ -75,8 +75,11 @@ const server = http.createServer((req, res) => {
       let rerolls = 0;
       const orig = SS.rerollX;
       SS.rerollX = function (x) { rerolls++; return orig.call(SS, x); };
+      if (!window.__realENG) window.__realENG = window.ENG;   // ta vare på den ekte
       if (eng === 'stub') {
         window.ENG = { ready: () => true, action: () => ({ kind: choice }), name: () => 'stub', move: () => null };
+      } else {
+        window.ENG = window.__realENG;                        // ikkje lat stubben lække
       }
       window.__settle();
       SS.rerollX = orig;
@@ -90,6 +93,12 @@ const server = http.createServer((req, res) => {
 
   const b = await run('stub', 'reroll');
   ok('NN seier omkast -> appen kastar om', b.rerolls === 1, JSON.stringify(b));
+
+  // Klassisk CPU: ingen motor-modul å spørje, so ho skal IKKJE kaste om på eiga
+  // hand — ho avsluttar turen (same val som eit menneske som ikkje vil kaste om).
+  const c = await run('classic', null);
+  ok('klassisk CPU -> ingen automatisk omkast', c.rerolls === 0, JSON.stringify(c));
+  ok('klassisk CPU -> turen går vidare', c.turn === 0, JSON.stringify(c));
 
   // Menneske: begge knappane skal vere synlege i same stilling
   const human = await page.evaluate(({ sq, qq }) => {
