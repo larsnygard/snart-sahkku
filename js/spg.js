@@ -98,5 +98,199 @@
     return L.join('\n') + '\n';
   }
 
-  global.SPG = { toSPG: toSPG };
+  // =======================================================================
+  // Lesing (SPG 1.2). Appen kunne tidlegare berre SKRIVE SPG — no kan ho
+  // lese, so arkivet tek imot .spg og .spgz utan omveg om JSON.
+  // =======================================================================
+
+  var TAG = /^\[(\w+)\s+"(.*)"\]\s*$/;
+  var OPEN = /^1\.\s+open(?:#(\d+))?:\s*M\((X|II|III|_)\s+(X|II|III|_)\s+(X|II|III|_)\)\s+K\((X|II|III|_)\s+(X|II|III|_)\s+(X|II|III|_)\)\s*(?:->\s*([MK]))?\s*$/;
+  var ROLL = /^(\d+)\.\s+([MK]):\s+(X|II|III|_)\s+(X|II|III|_)\s+(X|II|III|_)(?:\s*\(omkast\s*#(\d+)\))?\s*$/;
+  var MOVE = /^(?:(II|III):\s*)?([MkKQ])([A-O][123])->([A-O][123])(§|x \[[^\]]*\])?\s*$/;
+  var REL = /^X->([A-O][123])\s*$/;
+  var END = /^(1-0|0-1|\*)\s*(?:\{(\w+)\})?\s*$/;
+  var XMARK = /^X!\s*$/;
+
+  // Kommentarar: {…} (kan gå over fleire linjer, ingen nesting) og ; til
+  // linjeslutt. Resultatlinja «1-0 {dronning}» har {…} som ÅRSAK, ikkje
+  // kommentar, so ho vert halden utanfor.
+  function stripComments(text) {
+    var found = [], PROT = '\u0000SPGPROT\u0000', protectedLines = [], lines = [];
+    text.split(/\r?\n/).forEach(function (raw) {
+      var s = raw.trim();
+      if (/^(1-0|0-1|\*)\s*\{[^{}]*\}$/.test(s)) { protectedLines.push(s); lines.push(PROT); }
+      else lines.push(raw);
+    });
+    var body = lines.join('\n').replace(/\{([^{}]*)\}/g, function (m, c) {
+      found.push(c.trim()); return ' ';
+    });
+    var out = [];
+    body.split('\n').forEach(function (raw) {
+      if (raw.trim() === PROT) { out.push(protectedLines.shift() || ''); return; }
+      var cut = raw.indexOf(';');
+      if (cut >= 0) {
+        var note = raw.slice(cut + 1).trim();
+        if (note) found.push(note);
+        raw = raw.slice(0, cut);
+      }
+      out.push(raw);
+    });
+    return { text: out.join('\n'), comments: found };
+  }
+
+  function parseOne(text) {
+    var st = stripComments(text);
+    var tags = {}, events = [], result = null, reason = '', bad = null;
+    st.text.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      var m = TAG.exec(line);
+      if (m) { tags[m[1]] = m[2]; return; }
+      if (line === 'SPG-V1') return;
+      m = OPEN.exec(line);
+      if (m) {
+        if (m[8]) events.push({ k: 'open', first: m[8] === 'M' ? 0 : 1 });
+        else events.push({ k: 'open', first: 0 });
+        return;
+      }
+      m = ROLL.exec(line);
+      if (m) {
+        events.push({ k: m[6] ? 'reroll' : 'roll', faces: [m[3], m[4], m[5]],
+                      side: m[2] === 'M' ? 0 : 1 });
+        return;
+      }
+      m = MOVE.exec(line);
+      if (m) { events.push({ k: 'move', letter: m[2], from: m[3], to: m[4], die: m[1] || null }); return; }
+      m = REL.exec(line);
+      if (m) { events.push({ k: 'rel', to: m[1] }); return; }
+      if (XMARK.test(line)) return;
+      m = END.exec(line);
+      if (m) { result = m[1]; reason = m[2] || ''; return; }
+      if (!bad) bad = line;
+    });
+    return { tags: tags, events: events, result: result, reason: reason,
+             comments: st.comments, bad: bad };
+  }
+
+  // Eitt eller fleire parti i same fil (som PGN): eit nytt parti byrjar på
+  // ei tag-linje når det førre alt har hatt SPG-V1-merket.
+  function splitGames(text) {
+    var lines = text.split(/\r?\n/), out = [], cur = [], seenMarker = false, inBrace = false;
+    lines.forEach(function (raw) {
+      var t = raw.trim();
+      // hald styr på {…} so ikkje «[Event» inne i ein kommentar byrjar eit parti
+      var opens = (t.match(/\{/g) || []).length, closes = (t.match(/\}/g) || []).length;
+      var startsTag = !inBrace && TAG.test(t);
+      if (startsTag && seenMarker) { out.push(cur.join('\n')); cur = []; seenMarker = false; }
+      if (!inBrace && t === 'SPG-V1') seenMarker = true;
+      cur.push(raw);
+      if (opens > closes) inBrace = true;
+      else if (closes > opens) inBrace = false;
+    });
+    if (cur.join('').trim()) out.push(cur.join('\n'));
+    return out;
+  }
+
+  function parseMany(text) {
+    return splitGames(text).map(parseOne)
+      .filter(function (g) { return g.events.length || Object.keys(g.tags).length; });
+  }
+
+  // --- trekk-attkjenning (spegl av sahkku_ai/spg.py) ---------------------
+  function pieceLetter(p) {
+    if (p.t === 'q') return 'Q';
+    if (p.t === 'k') return 'k';
+    return p.o === 0 ? 'M' : 'K';
+  }
+  function destOf(st, mv) {
+    var p = SS.piece(st, mv.pid);
+    if (p.t === 's') return SS.soldierAt(p.o, p.at + (mv.kind === 'rel' ? 1 : mv.v));
+    return SS.moveDest(st, mv);
+  }
+  function fromOf(st, mv) {
+    var p = SS.piece(st, mv.pid);
+    return p.t === 's' ? SS.soldierAt(p.o, p.at) : p.at;
+  }
+
+  // Spel eit parsa parti opp att; gjev arkiv-oppføring (steps + fens).
+  function toRecord(g, meta) {
+    var st = SS.newGame({ first: 0 });
+    var steps = [], fens = [SS.toFEN(st)], applied = 0, first = null;
+    var curStep = null;
+    g.events.forEach(function (ev) {
+      if (ev.k === 'open') {
+        st = SS.newGame({ first: ev.first });
+        first = ev.first;
+        st.turn = ev.first;
+        fens = [SS.toFEN(st)];
+        return;
+      }
+      if (ev.k === 'roll' || ev.k === 'reroll') {
+        st.turn = ev.side;
+        st.dice = ev.faces.slice();
+        st.used = ev.faces.map(function (d) { return d === '_'; });
+        st.diceBy = st.turn;
+        st.phase = 'move';
+        if (ev.k === 'roll') { curStep = { t: ev.side, rolls: [ev.faces.slice()], moves: [] }; steps.push(curStep); }
+        else if (curStep) curStep.rolls.push(ev.faces.slice());
+        return;
+      }
+      var pool = SS.legalMoves(st, st.turn), pick = null;
+      for (var i = 0; i < pool.length; i++) {
+        var mv = pool[i];
+        if (ev.k === 'rel') {
+          if (mv.kind === 'rel' && SS.sqName(destOf(st, mv)) === ev.to) { pick = mv; break; }
+        } else {
+          var p = SS.piece(st, mv.pid);
+          if (pieceLetter(p) !== ev.letter) continue;
+          if (SS.sqName(fromOf(st, mv)) !== ev.from) continue;
+          if (SS.sqName(destOf(st, mv)) !== ev.to) continue;
+          if (ev.die === 'II' && mv.v !== 2) continue;
+          if (ev.die === 'III' && mv.v !== 3) continue;
+          pick = mv; break;
+        }
+      }
+      if (!pick) throw new Error('SPG: ukjent trekk «' + (ev.k === 'rel' ? 'X->' + ev.to
+        : ev.letter + ev.from + '->' + ev.to) + '» i ' + (meta && meta.name ? meta.name : 'fila'));
+      var frm = fromOf(st, pick), to = destOf(st, pick);
+      SS.applyMove(st, pick);
+      applied++;
+      fens.push(SS.toFEN(st));
+      var step = curStep || (curStep = { t: st.turn, rolls: [], moves: [] });
+      step.moves.push([frm, to, pick.v, pick.kind === 'rel' ? 1 : 0]);
+    });
+    return {
+      id: null,
+      ts: dateFromTags(g.tags),
+      mode: 'spg',
+      engine: g.tags.Koner && /\(c\)/.test(g.tags.Koner) ? g.tags.Koner.replace(/^.*\(c\)\s*/, '') : '',
+      level: 2,
+      first: first === null ? 0 : first,
+      result: g.result || '*',
+      reason: g.reason || (g.tags.Termination || ''),
+      plies: applied,
+      steps: steps,
+      fens: fens,
+      menn: g.tags.Menn || '', koner: g.tags.Koner || '',
+      event: g.tags.Event || '', utc: g.tags.UTC || '', time: g.tags.Time || '',
+      comments: g.comments || [],
+      spg: null,
+    };
+  }
+
+  function dateFromTags(tags) {
+    var d = tags.Date || '', t = tags.Time || '00:00:00';
+    if (tags.UTC) return tags.UTC;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d + 'T' + t;
+    return new Date().toISOString();
+  }
+
+  // Skriv fleire parti til éi fil (PGN-stil: blank linje mellom).
+  function toSPGMany(states, metas) {
+    return states.map(function (s, i) { return toSPG(s, metas[i] || {}); }).join('\n');
+  }
+
+  global.SPG = { toSPG: toSPG, toSPGMany: toSPGMany, parseOne: parseOne,
+                 parseMany: parseMany, toRecord: toRecord, stripComments: stripComments,
+                 splitGames: splitGames };
 })(typeof window !== 'undefined' ? window : globalThis);

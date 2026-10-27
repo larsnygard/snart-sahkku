@@ -69,6 +69,88 @@
     return { added: added, skipped: skipped };
   }
 
+  // ---- SPG: import (eitt eller fleire parti i same fil) -----------------
+  // Kvar kamp held på den ORIGINALE SPG-teksten sin, so kommentarar og
+  // formatering overlever ein runde inn og ut av arkivet.
+  function importSpg(text, opts) {
+    opts = opts || {};
+    var chunks = global.SPG.splitGames(text);
+    var recs = [], skipped = 0, err = null;
+    chunks.forEach(function (chunk) {
+      var g = global.SPG.parseOne(chunk);
+      if (!g.events.length && !Object.keys(g.tags).length) { skipped++; return; }
+      var rec;
+      try { rec = global.SPG.toRecord(g, { name: chunk.slice(0, 40) }); }
+      catch (e) { skipped++; err = err || e.message; return; }
+      if (!rec.plies) { skipped++; return; }
+      rec.spg = chunk.trim() + '\n';
+      rec.id = opts.idPrefix ? opts.idPrefix + '-' + rec.plies + '-' + hash(rec.fens[0] + rec.result)
+                             : 'spg-' + rec.plies + '-' + hash(rec.fens[0] + rec.result);
+      recs.push(rec);
+    });
+    return addMany(recs, skipped, err);
+  }
+
+  // ei .spgz er ei zip-fil med .spg-oppføringar
+  function importSpgz(bytes) {
+    if (!global.ZIP) return Promise.resolve({ added: 0, skipped: 0, error: 'zip-støtte manglar' });
+    return global.ZIP.read(bytes).then(function (items) {
+      var spg = items.filter(function (it) { return /\.spg$/i.test(it.name) || it.name.indexOf('.') < 0; });
+      if (!spg.length) return { added: 0, skipped: 0, error: 'fann ingen .spg-filer i zip-en' };
+      var all = spg.map(function (it) { return it.text; }).join('\n');
+      return importSpg(all, { idPrefix: 'spgz' });
+    });
+  }
+
+  function hash(s) {
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
+    return h.toString(36);
+  }
+
+  function addMany(recs, skipped, err) {
+    var cur = read(), ids = {}, added = 0;
+    cur.forEach(function (g) { if (g && g.id) ids[g.id] = 1; });
+    recs.forEach(function (rec) {
+      if (rec.id && ids[rec.id]) { skipped++; return; }
+      rec.id = rec.id || (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7));
+      rec.ts = rec.ts || new Date().toISOString();
+      ids[rec.id] = 1;
+      cur.push(rec);
+      added++;
+    });
+    cur.sort(function (a, b) { return String(b.ts || '').localeCompare(String(a.ts || '')); });
+    if (cur.length > MAX) cur.length = MAX;
+    write(cur);
+    var out = { added: added, skipped: skipped };
+    if (err) out.error = err;
+    return out;
+  }
+
+  // ---- SPG-eksport: alle (eller valde) parti som éi fil ----------------
+  function exportSpgText(filter) {
+    var games = (filter || read()).filter(function (g) { return g && g.spg; });
+    return { text: games.map(function (g) { return g.spg.replace(/\s*$/, ''); }).join('\n\n') + '\n',
+             games: games.length, missing: (filter || read()).length - games.length };
+  }
+
+  // .spgz: kvart parti som si eiga .spg-oppføring i ein zip
+  function exportSpgzBlob(filter) {
+    if (!global.ZIP) return Promise.reject(new Error('zip-støtte manglar'));
+    var games = (filter || read()).filter(function (g) { return g && g.spg; });
+    var files = games.map(function (g, i) {
+      var day = String(g.ts || '').slice(0, 10) || 'parti';
+      var who = (g.menn || 'Menn') + '-mot-' + (g.koner || 'Koner');
+      var nm = (day + '-' + String(i + 1).padStart(2, '0') + '-' + who)
+        .replace(/[^\w.\-]+/g, '_').slice(0, 60);
+      return { name: nm + '.spg', text: g.spg };
+    });
+    if (!files.length) return Promise.reject(new Error('ingen parti med notasjon'));
+    return global.ZIP.write(files).then(function (bytes) {
+      return { blob: new Blob([bytes], { type: 'application/zip' }), files: files.length };
+    });
+  }
+
   // ---- frå levande spel: st.log  ->  steps ------------------------------
   // st.log er [{t, roll:[[fjes…], …], mv:[{from,to,…}], closed}, …]: éin ply
   // per tur, med sida `t`, alle kast i turen og trekka.
@@ -184,6 +266,8 @@
   global.ARCH = {
     save: save, list: list, get: get, remove: remove, clear: clear,
     dumpAll: dumpAll, importBundle: importBundle,
+    importSpg: importSpg, importSpgz: importSpgz,
+    exportSpgText: exportSpgText, exportSpgzBlob: exportSpgzBlob,
     stepsFrom: stepsFrom, totalMoves: totalMoves, replay: replay,
     findMove: findMove, KEY: KEY
   };

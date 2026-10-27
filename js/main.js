@@ -788,21 +788,61 @@
       UI.toast(all.games.length + ' parti lasta ned');
     });
     $('btn-arch-import').addEventListener('click', function () { $('arch-file').click(); });
+    // ---- eksport: SPG (éi fil, mange parti) og SPGZ (zip) ---------------
+    $('btn-arch-spg').addEventListener('click', function () {
+      var r = global.ARCH.exportSpgText();
+      if (!r.games) { UI.toast('Ingen parti med notasjon i arkivet'); return; }
+      downloadText(r.text, 'sahkku-' + new Date().toISOString().slice(0, 10) + '.spg');
+      UI.toast(r.games + ' parti skrivne til SPG' +
+               (r.missing ? ' (' + r.missing + ' utan notasjon vart hoppa over)' : ''));
+    });
+    $('btn-arch-spgz').addEventListener('click', function () {
+      global.ARCH.exportSpgzBlob().then(function (r) {
+        var a = doc.createElement('a');
+        a.href = URL.createObjectURL(r.blob);
+        a.download = 'sahkku-' + new Date().toISOString().slice(0, 10) + '.spgz';
+        doc.body.appendChild(a); a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+        UI.toast(r.files + ' parti i zip-fila');
+      }, function (err) { UI.toast(err.message); });
+    });
     $('arch-file').addEventListener('change', function (e) {
       var f = e.target.files && e.target.files[0];
       if (!f) return;
+      var name = (f.name || '').toLowerCase();
+      var erZip = /\.(spgz|zip)$/.test(name);
       var rd = new FileReader();
       rd.onload = function () {
-        var res;
-        try { res = global.ARCH.importBundle(JSON.parse(rd.result)); }
-        catch (err) { UI.toast('Kunne ikkje lese fila — er det ein arkiv-eksport?'); return; }
-        if (res.error) { UI.toast(res.error); return; }
-        renderArchive();
-        UI.toast('Importerte ' + res.added + ' parti' +
-                 (res.skipped ? ' (' + res.skipped + ' fanst alt)' : ''));
+        var res, done = function (r) {
+          if (!r) { UI.toast('Kunne ikkje lese fila'); return; }
+          if (r.error && !r.added) { UI.toast(r.error); return; }
+          renderArchive();
+          UI.toast('Importerte ' + r.added + ' parti' +
+                   (r.skipped ? ' (' + r.skipped + ' vart ikkje lesne)' : '') +
+                   (r.error ? ' — ' + r.error : ''));
+        };
+        if (erZip) {                       // .spgz / .zip: zip med .spg-filer
+          global.ARCH.importSpgz(new Uint8Array(rd.result))
+            .then(done, function (err) { UI.toast('Zip: ' + err.message); });
+          return;
+        }
+        var txt = rd.result;
+        // Innhaldet avgjer: JSON-arkiv, SPG-tekst, eller ein zip med feil ending
+        var first = String(txt).replace(/^\uFEFF/, '').trim().slice(0, 1);
+        if (first === '{' || first === '[') {
+          var obj;
+          try { obj = JSON.parse(txt); } catch (err) {
+            UI.toast('Ugyldig JSON i fila'); return;
+          }
+          done(global.ARCH.importBundle(obj));
+          return;
+        }
+        if (/SPG-V1|^\[Event\b/m.test(txt)) { done(global.ARCH.importSpg(txt)); return; }
+        UI.toast('Kjenner ikkje filtypen — ventar JSON, .spg eller .spgz');
       };
       rd.onerror = function () { UI.toast('Kunne ikkje lese fila'); };
-      rd.readAsText(f);
+      if (erZip) rd.readAsArrayBuffer(f); else rd.readAsText(f);
+      e.target.value = '';
       e.target.value = '';
     });
     $('btn-arch-clear').addEventListener('click', function () {
