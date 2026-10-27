@@ -301,7 +301,17 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .chip.active { outline: 2px solid currentColor; }
 
 .dicebox { display: flex; gap: 8px; }
-.dicerow { display: flex; gap: 10px; flex-wrap: wrap; }
+.dicerow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* Autokast: kast terningane av seg sjølv når turen kjem (omkast er manuelt) */
+.autocast {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--muted, #8a8f98);
+  cursor: pointer; user-select: none; white-space: nowrap;
+  padding: 4px 8px; border: 1px solid var(--line, #2a2f3a); border-radius: 999px;
+}
+.autocast input { margin: 0; accent-color: currentColor; cursor: pointer; }
+.autocast:hover { color: var(--fg, #e6e8ec); }
 .dicepanel {
   display: flex; flex-direction: column; gap: 5px;
   padding: 8px 10px; border: 1px solid var(--line); border-radius: 14px;

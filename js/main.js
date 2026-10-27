@@ -13,8 +13,16 @@
     st: null,
     host: false,       // online: vert = P0, autoritativ
     busy: false,
-    over: false
+    over: false,
+    autocast: false    // «Autokast»: kast terningane automatisk når turen kjem
   };
+  var AC_KEY = 'sahkku.autocast';
+  function readAutocast() {
+    try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
+  }
+  function writeAutocast(v) {
+    try { global.localStorage.setItem(AC_KEY, v ? '1' : '0'); } catch (e) {}
+  }
   globalThis.__APP = app;   // feilsøkingshandtak (testar + devtools)
 
   function D(ms) { return (typeof globalThis !== 'undefined' && globalThis.__FAST) ? 30 : ms; }
@@ -135,7 +143,15 @@
     app.st.dice = []; app.st.used = [];
     UI.clearSelection();
     refresh();
-    if (!humanTurn() && !app.over) setTimeout(cpuTurn, D(600));
+    if (!humanTurn() && !app.over) { setTimeout(cpuTurn, D(600)); return; }
+    // Autokast: berre sjølve kastet — omkast av X er alltid manuelt.
+    if (app.autocast && !app.over && humanTurn()) {
+      setTimeout(function () {
+        // sjekk på nytt: turen kan ha endra seg, eller spelaren ha kasta sjølv
+        if (app.autocast && !app.over && !app.busy && humanTurn() &&
+            app.st && app.st.phase === 'roll') { onRoll(); }
+      }, D(650));
+    }
   }
 
   function cpuTurn() {
@@ -550,8 +566,9 @@
   function engName(id) { return global.ENG ? global.ENG.name(id) : id; }
   function engReady() { return global.ENG && global.ENG.ready(app.engine); }
 
-  // Testkrok: let testane drive den verkelege settle-vegen (omkast-bugen)
+  // Testkrok: let testane drive den verkelege settle-/kaste-vegen
   global.__settle = settleAndContinue;
+  global.__rollPhase = rollPhase;
   function syncLevelSelect() {
     var lv = $('cpu-level');
     if (!lv) return;
@@ -820,6 +837,16 @@
       });
     }
     $('btn-local').addEventListener('click', function () { app.mode = 'local'; newGame(); });
+    // «Autokast»: hugsar valet, og kastar med ein gong om vi alt ventar på kast
+    app.autocast = readAutocast();
+    if ($('chk-autocast')) {
+      $('chk-autocast').checked = app.autocast;
+      $('chk-autocast').addEventListener('change', function (e) {
+        app.autocast = !!e.target.checked;
+        writeAutocast(app.autocast);
+        if (app.autocast && app.st && app.st.phase === 'roll' && !app.over && !app.busy && humanTurn()) onRoll();
+      });
+    }
     $('btn-resume').addEventListener('click', function () {
       if (!resumeGame()) { UI.toast('Fann ikje noko lagra parti'); show('menu'); }
     });
