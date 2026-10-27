@@ -221,12 +221,13 @@ eq(lm.map(m => SS.name(m.to)).sort().join(','), 'F2,J2',
 // étt loddrett med X: H3 (P2-hjem) og H1 (P1-hjem) må være tomme felt:
 SS.soldiers(st, 1).forEach(x => { var b = SS.pt(SS.soldierAt(1, x.at)); if (b.col === 7 && b.row === 2) x.captured = true; });
 SS.soldiers(st, 0).forEach(x => { if (x.at === 7 && !x.released) x.captured = true; });
-// X VEKKJER berre: kongen (alltid «utløyst») får ingen trekk med X. Vertikalt
-// er han dessutan utan trekk med II/III (F/B frå midtrada går i veggen på 2
-// steg), så kongen held seg på rad 2 — han kan berre gå R/L.
+// X er eit 1-tal: kongen får 1 steg kvar veg BÅDE langs syklusen (G2/I2) og
+// loddrett i same kolonne (H3/H1) — fire trekk. (Lars 2026-10-27: loddrett
+// var blokkert fordi stepDir('F'/'B') aldri vart kalla for konge/dronning.)
 st.dice = ['X', 'X', 'X']; st.used = [false,false,false]; st.phase = 'move';
 lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
-eq(lm.length, 2, 'X er eit 1-tal — kongen får 1 steg kvar veg');
+eq(lm.map(m => SS.name(SS.moveDest(st, m))).sort().join(','), 'G2,H1,H3,I2',
+   'X: kongen går 1 steg kvar veg — syklus (G2/I2) OG loddrett (H1/H3)');
 st.dice = ['II', '_', '_']; st.used = [false,true,true]; st.phase = 'move';
 lm = SS.legalMoves(st, 0).filter(m => m.pid === k.id);
 eq(lm.map(m => SS.name(m.to)).sort().join(','), 'F2,J2',
@@ -342,8 +343,9 @@ for (let g = 0; g < 300; g++) {
   // X vekkjer berre: kongen er ALDRI «inaktiv», so X gjev han ingen trekk.
   k.at = nameIdx('H2');
   st.dice = ['III', 'II', 'X']; st.used = [true, true, false];
-  eq(SS.legalMoves(st, 0).filter(m => m.pid === k.id).map(m => SS.name(m.to)).sort().join(','),
-     'G2,I2', 'X H2: kongen går 1 steg kvar veg (X er eit 1-tal)');
+  eq(SS.legalMoves(st, 0).filter(m => m.pid === k.id)
+       .map(m => SS.name(SS.moveDest(st, m))).sort().join(','),
+     'G2,H1,H3,I2', 'X H2: kongen går 1 steg kvar veg — syklus og loddrett');
 
   // II frå H2: to steg kvar veg i syklusen -> F2 og J2
   k.at = nameIdx('H2');
@@ -611,6 +613,62 @@ ok(overCount >= 250, '300 tilfeldige spill: ' + overCount + ' endte med seier (u
   st2.dice = ['X', '_', '_']; st2.used = [false, true, true]; st2.phase = 'move'; st2.turn = 0;
   ok(!SS.canRerollX(st2), 'utan aktive brikker er X-omkast forbode');
 }
+
+/* ---- loddrett gang (Lars 2026-10-27) --------------------------------------
+   Kongen og dronninga går som kvarandre: langs tallsyklusen (åttetalet) OG
+   rett opp/ned i same kolonne, v steg i same retning. Bug: stepDir('F'/'B')
+   fanst, men vart aldri kalla for konge/dronning, so opp/ned var blokkert. */
+(function loddrett() {
+  const ni = nm => { for (let i = 0; i < 45; i++) if (SS.name(i) === nm) return i; return -1; };
+
+  function rig(kAt, qAt, face) {
+    const st = SS.newGame({ first: 0, queenMode: true });
+    st.pieces.forEach(p => { if (p.t === 's') p.captured = true; });
+    const k = SS.king(st); k.o = 0; k.at = kAt;
+    const q = SS.queen(st, 0); q.captured = false; q.released = true; q.at = qAt;
+    st.dice = [face, '_', '_']; st.used = [false, true, true];
+    st.phase = 'move'; st.turn = 0;
+    return { st, k, q };
+  }
+  const dests = (st, p) => SS.legalMoves(st, 0).filter(m => m.pid === p.id)
+    .map(m => SS.name(SS.moveDest(st, m))).sort().join(',');
+
+  // konge midt i: X -> opp og ned i same kolonne
+  let r = rig(ni('C2'), ni('F2'), 'X');
+  ok(dests(r.st, r.k).includes('C3') && dests(r.st, r.k).includes('C1'),
+     'konge C2 + X: loddrett opp (C3) og ned (C1)  [' + dests(r.st, r.k) + ']');
+
+  // dronninga: ho skal ha dei same loddrette trekka i si kolonne
+  ok(dests(r.st, r.q).includes('F3') && dests(r.st, r.q).includes('F1'),
+     'dronning F2 + X: loddrett opp (F3) og ned (F1)  [' + dests(r.st, r.q) + ']');
+
+  // II frå heimerada: to steg opp (C1 -> C3)
+  r = rig(ni('C1'), ni('F2'), 'II');
+  ok(dests(r.st, r.k).includes('C3'), 'konge C1 + II: to steg rett opp til C3  [' + dests(r.st, r.k) + ']');
+
+  // III frå C1: tre steg opp går i veggen (berre to rekker) -> ingen loddrett
+  r = rig(ni('C1'), ni('F2'), 'III');
+  ok(!dests(r.st, r.k).includes('C3'), 'konge C1 + III: veggen stoppar 3 steg opp  [' + dests(r.st, r.k) + ']');
+
+  // Kan ikkje lande på eiga brikke
+  r = rig(ni('C2'), ni('F2'), 'X');
+  const own = SS.soldiers(r.st, 0)[0];
+  own.captured = false; own.released = true; own.at = ni('C3');    // opp-landingsfeltet
+  ok(!dests(r.st, r.k).includes('C3'), 'loddrett: kan ikkje lande på eiga brikke');
+  own.captured = true;
+
+  // Men ho kan HOPPE over henne (banen er fri, berre landinga er regulert)
+  r = rig(ni('C1'), ni('F2'), 'II');
+  const hop = SS.soldiers(r.st, 0)[0];
+  hop.captured = false; hop.released = true; hop.at = ni('C2');    // midt på vegen opp
+  ok(dests(r.st, r.k).includes('C3'), 'loddrett: banen kan passere eiga brikke (C1->C3)');
+
+  // Motstandar på landingsfeltet: kongen slår ut
+  r = rig(ni('C2'), ni('F2'), 'X');
+  const foe = SS.soldiers(r.st, 1)[0];
+  foe.captured = false; foe.released = true; foe.at = ni('C3');
+  ok(dests(r.st, r.k).includes('C3'), 'loddrett: kongen slår fiendtleg soldat på C3');
+})();
 
 console.log('\n' + pass + ' pass, ' + fail + ' fail');
 process.exit(fail ? 1 : 0);
