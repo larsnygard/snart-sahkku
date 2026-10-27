@@ -837,15 +837,18 @@ function encodeState(st) {
     else S(11, 0, 2);
   }
   var g = new Float32Array(N_GLOBAL);
+  var me = st.turn, foe = 1 - me;
   g[0] = st.turn === 0 ? 1 : -1;
-  g[1] = st.kills[0] / 15;
-  g[2] = st.kills[1] / 15;
-  g[3] = SS.aliveSoldiers(st, 0).length / 15;
-  g[4] = SS.aliveSoldiers(st, 1).length / 15;
+  g[1] = st.kills[me] / 15;                       // POV-relativt (mi side fyrst)
+  g[2] = st.kills[foe] / 15;
+  // UTLØYSTE soldatar, ikkje «i live»: heimebrikker er trygge og gjev ingen
+  // mobilitet. Talet på heimebrikker er implisitt 15 − utløyste − slagtekne.
+  g[3] = SS.aliveSoldiers(st, me).filter(function (p) { return p.released; }).length / 15;
+  g[4] = SS.aliveSoldiers(st, foe).filter(function (p) { return p.released; }).length / 15;
   g[5] = Math.min(st.moves, 200) / 200;
-  var q0 = SS.queen(st, 0), q1 = SS.queen(st, 1);
-  g[6] = (q0 && q0.released) ? 1 : 0;   // UTLØYST, ikkje berre «finst» (jf. features.py)
-  g[7] = (q1 && q1.released) ? 1 : 0;
+  var qm = SS.queen(st, me), qf = SS.queen(st, foe);
+  g[6] = (qm && qm.released) ? 1 : 0;   // UTLØYST og POV-relativ (jf. features.py)
+  g[7] = (qf && qf.released) ? 1 : 0;
   g[8] = (st.dice ? st.dice.filter(function (d) { return d === 'X'; }).length : 0) / 3;
   g[9] = st.winner === null || st.winner === undefined ? 1 : (st.winner === st.turn ? 1 : -1);
   return { planes: pl, glob: g };
@@ -985,6 +988,7 @@ var ENGINE_NAME = 'AIL0.3';   // settast ved eksport (--name)
 var st = SS.fromFEN(START_FEN);
 var dbg = false, ilStreak = 0;
 var LA = 4;              // 0 = rein policy (moment); k = 1-ply verdilookahead på k+1 trekk
+var DEEP = 0;            // 0 = av; m > 0 = 2-ply: motstandaren sine m beste svar vert rekna med
 var DEC = { X: 'X', '2': 'II', '3': 'III', '_': '_' };  // wire-faces -> interne fjes (som i ref)
 
 function encode(st_, mv) {
@@ -1069,6 +1073,32 @@ function childValue(ch, rootTurn) {
   var v = valueOf(ch);
   return ch.turn === rootTurn ? v : -v;
 }
+// 2-ply: etter vårt trekk er motstandaren i tur. Verdistett vårt trekk som
+// det VERSTE motstandaren kan gjere mot oss, blant dei m beste svara hans
+// (etter policy). Det fangar t.d. «trekket mitt ser bra ut, men han tek
+// dronninga mi neste gong» — noko 1-ply lookahead ikkje ser.
+function deepScore(ch, rootTurn, m) {
+  var ids = legalIds(ch);
+  if (!ids.length) return childValue(ch, rootTurn);
+  var real = [];
+  for (var i = 0; i < ids.length; i++) if (ids[i][0] < SPEC_BASE) real.push(ids[i]);
+  if (!real.length) return childValue(ch, rootTurn);   // berre pass/reroll
+  var e = encodeState(ch), f = netForward(e.planes, e.glob);
+  real.sort(function (a, b) { return f.policy[b[0]] - f.policy[a[0]]; });
+  var worst = Infinity;
+  for (var j = 0; j < Math.min(m, real.length); j++) {
+    var tok = encode(ch, real[j][1]);
+    if (!tok) continue;
+    var g = SS.deserialize(SS.serialize(ch));
+    var mv2 = decode(g, tok);
+    if (!mv2) continue;
+    SS.applyMove(g, mv2); SS.settle(g);
+    var v = childValue(g, rootTurn);
+    if (v < worst) worst = v;
+  }
+  return worst === Infinity ? childValue(ch, rootTurn) : worst;
+}
+
 function pick(st_) {
   var ids = legalIds(st_);
   var enc = encodeState(st_);
@@ -1091,7 +1121,9 @@ function pick(st_) {
       var mv2 = decode(ch, tok);
       if (!mv2) continue;
       SS.applyMove(ch, mv2); SS.settle(ch);
-      var cv = childValue(ch, st_.turn);
+      var cv = (DEEP > 0 && ch.winner == null)
+        ? deepScore(ch, st_.turn, DEEP)
+        : childValue(ch, st_.turn);
       if (cv > bestV) { bestV = cv; bestC = cand[c][0]; }
     }
     if (bestV > -Infinity) return { aid: bestC, value: bestV };
@@ -1131,6 +1163,7 @@ M.onLine = function (line) {
       out('id author sahkku-ai (PyTorch -> JS export)');
       out('option name Debug type check default false');
       out('option name Lookahead type spin default 4 min 0 max 12');
+      out('option name Deep type spin default 0 min 0 max 4');
       out('uciok');
     } else if (cmd === 'isready') {
       out('readyok');
@@ -1144,7 +1177,11 @@ M.onLine = function (line) {
         if (onm === 'debug') dbg = oval === 'true';
         else if (onm === 'lookahead') {
           var n = parseInt(oval, 10);
-          LA = isNaN(n) ? 0 : Math.max(0, Math.min(12, n));
+          LA = isNaN(n) ? 4 : Math.max(0, Math.min(12, n));
+        }
+        else if (onm === 'deep') {
+          var d = parseInt(oval, 10);
+          DEEP = isNaN(d) ? 0 : Math.max(0, Math.min(4, d));
         }
       }
     } else if (cmd === 'position') {
@@ -1198,6 +1235,20 @@ M.exported = {
         var mv = ids[i][1];
         return (mv && mv.pid !== undefined) ? mv : null;
       }
+    }
+    return null;
+  },
+  // Vel ei HANDLING (ikkje berre eit trekk): omkast og pass er no val, og
+  // GUI-et skal ikkje kaste om på eigen hand. Returnerer {kind, aid, mv?}.
+  chooseAction: function (st_) {
+    var ids = legalIds(st_);
+    if (!ids.length) return null;
+    var pk = pick(st_);
+    for (var i = 0; i < ids.length; i++) {
+      if (ids[i][0] !== pk.aid) continue;
+      var mv = ids[i][1], k = mv && mv.kind ? mv.kind : 'mv';
+      return { kind: (k === 'pass' || k === 'reroll') ? k : 'move',
+               aid: ids[i][0], mv: mv };
     }
     return null;
   },

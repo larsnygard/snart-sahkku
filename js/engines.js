@@ -97,6 +97,16 @@
     }
   }
 
+  // NN-motoren si eiga avgjerd òg for omkast/pass (ikkje berre trekk)
+  function action(id, st) {
+    var m = mods[id];
+    if (!m || !m.ready || !m.mod) return null;
+    try {
+      if (typeof m.mod.exported.chooseAction !== 'function') return null;
+      return m.mod.exported.chooseAction(st);
+    } catch (e) { return null; }
+  }
+
   function name(id) {
     var e = byId(id);
     return e ? e.name : id;
@@ -107,7 +117,7 @@
   }
 
   global.ENG = {
-    list: fetchList, byId: byId, load: load, ready: ready, move: move,
+    list: fetchList, byId: byId, load: load, ready: ready, move: move, action: action,
     name: name, type: type, error: function (id) { return mods[id] && mods[id].err; }
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

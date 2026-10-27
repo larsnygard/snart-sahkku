@@ -202,7 +202,9 @@
     actionEl.appendChild(pb);
     if (st.phase === 'move' && ui.interactive) {
       var lm = SS.legalMoves(st, st.turn);
-      if (!lm.length && !SS.canRerollX(st)) pb.style.display = '';
+      // Inga lovleg trekk: omkast er VALFRITT — vis både «kast om» og
+      // «hopp over», so spelaren kan velje å avslutte turen i staden.
+      if (!lm.length) pb.style.display = '';
     }
   }
 

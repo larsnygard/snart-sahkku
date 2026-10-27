@@ -95,7 +95,24 @@
       if (humanTurn()) { refresh(); }   // vis omkast-knapp
       else if (app.mode === 'online') { /* motspilleren avgjør selv */ }
       else {
-        // CPU: kast om X-ene
+        // CPU: omkast er eit VAL, ikkje noko som skjer automatisk. NN-motorane
+        // avgjer sjølv; klassisk CPU kastar berre om når ho ikkje kan noko
+        // anna (ho har ingen strategi for det).
+        var act = (global.ENG && global.ENG.ready(app.engine))
+          ? global.ENG.action(app.engine, app.st) : null;
+        if (act && act.kind === 'pass') {
+          UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': hoppar over resten');
+          SS.passRemaining(app.st);
+          afterTurnChange();
+          return;
+        }
+        if (act && act.kind === 'move') {
+          var evm = SS.applyMove(app.st, act.mv);
+          announceEvents(evm);
+          refresh();
+          setTimeout(settleAndContinue, D(60));
+          return;
+        }
         SS.rerollX(app.st);
         UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': kastet om X-ene');
         setTimeout(cpuStep, D(550));
@@ -532,6 +549,9 @@
   // ---------- motorar (fleire samtidig) ----------
   function engName(id) { return global.ENG ? global.ENG.name(id) : id; }
   function engReady() { return global.ENG && global.ENG.ready(app.engine); }
+
+  // Testkrok: let testane drive den verkelege settle-vegen (omkast-bugen)
+  global.__settle = settleAndContinue;
   function syncLevelSelect() {
     var lv = $('cpu-level');
     if (!lv) return;
