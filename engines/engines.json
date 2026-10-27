@@ -42,6 +42,15 @@
       "weights": "engines/ail0.4.weights.json",
       "lookahead": 4,
       "note": "Trena mot klassisk CPU nivå 3 (ikkje sjølvspel), med MCTS-mål og nye globale trekk: utløyste (ikkje «levande») brikker, POV-relative."
+    },
+    {
+      "id": "ail0.5",
+      "name": "AIL0.5",
+      "type": "nn",
+      "script": "engines/ail0.5.js",
+      "weights": "engines/ail0.5.weights.json",
+      "lookahead": 4,
+      "note": "Trena 12 syklusar mot klassisk CPU nivå 3 (219 000 prøver). Målt 50 % mot same CPU — jamstilt med den sterke klassiske."
     }
   ]
 }
