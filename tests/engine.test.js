@@ -670,6 +670,41 @@ ok(overCount >= 250, '300 tilfeldige spill: ' + overCount + ' endte med seier (u
   ok(dests(r.st, r.k).includes('C3'), 'loddrett: kongen slår fiendtleg soldat på C3');
 })();
 
+/* ---- individuelt X-omkast (Lars 2026-10-27) -----------------------------
+   Slår ein fleire X, er kvar terning si eiga handling: ein kan halde på éin
+   og kaste om ein annan. Før kasta rerollX om ALLE X-ane på éin gong. */
+(function individueltOmkast() {
+  function rig() {
+    const st = SS.newGame({ first: 0 });
+    st.phase = 'move'; st.turn = 0;
+    const s = SS.soldiers(st, 0)[0];
+    s.released = true; s.captured = false;          // éi aktiv brikke -> omkast lovleg
+    st.dice = ['X', 'X', 'III']; st.used = [false, false, false];
+    return st;
+  }
+  const fast = () => 0.5;                            // => fjes III
+
+  let st = rig();
+  SS.rerollX(st, fast, 1);                           // berre terning 1
+  eq(st.dice.join(' '), 'X III III', 'omkast av terning 1 rører ikkje terning 0');
+
+  st = rig();
+  SS.rerollX(st, fast, 0);
+  eq(st.dice.join(' '), 'III X III', 'omkast av terning 0 rører ikkje terning 1');
+
+  st = rig();
+  eq(SS.rerollX(st, fast, 2), null, 'terning 2 er III — ikkje X, kan ikkje kastast om');
+  eq(st.dice.join(' '), 'X X III', 'nekta omkast let terningane stå');
+
+  st = rig();
+  st.used = [true, false, false];                    // terning 0 alt brukt
+  eq(SS.rerollX(st, fast, 0), null, 'ein BRUKT X kan ikkje kastast om');
+
+  st = rig();
+  SS.rerollX(st, fast);                              // utan slot = fyrste ubrukte X
+  eq(st.dice.join(' '), 'III X III', 'utan slot vert den fyrste ubrukte X-en kasta om');
+})();
+
 /* ---- utryddelse slår sjølv om fienden eig konge og dronning --------------
    Lars 2026-10-27: «If all soldiers are fallen, the game is lost to
    annihilation, even if you control the king and have an unactivated

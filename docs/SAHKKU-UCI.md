@@ -53,7 +53,8 @@ Why the protocol differs from chess UCI (read this once, then write engines):
   avoid moving your pieces (when a wake *is* available) is **not** allowed;
   that was the old rule and it is gone. All X dice are re-rolled at once, and
   the rule may be used repeatedly while `X` stays unusable. The engine signals
-  it with the keyword `reroll`.
+  it with the keyword `reroll`. Each `reroll` re-rolls **one** X die (the
+  first unused one) — X dice are re-rolled individually, not as a group.
 * When no legal move exists for the remaining dice (and no X-reroll applies),
   the side plays `pass`: the remaining dice are skipped and the turn ends.
 * The turn ends when all dice slots are spent (used, passed, or skipped).
@@ -197,7 +198,7 @@ taking the **frontmost** (number-cycle-highest) piece matching `from→to`.
 | keyword | meaning | when legal |
 |---|---|---|
 | `<from>-<to>` | ordinary move | the move is in the move pool for the active die |
-| `reroll` | re-roll all X dice at once, the turn does **not** end | active die is X **and** the move pool is empty (the X-reroll rule) |
+| `reroll` | re-roll **one** X die (the first unused one), the turn does **not** end; call it repeatedly to re-roll several | active die is X **and** the move pool is empty (the X-reroll rule) |
 | `pass` | skip all remaining dice; the turn ends | the move pool is empty and no X-reroll applies |
 | `resign` | the engine resigns; the opponent wins | any time during `move` |
 | `none` | no move exists and the engine will not resign | phase `over` (engine answering a late `go`), or when it refuses to move — GUI treats like `resign` |

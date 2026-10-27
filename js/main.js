@@ -116,7 +116,7 @@
           return;
         }
         if (act && act.kind === 'reroll') {
-          SS.rerollX(app.st);
+          SS.rerollX(app.st, undefined, (act.slot == null ? null : act.slot));
           UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': kastet om X-ene');
           setTimeout(cpuStep, D(550));
           return;
@@ -224,10 +224,13 @@
     doc.querySelectorAll('.die').forEach(function (el) { el.classList.add('rolling'); });
     setTimeout(settleAndContinue, D(420));
   }
-  function onReroll() {
-    if (app.mode === 'online') return onlineReroll();
-    var r = SS.rerollX(app.st);
-    if (r) UI.log('Kastet om X-ene: ' + r.join(' '));
+  // `slot` = kva X-terning spelaren klikka på (0-2). Utan slot: den fyrste
+  // ubrukte X-en, som er kva CPU-en gjer.
+  function onReroll(slot) {
+    if (app.mode === 'online') return onlineReroll(slot);
+    var before = app.st.dice.slice();
+    var r = SS.rerollX(app.st, undefined, slot);
+    if (r) UI.log('Kastet om ' + (before.join(' ')) + ' → ' + r.join(' '));
     settleAndContinue();
   }
   function onPass() {
@@ -343,15 +346,15 @@
       }, 6000);
     }
   }
-  function onlineReroll() {
+  function onlineReroll(slot) {
     if (app.st.turn !== app.me) return;
     if (app.host) {
-      var r = SS.rerollX(app.st);
+      var r = SS.rerollX(app.st, undefined, slot);
       if (r) { UI.log('Kastet om X-ene: ' + r.join(' ')); onlineSnapshot(); }
       settleAndContinue();
     } else {
       app.busy = true; refresh();
-      NET.send({ t: 'reroll' });
+      NET.send({ t: 'reroll', slot: slot });
       clearTimeout(app._rt);
       app._rt = setTimeout(function () { if (app.busy) { app.busy = false; NET.send({ t: 'sync' }); refresh(); } }, 6000);
     }
@@ -467,7 +470,7 @@
         }
       } else if (d.t === 'reroll') {
         if (app.st.turn === foe && SS.canRerollX(app.st)) {
-          SS.rerollX(app.st);
+          SS.rerollX(app.st, undefined, (d.slot == null ? null : d.slot));
           UI.log('Koner kasta om X-ene: ' + app.st.dice.join(' '));
           onlineSnapshot();
         }

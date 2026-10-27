@@ -43,8 +43,9 @@ const path = require('path');
         continue;
       }
       // move-fase: bruk omkast-knapp 25% av gangen
-      const rb = document.getElementById('btn-reroll');
-      if (rb && rb.style.display !== 'none' && Math.random() < 0.25) { rb.click(); rerolls++; continue; }
+      // X-omkast: klikk på ein X-terning (knappen finst ikkje lenger)
+      const rd = document.querySelector('#dicebox-p0 .die.rerollable, #dicebox-p1 .die.rerollable');
+      if (rd && Math.random() < 0.25) { rd.click(); rerolls++; continue; }
       const pb = document.getElementById('btn-pass');
       if (pb && pb.style.display !== 'none') { pb.click(); passes++; continue; }
       // velg første brikke med lovlig trekk, klikk dens første mål

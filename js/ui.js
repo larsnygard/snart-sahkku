@@ -169,17 +169,23 @@
       var isCurrent = (st.diceBy != null ? st.diceBy : st.turn) === o && st.phase === 'move' && !!st.dice.length;
       // Kan X kastast om? Gjer då terningane klikkbare — det er den mest
       // opplagde måten å kaste om på (Lars 2026-10-26).
+      // Kvar X-terning er klikkbar for seg (Lars 2026-10-27): slår ein to X,
+      // kastar ein om berre den eine. Difor ingen «kast om»-knapp lenger.
       var canRe = isCurrent && ui.interactive && SS.canRerollX(st);
       box.classList.toggle('rerollable', !!canRe);
-      box.title = canRe ? 'Klikk for å kaste om X-ene' : '';
-      box.onclick = canRe ? function () { if (ui.onReroll) ui.onReroll(); } : null;
+      box.title = '';
+      box.onclick = null;
       d.forEach(function (face, ix) {
         var el = doc.createElement('div');
-        el.className = 'die' + (face === 'X' ? ' X' : '');
-        if (canRe && face === 'X') el.classList.add('rerollable');
         var used = isCurrent && st.used && st.used[ix];
+        var solo = canRe && face === 'X' && !used;
+        el.className = 'die' + (face === 'X' ? ' X' : '') + (solo ? ' rerollable' : '');
         if (used) el.classList.add('used');
         el.textContent = face === '_' ? '·' : face;
+        if (solo) {
+          el.title = 'Klikk for å kaste om denne X-en';
+          el.onclick = function () { if (ui.onReroll) ui.onReroll(ix); };
+        }
         box.appendChild(el);
       });
     });
@@ -187,23 +193,19 @@
 
   function renderActions() {
     var st = ui.st;
-    var rb = doc.createElement('button');
-    rb.id = 'btn-reroll';
-    rb.textContent = '↻ Kast om X-ene';
-    rb.style.display = (SS.canRerollX(st) && ui.interactive) ? '' : 'none';
-    rb.onclick = function () { if (ui.onReroll) ui.onReroll(); };
+    // Ingen «kast om»-knapp: X-ane vert kasta om ved å klikke på terningen
+    // sjølv (og berre den eine, om ein slo fleire).
     var pb = doc.createElement('button');
     pb.id = 'btn-pass';
     pb.textContent = 'Hopp over';
     pb.style.display = 'none';
     pb.onclick = function () { if (ui.onPass) ui.onPass(); };
     actionEl.innerHTML = '';
-    actionEl.appendChild(rb);
     actionEl.appendChild(pb);
     if (st.phase === 'move' && ui.interactive) {
       var lm = SS.legalMoves(st, st.turn);
-      // Inga lovleg trekk: omkast er VALFRITT — vis både «kast om» og
-      // «hopp over», so spelaren kan velje å avslutte turen i staden.
+      // Inga lovleg trekk: omkast er VALFRITT (klikk på ein X-terning) —
+      // «hopp over» let spelaren avslutte turen i staden.
       if (!lm.length) pb.style.display = '';
     }
   }
