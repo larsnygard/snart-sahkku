@@ -670,5 +670,36 @@ ok(overCount >= 250, '300 tilfeldige spill: ' + overCount + ' endte med seier (u
   ok(dests(r.st, r.k).includes('C3'), 'loddrett: kongen slår fiendtleg soldat på C3');
 })();
 
+/* ---- utryddelse slår sjølv om fienden eig konge og dronning --------------
+   Lars 2026-10-27: «If all soldiers are fallen, the game is lost to
+   annihilation, even if you control the king and have an unactivated
+   queen.» Siste soldat fell -> partiet er over; konge og dronning bergar
+   ingen. (Difor kan heller ikkje «berre dronninga att» oppstå i eit
+   verkeleg parti — den sida har alt tapt.) */
+(function utryddelse() {
+  let pair = null;
+  for (let t0 = 0; t0 < 60 && !pair; t0++)
+    for (let t1 = 0; t1 < 60 && !pair; t1++)
+      if (SS.soldierAt(0, t0 + 1) === SS.soldierAt(1, t1)) pair = [t0, t1];
+
+  const st = SS.newGame({ first: 0, queenMode: true });
+  st.phase = 'move'; st.turn = 0;
+  st.pieces.forEach(p => { if (p.t === 's') p.captured = true; });
+  const s0 = SS.soldiers(st, 0)[0]; s0.captured = false; s0.released = true; s0.at = pair[0];
+  const s1 = SS.soldiers(st, 1)[0]; s1.captured = false; s1.released = true; s1.at = pair[1];
+  SS.king(st).o = 1;                                    // fienden EIG kongen
+  const q1 = SS.queen(st, 1); q1.captured = false; q1.released = true; q1.at = 20;
+  st.dice = ['X', '_', '_']; st.used = [false, true, true];
+
+  const mv = SS.legalMoves(st, 0).find(m => m.pid === s0.id && m.kind === 'mv');
+  SS.applyMove(st, mv);
+  eq(SS.aliveSoldiers(st, 1).length, 0, 'utryddelse: siste soldat er fallen');
+  eq(st.winner, 0, 'utryddelse: motstandaren vinn når siste soldat fell');
+  eq(st.winReason, 'utryddelse', 'utryddelse: årsaka er utryddelse (ikkje dronning)');
+  eq(st.phase, 'over', 'utryddelse: partiet er over');
+  eq(SS.king(st).o, 1, 'utryddelse: konge-eigaren var urørt (1)');
+  ok(!q1.captured, 'utryddelse: dronninga levde framleis');
+})();
+
 console.log('\n' + pass + ' pass, ' + fail + ' fail');
 process.exit(fail ? 1 : 0);
