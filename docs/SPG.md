@@ -1,5 +1,11 @@
 # SPG — Sáhkku Portable Game
-### A PGN-inspired notation for sáhkku (Lágesvuotna rules), format version **SPG-V1**
+### A PGN-inspired notation for sáhkku (Lágesvuotna rules), format version **SPG-V1**, revision 1.2
+
+> **Revision 1.2** (2026-10-27): added the `[Time]`/`[UTC]` start-time tags and
+> PGN-style comments (§5). Both are purely additive — a 1.1 reader ignores the
+> tags (unknown tags must be ignored) and, having no comment syntax, would need
+> to skip `{…}`/`;` lines to stay correct, so the sections below define that
+> behaviour for readers.
 
 > **Why this format exists.** No established sáhkku notation exists — neither
 > the rule documents (sahkku.no), Wikipedia, nor Ludii define one. SPG fills
@@ -21,7 +27,9 @@ An SPG file is UTF-8, LF line endings, extension `.spg`. It has three parts:
 
 ```
 [Event "Kapplanginga 3. rundar"]      # PGN-style header tags
-[Date "2026-10-25"]
+[Date "2026-10-25"]                    # day the game STARTED
+[Time "19:42:07"]                      # local start time
+[UTC "2026-10-25T17:42:07Z"]           # same instant, unambiguous
 [Menn "Olbmát"]
 [Koner "Gálgut"]
 [Result "0-1"]
@@ -41,7 +49,9 @@ PGN syntax: `[Tag "value"]`, one per line, before the `SPG-V1` marker.
 | tag | meaning |
 |---|---|
 | `Event` | name of the event/match, e.g. `"Parti mot CPU"`, `"Parti på nett"` |
-| `Date` | `YYYY-MM-DD` |
+| `Date` | `YYYY-MM-DD` — the date the game **started** |
+| `Time` | `HH:MM:SS` — the local clock time the game **started** (PGN's `Time` tag) |
+| `UTC` | `YYYY-MM-DDTHH:MM:SSZ` — the same instant in UTC; unambiguous, and what tools should sort on. Optional but recommended: without it a `Date`/`Time` pair is only local time, and a game played across midnight or in another timezone cannot be placed |
 | `Menn` | Menn player name, form `"Etternamn, Fornamn"`; default `"Olbmát"` (sámi for *menn*) |
 | `Koner` | Koner player name, form `"Etternamn, Fornamn"`; default `"Gálgut"` (sámi for *koner*) |
 
@@ -174,7 +184,40 @@ line** marked `(omkast #n)`, with a `X!` body line under it:
 voluntary (the side may also pass). `X!` appears **only** on omkast lines —
 the plain X release (§3.1) is written `X->square`.
 
-## 5. Game end
+## 5. Comments
+
+SPG uses PGN's comment syntax verbatim, so existing PGN habits and tools carry
+over. There are two forms:
+
+* **Brace comment** — `{ ... }`. May stand on its own line, or follow a roll
+  or a move line on the same line:
+  ```
+  14. M: II III _
+     II: ML2->M4
+     {Menn held the queen back two rolls too long here.}
+  15. K: X _ _ {forced: no active piece, so the X must wake someone}
+  ```
+  A brace comment may span several lines. Braces do not nest: everything up to
+  the first `}` is comment text, so a `{` inside a comment is literal. (That is
+  the PGN rule; nested comments are not portable.)
+* **Rest-of-line comment** — `; ...`. Everything from the `;` to the end of the
+  line is ignored:
+  ```
+  15. K: X _ _    ; the wake is forced, there is nothing else legal
+  ```
+
+Rules for readers and writers:
+
+1. **Comments carry no game state.** Replaying a file with or without its
+   comments must produce the identical position. Readers must skip them.
+2. A comment may appear **between** tokens, never **inside** one: `K3->K5` must
+   not be split as `K3->{x}K5`. Keeping that rule makes line-based parsing safe.
+3. Writers should preserve comments when re-exporting — they are the only place
+   human analysis lives — and may add their own (an engine annotating its choice,
+   a tool recording its own name and version).
+4. A comment must not contain an unmatched `}`. There is no escape character.
+
+## 6. Game end
 
 The last body line of a finished game repeats the result with the reason in
 braces:
@@ -186,7 +229,7 @@ braces:
 `*` is not written at the end of unfinished games (the header already says
 `*`).
 
-## 6. Replayability (why this is a complete record)
+## 7. Replayability (why this is a complete record)
 
 A conformant reader can rebuild every position from the start position using
 only the file:
@@ -205,7 +248,7 @@ replay across programs uses the S-UCI `position ... moves` tokens —
 `docs/SAHKKU-UCI.md` §5 — which carry the same information in a compact
 form.)
 
-## 7. Full example
+## 8. Full example
 
 Complete, real export from the app (CPU game; the last move captures Giera's
 queen). All constructs appear: opening ritual, release, II/III moves, king
@@ -295,9 +338,9 @@ A whole-roll pass looks like:
 
 (blank faces only — nothing playable; the roll line stands alone).
 
-## 8. Writing engines/tools for SPG
+## 9. Writing engines/tools for SPG
 
-* **Writers**: keep the file valid under §1–§5; unknown extra tags are fine.
+* **Writers**: keep the file valid under §1–§6; unknown extra tags are fine.
   Never number gaps, always one roll line per roll (incl. re-rolls).
 * **Readers**: ignore unknown tags and unknown piece suffixes gracefully;
   refuse files whose marker is not `SPG-V1`.

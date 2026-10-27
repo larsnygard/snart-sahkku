@@ -41,7 +41,16 @@
     meta = meta || {};
     var L = [];
     L.push('[Event "' + (meta.event || 'Sáhkku-parti') + '"]');
-    L.push('[Date "' + (meta.date || new Date().toISOString().slice(0, 10)) + '"]');
+    // SPG 1.2: tidspunktet partiet BYRJA, ikkje då det vart eksportert.
+    // Date/Time er lokal tid (som PGN sin [Time]); UTC gjer augneblinken
+    // entydig, so han kan sorterast og samanliknast på tvers av tidssoner.
+    var start = meta.start ? new Date(meta.start) : new Date();
+    var pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
+    L.push('[Date "' + (meta.date || (start.getFullYear() + '-' +
+      pad2(start.getMonth() + 1) + '-' + pad2(start.getDate()))) + '"]');
+    L.push('[Time "' + (meta.time || (pad2(start.getHours()) + ':' +
+      pad2(start.getMinutes()) + ':' + pad2(start.getSeconds()))) + '"]');
+    L.push('[UTC "' + (meta.utc || start.toISOString().replace(/\.\d+Z$/, 'Z')) + '"]');
     // SPG 1.1: sídene heiter Menn og Koner (ikkje White/Black). Namn på
     // forma «Etternamn, Fornamn». Ukjende namn: dei samiske side-namna
     // (olbmát = menn, gálgut = koner). Datamaskin: «(c) <motor>».
@@ -51,6 +60,10 @@
     if (st.winReason) L.push('[Termination "' + st.winReason + '"]');
     L.push('SPG-V1');
     L.push('');
+    // SPG 1.2: kommentarar, same syntaks som PGN ({…} og ; til linjeslutt).
+    var cm = meta.comment ? (Array.isArray(meta.comment) ? meta.comment : [meta.comment]) : [];
+    cm.forEach(function (c) { L.push('{' + String(c) + '}'); });
+    if (cm.length) L.push('');
     var plyNo = 0;
     (st.log || []).forEach(function (ply) {
       if (ply.t === 'open') {
@@ -78,6 +91,8 @@
         if (m.rel) L.push('   X->' + SS.sqName(m.to));
         else L.push('   ' + pre + head + SS.sqName(m.from) + '->' + SS.sqName(m.to) + tail);
       });
+      // valfri kommentar på turen (t.d. sett inn av eit analyseverktøy)
+      if (ply.c) L.push('   {' + String(ply.c) + '}');
     });
     if (st.winner !== null) L.push((st.winner === 0 ? '1-0' : '0-1') + ' {' + (st.winReason || '') + '}');
     return L.join('\n') + '\n';

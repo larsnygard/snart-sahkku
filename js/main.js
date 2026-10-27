@@ -17,6 +17,7 @@
     over: false,
     autocast: false    // «Autokast»: kast terningane automatisk når turen kjem
   };
+  var APP_VERSION = 'v1.8.1';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -260,6 +261,7 @@
   // ---------- oppstart ----------
   function newGame() {
     app.over = false;
+    app.startTs = new Date().toISOString();   // SPG: [Date]/[Time]/[UTC] = starttida
     app.st = SS.newGame({ first: 0, nesseby: !!app.nesseby });
     var op = SS.openingRoll(app.st);
     app.st.turn = op.first;
@@ -554,6 +556,11 @@
   // ---------- SPG-notasjon: last ned / kopier ----------
   function spgMeta() {
     var m = { event: { cpu: 'Parti mot CPU', local: 'Parti ved same skjerm', online: 'Parti på nett' }[app.mode] || 'Sáhkku-parti' };
+    // SPG 1.2: tidspunktet partiet byrja ([Date]/[Time]/[UTC]), ikkje no.
+    if (app.startTs) m.start = app.startTs;
+    m.comment = 'SnartSáhkku ' + APP_VERSION +
+      (app.mode === 'cpu' ? ', mot ' + (global.ENG ? global.ENG.name(app.engine) : app.engine) : '') +
+      '. Terningar og trekk er registrerte; kommentarar er frie.';
     // Datamaskin-merke etter standarden: «(c) <motor>». Koner er CPU-en.
     if (app.mode === 'cpu') {
       m.koner = 'Gálgut (c) ' + (app.engine === 'classic'
