@@ -9,7 +9,8 @@
     mode: 'cpu',       // 'cpu' | 'local' | 'online'
     me: 0,             // min spiller (online)
     level: 2,          // klassisk CPU: 1-3
-    engine: 'classic', // motor-id frå engines/engines.json (t.d. 'classic', 'ail0.1')
+    engine: 'classic', // motor-id frå engines/engines.json; vert sett til manifestets
+                       // «default» (nyaste modell) so snart lista er lasta
     st: null,
     host: false,       // online: vert = P0, autoritativ
     busy: false,
@@ -605,7 +606,11 @@
         if (e.note) o.title = e.note;
         sel.appendChild(o);
       });
-      if (!engines.some(function (e) { return e.id === app.engine; })) app.engine = engines[0].id;
+      // Standardmotor = manifestets «default» (den nyaste modellen). Klassisk
+      // CPU er framleis reserve om noko feilar med lastinga.
+      var want = global.ENG.defaultId ? global.ENG.defaultId() : null;
+      if (want) app.engine = want;
+      else if (!engines.some(function (e) { return e.id === app.engine; })) app.engine = engines[0].id;
       sel.value = app.engine;
       syncLevelSelect();
     });

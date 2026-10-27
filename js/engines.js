@@ -21,6 +21,7 @@
   'use strict';
   var MANIFEST = 'engines/engines.json';
   var list = null;                 // [{id,name,type,…}]
+  var defaultId = null;            // manifestets «default» (nyaste motor)
   var mods = {};                   // id -> {mod, ready, err}
 
   function fallback() {
@@ -34,6 +35,8 @@
       .then(function (j) {
         var e = (j && j.engines) || [];
         list = e.length ? e : fallback();
+        defaultId = (j && j["default"]) || null;
+        if (defaultId && !list.some(function (x) { return x.id === defaultId; })) defaultId = null;
         return list;
       })
       .catch(function () { list = fallback(); return list; });
@@ -118,6 +121,8 @@
 
   global.ENG = {
     list: fetchList, byId: byId, load: load, ready: ready, move: move, action: action,
+    // standardmotor frå manifestet (til dømes den nyaste modellen), elles null
+    defaultId: function () { return defaultId; },
     name: name, type: type, error: function (id) { return mods[id] && mods[id].err; }
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

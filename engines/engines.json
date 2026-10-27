@@ -1,5 +1,6 @@
 {
   "v": 1,
+  "default": "ail0.5",
   "engines": [
     {
       "id": "classic",
