@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "ail0.5",
+  "default": "ail0.6",
   "engines": [
     {
       "id": "classic",
@@ -52,6 +52,15 @@
       "weights": "engines/ail0.5.weights.json",
       "lookahead": 4,
       "note": "Trena 12 syklusar mot klassisk CPU nivå 3 (219 000 prøver). Målt 50 % mot same CPU — jamstilt med den sterke klassiske."
+    },
+    {
+      "id": "ail0.6",
+      "name": "AIL0.6",
+      "type": "nn",
+      "script": "engines/ail0.6.js",
+      "weights": "engines/ail0.6.weights.json",
+      "lookahead": 4,
+      "note": "Sjølvspel med «sein dronning»-handikap + retta søk (kapslar vert krediterte). 85 % mot klassisk nivå 3, 80 % mot AIL0.5."
     }
   ]
 }
