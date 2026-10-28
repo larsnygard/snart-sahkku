@@ -17,7 +17,7 @@
     over: false,
     autocast: false    // «Autokast»: kast terningane automatisk når turen kjem
   };
-  var APP_VERSION = 'v1.10.1';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.10.2';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -31,6 +31,7 @@
 
   // ---------- skjermbytter ----------
   function show(id) {
+    if (id === 'menu' && app._checkUpdate) setTimeout(app._checkUpdate, 150);
     ['menu', 'room', 'game', 'archive'].forEach(function (s) {
       $(s).classList.toggle('hidden', s !== id);
     });
@@ -1039,18 +1040,34 @@
     wireUI();
     wireNet();
     if ('serviceWorker' in navigator) {
-      // Når ein ny SW tek over: last sida på nytt éin gong, so ein open fane
-      // ikkje sit att med gamal kode (det var nettopp det som fekk det til å
-      // sjå ut som om retta feil var tilbake).
-      var hadSW = !!navigator.serviceWorker.controller, reloading = false;
-      if (hadSW) {
-        navigator.serviceWorker.addEventListener('controllerchange', function () {
-          if (reloading) return;
-          reloading = true;
-          if (global.location) global.location.reload();
-        });
+      // Ny SW tek over -> sidan må lastast på nytt for å bruke den nye koden.
+      // Men: ALDRI midt i eit parti (ein mistar stillinga og kan hamne i ein
+      // ny fane), og ALDRI i løkke. Difor: vent til vi er i menyen, og bruk
+      // location.replace (inga ny historie-oppføring).
+      var hadSW = !!navigator.serviceWorker.controller;
+      var RELOAD_KEY = 'sahkku.reloadedAt';
+      function canReloadNow() {
+        return !app.st || app.over || app.mode === 'menu' || app.mode === 'review';
       }
-      navigator.serviceWorker.register('./sw.js').then(function (reg) {
+      function reloadForUpdate() {
+        try {
+          var last = Number(global.sessionStorage.getItem(RELOAD_KEY) || 0);
+          if (last && Date.now() - last < 60000) return false;   // hindrar løkke
+          global.sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+        } catch (e) { /* privat modus */ }
+        if (global.location) global.location.replace(global.location.href);
+        return true;
+      }
+      function pendingUpdate() {
+        app._updateReady = true;
+        if (canReloadNow()) { reloadForUpdate(); return; }
+        UI.toast('Ny versjon er klar — ho vert lasta når partiet er ferdig');
+      }
+      if (hadSW) navigator.serviceWorker.addEventListener('controllerchange', pendingUpdate);
+      app._checkUpdate = function () {           // kallast når vi kjem til menyen
+        if (app._updateReady && canReloadNow()) reloadForUpdate();
+      };
+      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(function (reg) {
         try { reg.update().catch(function () {}); } catch (e) {}
       }).catch(function () {});
     }
