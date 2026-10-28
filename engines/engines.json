@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "ail0.8",
+  "default": "ail0.9",
   "engines": [
     {
       "id": "classic",
@@ -79,6 +79,15 @@
       "weights": "engines/ail0.8.weights.json",
       "lookahead": 4,
       "note": "Lett trena (éin syklus, 200 parti) oppå AIL0.7, med materialklausa i sjølvspelet: trygge slag vert spela, so policy-måla inneheld slag. Førebels utgåve — full køyring kjem."
+    },
+    {
+      "id": "ail0.9",
+      "name": "AIL0.9",
+      "type": "nn",
+      "script": "engines/ail0.9.js",
+      "weights": "engines/ail0.9.weights.json",
+      "lookahead": 4,
+      "note": "Trena 3 syklusar / 600 parti oppå AIL0.8 med materialklausa i sjølvspel og retta søk. 97,5 % mot klassisk nivå 3."
     }
   ]
 }
