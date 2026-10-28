@@ -113,6 +113,57 @@
   }
   function paintTargets() { showTargets(); }
 
+  // Fangstrader: kva kvar side har TEKE. Vi les brikkene (captured + eigar)
+  // i staden for berre st.kills, so vi kan vise kva SLAG det var: prikkar for
+  // soldatar, «♀/⚕» for fiendedronninga, «♔» om sida eig kongen.
+  function renderCaptured(st) {
+    if (!st) return;
+    [0, 1].forEach(function (side) {
+      var list = doc.getElementById('caplist-p' + side);
+      var box = doc.getElementById('cap-p' + side);
+      if (!list || !box) return;
+      list.innerHTML = '';
+      var soldiers = 0, gotQueen = false;
+      st.pieces.forEach(function (p) {
+        if (p.captured && p.o != null && p.o !== side) {
+          if (p.t === 's') soldiers++;
+          else if (p.t === 'q') gotQueen = true;
+        }
+      });
+      var k = SS.king(st);
+      var ownsKing = k && k.o === side;
+      for (var i = 0; i < soldiers; i++) {
+        var d = doc.createElement('span');
+        d.className = 'capdot';
+        list.appendChild(d);
+      }
+      if (gotQueen) {
+        var q = doc.createElement('span');
+        q.className = 'capq';
+        q.textContent = '♀';
+        q.title = 'fiendedronninga er slått ut — partiet er vunne';
+        list.appendChild(q);
+      }
+      if (ownsKing) {
+        var kk = doc.createElement('span');
+        kk.className = 'capk';
+        kk.textContent = '♔';
+        kk.title = 'kongen er kapra';
+        list.appendChild(kk);
+      }
+      if (!soldiers && !gotQueen && !ownsKing) {
+        var none = doc.createElement('span');
+        none.className = 'capnone';
+        none.textContent = '–';
+        list.appendChild(none);
+      }
+      box.title = (side === 0 ? 'Menn' : 'Koner') + ' har fanga ' + soldiers +
+        ' soldat' + (soldiers === 1 ? '' : 'ar') +
+        (gotQueen ? ' og fiendedronninga' : '') +
+        (ownsKing ? ' og kapra kongen' : '');
+    });
+  }
+
   function paintChrome() {
     var st = ui.st;
     if (!st) return;
@@ -125,6 +176,7 @@
     label0.parentNode.classList.toggle('active-p0', st.turn === 0);
     label1.parentNode.classList.toggle('active-p1', st.turn === 1);
     renderDice();
+    renderCaptured(st);
     renderActions();
   }
 
@@ -342,6 +394,7 @@
   ui.setFlip = function (f) { ui.flip = f; render(); markLastMove(); };
   ui.selectPiece = function (pid) { selectPiece(pid); };
   ui.render = render;
+  ui.renderCaptured = renderCaptured;
   ui.markLastMove = markLastMove;
   ui.log = log;
   ui.clearLog = clearLog;

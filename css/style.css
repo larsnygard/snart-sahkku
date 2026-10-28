@@ -303,6 +303,20 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .dicebox { display: flex; gap: 8px; }
 .dicerow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
+/* Fangstrader: kva kvar side har teke (soldatar som prikkar, dronning, konge) */
+.capturedrow { display: flex; gap: 14px; flex-wrap: wrap; margin: 4px 0 2px; }
+.capbox { display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+          color: var(--muted, #8a8f98); min-height: 16px; }
+.capbox .caplabel { white-space: nowrap; }
+.capbox .caplist { display: inline-flex; align-items: center; gap: 2px; }
+.capbox .capdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.capbox.p0 .capdot { background: #cc3333; }
+.capbox.p1 .capdot { background: #2f66c0; }
+.capbox .capq, .capbox .capk { font-size: 13px; line-height: 1; }
+.capbox .capq { color: #e6c34a; }
+.capbox .capk { color: #d9d9d9; }
+.capbox .capnone { opacity: .45; }
+
 /* Autokast: kast terningane av seg sjølv når turen kjem (omkast er manuelt) */
 .autocast {
   display: inline-flex; align-items: center; gap: 6px;

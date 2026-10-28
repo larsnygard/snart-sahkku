@@ -17,7 +17,7 @@
     over: false,
     autocast: false    // «Autokast»: kast terningane automatisk når turen kjem
   };
-  var APP_VERSION = 'v1.10.2';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.11.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
