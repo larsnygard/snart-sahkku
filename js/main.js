@@ -17,7 +17,7 @@
     over: false,
     autocast: false    // «Autokast»: kast terningane automatisk når turen kjem
   };
-  var APP_VERSION = 'v1.10.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.10.1';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -809,8 +809,6 @@
     $('arch-file').addEventListener('change', function (e) {
       var f = e.target.files && e.target.files[0];
       if (!f) return;
-      var name = (f.name || '').toLowerCase();
-      var erZip = /\.(spgz|zip)$/.test(name);
       var rd = new FileReader();
       rd.onload = function () {
         var res, done = function (r) {
@@ -821,27 +819,31 @@
                    (r.skipped ? ' (' + r.skipped + ' vart ikkje lesne)' : '') +
                    (r.error ? ' — ' + r.error : ''));
         };
-        if (erZip) {                       // .spgz / .zip: zip med .spg-filer
-          global.ARCH.importSpgz(new Uint8Array(rd.result))
+        // Alt vert lese som BYTES og avgjort på innhaldet — ikkje på endinga
+        // og ikkje på fyrste teiknet. (Ein .spg byrjar med «[Event …]», so
+        // «byrjar på [ = JSON» var feil: JSON.parse kasta og fila vart avvist.)
+        var bytes = new Uint8Array(rd.result);
+        if (bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b &&
+            bytes[2] === 0x03 && bytes[3] === 0x04) {          // PK\x03\x04 = zip
+          global.ARCH.importSpgz(bytes)
             .then(done, function (err) { UI.toast('Zip: ' + err.message); });
           return;
         }
-        var txt = rd.result;
-        // Innhaldet avgjer: JSON-arkiv, SPG-tekst, eller ein zip med feil ending
-        var first = String(txt).replace(/^\uFEFF/, '').trim().slice(0, 1);
-        if (first === '{' || first === '[') {
-          var obj;
-          try { obj = JSON.parse(txt); } catch (err) {
-            UI.toast('Ugyldig JSON i fila'); return;
-          }
+        var txt = new TextDecoder('utf-8').decode(bytes).replace(/^\uFEFF/, '');
+        var obj = null;
+        try { obj = JSON.parse(txt); } catch (err) { obj = null; }
+        if (obj && (obj.games || Array.isArray(obj) || obj.steps || obj.fens)) {
           done(global.ARCH.importBundle(obj));
           return;
         }
-        if (/SPG-V1|^\[Event\b/m.test(txt)) { done(global.ARCH.importSpg(txt)); return; }
-        UI.toast('Kjenner ikkje filtypen — ventar JSON, .spg eller .spgz');
+        if (/SPG-V1|^\s*\[(Event|Menn|Koner|Date)\b/m.test(txt)) {
+          done(global.ARCH.importSpg(txt));
+          return;
+        }
+        UI.toast('Kjenner ikkje formatet — ventar JSON-arkiv, SPG eller SPGZ');
       };
       rd.onerror = function () { UI.toast('Kunne ikkje lese fila'); };
-      if (erZip) rd.readAsArrayBuffer(f); else rd.readAsText(f);
+      rd.readAsArrayBuffer(f);
       e.target.value = '';
       e.target.value = '';
     });
