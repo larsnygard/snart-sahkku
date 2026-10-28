@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "ail0.6",
+  "default": "ail0.7",
   "engines": [
     {
       "id": "classic",
@@ -61,6 +61,15 @@
       "weights": "engines/ail0.6.weights.json",
       "lookahead": 4,
       "note": "Sjølvspel med «sein dronning»-handikap + retta søk (kapslar vert krediterte). 85 % mot klassisk nivå 3, 80 % mot AIL0.5."
+    },
+    {
+      "id": "ail0.7",
+      "name": "AIL0.7",
+      "type": "nn",
+      "script": "engines/ail0.7.js",
+      "weights": "engines/ail0.7.weights.json",
+      "lookahead": 4,
+      "note": "Kongedoktrinen og terningane som inndata (konge-eige, kongeavstand, dronningrisiko, motstandarens terningfridom) + djupare søk i treningsmåla. 77,5 % mot AIL0.6, 82,5 % mot klassisk nivå 3."
     }
   ]
 }
