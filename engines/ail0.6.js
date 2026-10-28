@@ -131,6 +131,18 @@ var M = {};
   // bare landing er regulated, gjennomfart fri.
   function canLand(st, p, land) {
     var on = occ(st, land), i, q;
+    // KONGEN FYRST, UAVHENGIG AV REKKJEFØLGJA I occ (Lars 2026-10-28):
+    // kapslar ein kongen, står kongen og soldaten saman på feltet — og det er
+    // den einaste gongen. Difor kan ingen egne brikker (soldat eller dronning)
+    // lande på EIGEN konge. Utan denne førehandssjekken kunne eit tredje
+    // stykke kome inn berre fordi ein eigen soldat låg fyrst i occ og løkka
+    // under returnerte true før ho nådde kongen.
+    if (p.t !== 'k') {
+      for (i = 0; i < on.length; i++) {
+        q = on[i];
+        if (q !== p && q.t === 'k' && q.o != null && q.o === p.o) return false;
+      }
+    }
     for (i = 0; i < on.length; i++) {
       q = on[i];
       if (q === p) continue;
@@ -821,7 +833,7 @@ var M = {};
 var SS = (typeof globalThis !== 'undefined' ? globalThis : this).SS;
 
 // ==================== FEATURES + ACTIONS (mirrors features.py) ============
-var N_PLANES = 16, N_GLOBAL = 10;
+var N_PLANES = 16, N_GLOBAL = 15;   // fylt inn av export.py
 var REL_BASE = 0, MOVE_BASE = 180, SPEC_BASE = 180 + 8100;
 var CLASSES = ['M', 'K', 'Q', 'k'];
 var FIRST_PASS = [[], []];
@@ -881,7 +893,71 @@ function encodeState(st) {
   g[7] = (qf && qf.released) ? 1 : 0;
   g[8] = (st.dice ? st.dice.filter(function (d) { return d === 'X'; }).length : 0) / 3;
   g[9] = st.winner === null || st.winner === undefined ? 1 : (st.winner === st.turn ? 1 : -1);
+
+  // ---- kongedoktrinen + terningane (spegl av features.py) --------------
+  // NB: alt nedanfor må reknast UTAN å endre stillinga til kallaren.
+  var k = SS.king(st);
+  var mine = (k && k.o === me), theirs = (k && k.o === foe);
+  g[10] = mine ? 1 : 0;
+  g[11] = theirs ? 1 : 0;
+  if (mine) {
+    var foes = SS.aliveSoldiers(st, foe);
+    var best = 99;
+    for (var fi = 0; fi < foes.length; fi++) {
+      var fs = SS.soldierAt(foes[fi].o, foes[fi].at);
+      var d = cheb(k.at, fs);
+      if (d < best) best = d;
+    }
+    if (best < 99) g[12] = 1 - Math.min(best, 14) / 14;
+  }
+  var us = usableAndCapture(st, foe);
+  if (qm && qm.released && !qm.captured) {
+    g[13] = us.caps[qm.at] ? 1 : 0;              // dronninga er takeleg NO
+  }
+  g[14] = DICE_USE_PROB[us.mask];                 // friheit i neste kast
   return { planes: pl, glob: g };
+}
+
+function cheb(a, b) {
+  var pa = SS.pt(a), pb = SS.pt(b);
+  return Math.max(Math.abs(pa.col - pb.col), Math.abs(pa.row - pb.row));
+}
+
+// Sannsynet for at eit kast har minst éin terning sida kan nytte, gjeve
+// kva fjes ho kan nytte i det heile (bit 0 = X, bit 1 = II, bit 2 = III).
+var DICE_USE_PROB = [0.0, 0.5781, 0.5781, 0.8750, 0.5781, 0.8750, 0.8750, 0.9844];
+
+// Kva terningverdiar kan `side` nytte, og kva felt kan ho slå på no?
+// (same som _usable_mask/_capture_squares i features.py)
+function usableAndCapture(st, side) {
+  var save = { dice: st.dice ? st.dice.slice() : null,
+               used: st.used ? st.used.slice() : null,
+               phase: st.phase, turn: st.turn };
+  var mask = 0, caps = {};
+  try {
+    st.turn = side; st.phase = 'move';
+    var faces = [['X', 1], ['II', 2], ['III', 3]];
+    for (var i = 0; i < 3; i++) {
+      st.dice = [faces[i][0], '_', '_'];
+      st.used = [false, true, true];
+      var pool = SS.legalMoves(st, side);
+      for (var j = 0; j < pool.length; j++) {
+        var mv = pool[j];
+        if (mv.v === faces[i][1]) mask |= (1 << (faces[i][1] - 1));
+        var land = SS.moveDest(st, mv);
+        var on = SS.occ(st, land);
+        for (var oi = 0; oi < on.length; oi++) {
+          var q = on[oi];
+          if (q.o != null && q.o !== side && q.id !== mv.pid) {
+            caps[land] = (caps[land] || []).concat([faces[i][1]]);
+          }
+        }
+      }
+    }
+  } finally {
+    st.dice = save.dice; st.used = save.used; st.phase = save.phase; st.turn = save.turn;
+  }
+  return { mask: mask, caps: caps };
 }
 function letterOf(p) {
   return p.t === 'q' ? 'Q' : (p.t === 'k' ? 'k' : (p.o === 0 ? 'M' : 'K'));
@@ -1019,6 +1095,7 @@ var st = SS.fromFEN(START_FEN);
 var dbg = false, ilStreak = 0;
 var LA = 4;              // 0 = rein policy (moment); k = 1-ply verdilookahead på k+1 trekk
 var DEEP = 0;            // 0 = av; m > 0 = 2-ply: motstandaren sine m beste svar vert rekna med
+var CAP_MARGIN = 0.12;   // trygt slag innanfor denne verdimarginen av beste trekk vert valt
 var DEC = { X: 'X', '2': 'II', '3': 'III', '_': '_' };  // wire-faces -> interne fjes (som i ref)
 
 function encode(st_, mv) {
@@ -1098,6 +1175,32 @@ function valueOf(st_) {
 // barnestillinga vert verdsett av verdinettet (med forteikn for kven som
 // trekker). Politikk-hovudet er trena på utfallsvekta mål, men er svakt åleine;
 // verdinettet ber informasjonen som ikkje hamnar i argument-maks.
+// Kan motstandaren slå den brikka vi netto flytta, med ein av terningverdiane
+// 1-3? (Bruka berre i materialsklausa; billig: éin trekk-generering per verdi.)
+function opponentCanTakeBack(ch, mv) {
+  var p = SS.piece(ch, mv.pid);
+  if (!p || p.captured) return true;
+  var sq = p.t === 's' ? SS.soldierAt(p.o, p.at) : p.at;
+  var save = { dice: ch.dice ? ch.dice.slice() : null,
+               used: ch.used ? ch.used.slice() : null, phase: ch.phase, turn: ch.turn };
+  var taken = false;
+  try {
+    ch.phase = 'move';
+    var faces = [['X', 1], ['II', 2], ['III', 3]];
+    for (var i = 0; i < 3 && !taken; i++) {
+      ch.dice = [faces[i][0], '_', '_'];
+      ch.used = [false, true, true];
+      var pool = SS.legalMoves(ch, 1 - p.o);        // p.o = sida som netto flytta
+      for (var j = 0; j < pool.length; j++) {
+        if (SS.moveDest(ch, pool[j]) === sq && pool[j].pid !== mv.pid) { taken = true; break; }
+      }
+    }
+  } finally {
+    ch.dice = save.dice; ch.used = save.used; ch.phase = save.phase; ch.turn = save.turn;
+  }
+  return taken;
+}
+
 function childValue(ch, rootTurn) {
   if (ch.winner !== null && ch.winner !== undefined) return ch.winner === rootTurn ? 1 : -1;
   var v = valueOf(ch);
@@ -1164,6 +1267,13 @@ function pick(st_) {
       if (kill && !inCand[real[ri][0]]) { cand.push(real[ri]); inCand[real[ri][0]] = 1; }
     }
     var bestV = -Infinity, bestC = cand[0][0];
+    // MATERIALSKLAUSE (quiescence-light). Verdhovudet er eit tilnærming: målt
+    // på eit verkeleg parti undervurderte det eit GRATIS slag med 0,08 (nettet
+    // meinte dronninga stod dårleg på E2, men ho overlevde 27 trekk i utspel
+    // og gav eit soldatkast). Materiale er konkret, verdiestimatet er ikkje:
+    // er eit trygt slag (ingen motslag) innanfor CAP_MARGIN av beste trekk,
+    // vel vi slaget.
+    var bestCapV = -Infinity, bestCapA = -1;
     for (var c = 0; c < cand.length; c++) {
       var tok = encode(st_, cand[c][1]);
       var ch = SS.deserialize(SS.serialize(st_));
@@ -1174,6 +1284,15 @@ function pick(st_) {
         ? deepScore(ch, st_.turn, DEEP)
         : childValue(ch, st_.turn);
       if (cv > bestV) { bestV = cv; bestC = cand[c][0]; }
+      // trygt slag?  tok noko, og kan motstandaren ikkje ta tilbake?
+      if (CAP_MARGIN > 0 && ch.winner == null &&
+          ch.kills[st_.turn] > st_.kills[st_.turn] &&
+          !opponentCanTakeBack(ch, mv2)) {
+        if (cv > bestCapV) { bestCapV = cv; bestCapA = cand[c][0]; }
+      }
+    }
+    if (bestCapA >= 0 && bestCapV >= bestV - CAP_MARGIN) {
+      return { aid: bestCapA, value: bestCapV };
     }
     if (bestV > -Infinity) return { aid: bestC, value: bestV };
   }
@@ -1213,6 +1332,7 @@ M.onLine = function (line) {
       out('option name Debug type check default false');
       out('option name Lookahead type spin default 4 min 0 max 12');
       out('option name Deep type spin default 0 min 0 max 4');
+      out('option name CapMargin type string default 0.12');
       out('uciok');
     } else if (cmd === 'isready') {
       out('readyok');
@@ -1227,6 +1347,10 @@ M.onLine = function (line) {
         else if (onm === 'lookahead') {
           var n = parseInt(oval, 10);
           LA = isNaN(n) ? 4 : Math.max(0, Math.min(12, n));
+        }
+        else if (onm === 'capmargin') {
+          var cm = parseFloat(oval);
+          CAP_MARGIN = isNaN(cm) ? 0.12 : Math.max(0, Math.min(1, cm));
         }
         else if (onm === 'deep') {
           var d = parseInt(oval, 10);
