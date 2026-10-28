@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "ail0.9",
+  "default": "ail0.10",
   "engines": [
     {
       "id": "classic",
@@ -88,6 +88,15 @@
       "weights": "engines/ail0.9.weights.json",
       "lookahead": 4,
       "note": "Trena 3 syklusar / 600 parti oppå AIL0.8 med materialklausa i sjølvspel og retta søk. 97,5 % mot klassisk nivå 3."
+    },
+    {
+      "id": "ail0.10",
+      "name": "AIL0.10",
+      "type": "nn",
+      "script": "engines/ail0.10.js",
+      "weights": "engines/ail0.10.weights.json",
+      "lookahead": 4,
+      "note": "Trena på RTX 3070 (12 kjernar), éin syklus oppå AIL0.9. 96,7 % mot klassisk nivå 3 — jamstilt med AIL0.9."
     }
   ]
 }
