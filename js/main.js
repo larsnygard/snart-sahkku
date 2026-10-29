@@ -15,9 +15,11 @@
     host: false,       // online: vert = P0, autoritativ
     busy: false,
     over: false,
-    autocast: false    // «Autokast»: kast terningane automatisk når turen kjem
+    autocast: false,   // «Autokast»: kast terningane automatisk når turen kjem
+    nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
+
   };
-  var APP_VERSION = 'v1.17.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.18.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -697,7 +699,9 @@
       fens: (app.fens || []).slice(),
       spg: (global.SPG && global.SPG.toSPG) ? global.SPG.toSPG(app.st, spgMeta()) : ''
     };
-    if (global.ARCH.save(rec)) UI.log('Partiet er lagra i arkivet');
+    var lagra = global.ARCH.save(rec);
+    if (lagra) { app.lastId = rec.id || (lagra && lagra.id); UI.log('Partiet er lagra i arkivet'); }
+    app.lastRec = rec;
   }
 
   function archRow(g) {
@@ -751,8 +755,8 @@
     return global.ARCH.totalMoves(rec);
   }
 
-  function openReplay(id) {
-    var rec = global.ARCH.get(id);
+  function openReplay(idOrRec) {
+    var rec = (typeof idOrRec === 'string') ? global.ARCH.get(idOrRec) : idOrRec;
     if (!rec) return;
     if (app.mode !== 'review') prevMode = app.mode;
     app.mode = 'review';
@@ -1048,7 +1052,45 @@
         leaveOnline(); app.mode = 'menu'; show('menu');
       });
     }
+    // Slutten av eit parti -> gjennomgang. Dialogen syner resultatet fyrst;
+    // når ho vert lukka (kryss, Escape) går vi rett i gjennomgangen, so ein
+    // alltid kan sjå attende på partiet utan å leite i arkivet.
+    $('endscore').addEventListener('close', function () {
+      if (app._noReview) { app._noReview = false; return; }
+      if (app.mode === 'online') return;
+      if (app.lastRec && global.ARCH.totalMoves(app.lastRec) > 0) openReplay(app.lastRec);
+    });
+    $('btn-review').addEventListener('click', function () {
+      app._noReview = true;
+      $('endscore').close();
+      if (app.lastRec) openReplay(app.lastRec);
+    });
+    // Del bilete: sluttstillinga som PNG med SPG-notasjonen i EXIF
+    $('btn-share').addEventListener('click', function () {
+      var st = app.st;
+      if (!st || !global.SHARE) return;
+      var rec = app.lastRec || {};
+      var spg = rec.spg || ((global.SPG && global.SPG.toSPG) ? global.SPG.toSPG(st, spgMeta()) : '');
+      var stamp = fileStamp();
+      SHARE.image(st, {
+        spg: spg,
+        software: 'SnartSáhkku ' + APP_VERSION,
+        title: 'Sáhkku — ' + (st.winner === 0 ? 'Menn vann' : st.winner === 1 ? 'Koner vann' : 'ikkje avslutta'),
+        subtitle: (app.mode === 'cpu' ? ('CPU: ' + (app.engine === 'classic' ? 'nivå ' + app.level : app.engine)) : ''),
+        footer: (st.winner === 0 ? 'Menn' : st.winner === 1 ? 'Koner' : '—') + ' · ' +
+                ({ dronning: 'dronninga slått ut', utryddelse: 'utryddelse', overgivelse: 'gav seg' }[st.winReason] || 'ikkje avslutta') +
+                ' · ' + (st.moves || 0) + ' trekk' + (st.nesseby ? ' · Nesseby' : ''),
+        stamp: stamp.slice(0, 10) + ' ' + stamp.slice(11, 13) + ':' + stamp.slice(13, 15) + ' UTC · snart.com/sahkku'
+      }).then(function (img) {
+        return SHARE.share(img.blob, 'sahkku-' + stamp + '.png', 'Sáhkku');
+      }).then(function (kva) {
+        UI.toast(kva === 'delt' ? 'Biletet er delt' : 'Biletet er lasta ned');
+      }).catch(function (e) {
+        UI.toast('Kunne ikkje lage bilete: ' + e.message);
+      });
+    });
     $('btn-rematch').addEventListener('click', function () {
+      app._noReview = true;
       $('endscore').close();
       if (app.mode === 'online') {
         if (app.host) newOnlineGame();   // vert: nytt oppningsritual + snapshot
@@ -1056,6 +1098,7 @@
       } else newGame();
     });
     $('btn-endmenu').addEventListener('click', function () {
+      app._noReview = true;
       $('endscore').close();
       if (app.mode === 'online') NET.leave();
       app.mode = 'menu'; show('menu');

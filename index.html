@@ -26,7 +26,7 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.17.0 · AGPL-3.0</span></p>
+      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.18.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden">▶ Fortsett lagra parti</button>
         <button id="btn-cpu" class="big">⚔︎ Spill mot CPU</button>
@@ -45,7 +45,7 @@
           </select>
         </label>
         <label class="nesseby-label" title="Valfri regel: kongen kan ikkje kaprast ved landing før nokon har nådd motstandarens heimrad; den fyrste soldaten som når dit kaprar kongen.">
-          <input type="checkbox" id="chk-nesseby"> Nesseby
+          <input type="checkbox" id="chk-nesseby" checked> Nesseby
         </label>
         <label>Motor:
           <select id="cpu-engine"><option value="classic">Klassisk CPU</option></select>
@@ -193,6 +193,8 @@
   <h3 id="end-title">Spallet er slutt</h3>
   <p id="end-reason"></p>
   <div class="gamebtns">
+    <button id="btn-review" class="big">🔍 Gå gjennom partiet</button>
+    <button id="btn-share" class="big" title="Bilete av sluttstillinga med SPG-notasjonen i EXIF">🖼 Del bilete</button>
     <button id="btn-export-spg" class="big">💾 Last ned notasjon (SPG)</button>
     <button id="btn-rematch" class="big">Omkamp</button>
     <button id="btn-endmenu" class="ghost">Meny</button>
@@ -200,6 +202,7 @@
 </dialog>
 
 <script src="js/engine.js"></script>
+<script src="js/share.js"></script>
 <script src="js/fen.js"></script>
 <script src="js/spg.js"></script>
 <script src="js/zip.js"></script>
