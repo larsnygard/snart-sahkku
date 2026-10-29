@@ -148,6 +148,31 @@ const server = http.createServer((req, res) => {
   ok('avspelingslinja er synleg', rev.bar === true, JSON.stringify(rev));
   ok('sluttdialogen har «Gå gjennom» og «Del bilete»', rev.knappar === true);
 
+  // ---- 5. same knapp finst i gjennomgangen og delar stillinga der ----
+  const revShare = await page.evaluate(async () => {
+    // fang bloba i staden for å opne systemdialogen
+    let fanga = null;
+    const orig = window.SHARE.share;
+    window.SHARE.share = function (blob, fname) { fanga = { blob, fname }; return Promise.resolve('fanga'); };
+    document.getElementById('btn-share-rev').click();
+    await new Promise(r => setTimeout(r, 400));
+    window.SHARE.share = orig;
+    if (!fanga) return { feil: 'ingen blob' };
+    const buf = new Uint8Array(await fanga.blob.arrayBuffer());
+    let i = 8, ch = [];
+    while (i < buf.length) {
+      const len = (buf[i] << 24 | buf[i + 1] << 16 | buf[i + 2] << 8 | buf[i + 3]) >>> 0;
+      ch.push(String.fromCharCode(buf[i + 4], buf[i + 5], buf[i + 6], buf[i + 7]));
+      i += 12 + len;
+    }
+    return { fname: fanga.fname, storleik: buf.length, chunks: ch };
+  });
+  ok('gjennomgangen har eigen del-knapp', !!revShare && !revShare.feil, JSON.stringify(revShare));
+  ok('del frå gjennomgangen gjev PNG-namn med stempel',
+     revShare && /^sahkku-\d{4}-\d{2}-\d{2}T\d{4}Z\.png$/.test(revShare.fname || ''), revShare && revShare.fname);
+  ok('biletet frå gjennomgangen har eXIf',
+     revShare && Array.isArray(revShare.chunks) && revShare.chunks.includes('eXIf'), JSON.stringify(revShare && revShare.chunks));
+
   ok('ingen JS-feil', errs.length === 0, errs.join(' | '));
   console.log('share_image: ' + pass + ' pass, ' + fail + ' fail');
   await browser.close();

@@ -19,7 +19,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.18.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.18.1';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -1065,13 +1065,16 @@
       $('endscore').close();
       if (app.lastRec) openReplay(app.lastRec);
     });
-    // Del bilete: sluttstillinga som PNG med SPG-notasjonen i EXIF
-    $('btn-share').addEventListener('click', function () {
+    // Del bilete: PNG av stillinga med SPG-notasjonen i EXIF. Vert brukt både
+    // frå sluttdialogen (sluttstillinga) og frå gjennomgangen (den stillinga
+    // ein står på — so ein kan dele akkurat det trekket ein vil vise).
+    function sharePosition(rec, at, total) {
       var st = app.st;
       if (!st || !global.SHARE) return;
-      var rec = app.lastRec || {};
+      rec = rec || {};
       var spg = rec.spg || ((global.SPG && global.SPG.toSPG) ? global.SPG.toSPG(st, spgMeta()) : '');
       var stamp = fileStamp();
+      var stilling = (at != null && total != null) ? (' · stilling ' + at + '/' + total) : '';
       SHARE.image(st, {
         spg: spg,
         software: 'SnartSáhkku ' + APP_VERSION,
@@ -1079,7 +1082,7 @@
         subtitle: (app.mode === 'cpu' ? ('CPU: ' + (app.engine === 'classic' ? 'nivå ' + app.level : app.engine)) : ''),
         footer: (st.winner === 0 ? 'Menn' : st.winner === 1 ? 'Koner' : '—') + ' · ' +
                 ({ dronning: 'dronninga slått ut', utryddelse: 'utryddelse', overgivelse: 'gav seg' }[st.winReason] || 'ikkje avslutta') +
-                ' · ' + (st.moves || 0) + ' trekk' + (st.nesseby ? ' · Nesseby' : ''),
+                ' · ' + (st.moves || 0) + ' trekk' + (st.nesseby ? ' · Nesseby' : '') + stilling,
         stamp: stamp.slice(0, 10) + ' ' + stamp.slice(11, 13) + ':' + stamp.slice(13, 15) + ' UTC · snart.com/sahkku'
       }).then(function (img) {
         return SHARE.share(img.blob, 'sahkku-' + stamp + '.png', 'Sáhkku');
@@ -1088,7 +1091,15 @@
       }).catch(function (e) {
         UI.toast('Kunne ikkje lage bilete: ' + e.message);
       });
-    });
+    }
+    $('btn-share').addEventListener('click', function () { sharePosition(app.lastRec, null, null); });
+    // …og frå gjennomgangen: delar stillinga ein står på, ikkje sluttstillinga
+    if ($('btn-share-rev')) {
+      $('btn-share-rev').addEventListener('click', function () {
+        if (!review) return;
+        sharePosition(review.rec, review.at, review.total);
+      });
+    }
     $('btn-rematch').addEventListener('click', function () {
       app._noReview = true;
       $('endscore').close();
