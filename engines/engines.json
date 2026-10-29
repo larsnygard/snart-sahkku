@@ -115,6 +115,15 @@
       "weights": "engines/nais2.weights.json",
       "lookahead": 4,
       "note": "Nesseby-trena (100 % av partia) oppå NAIS.1, 4 t. Kongekapringa er no jamt fordelt (Menn 47 % / Giera 53 %, før 0/100). 95 % mot klassisk nivå 3."
+    },
+    {
+      "id": "nais3",
+      "name": "NAIS.3",
+      "type": "nn",
+      "script": "engines/nais3.js",
+      "weights": "engines/nais3.weights.json",
+      "lookahead": 4,
+      "note": "Trena 1 t oppå NAIS.2 med to menneskeparti blanda inn (12 % av kvar batch): policy berre frå vinnaren sine trekk, taparsida berre verdi. Unngår stupet som kosta NAIS.2 dronninga (p for tapande trekk 0,65 -> 0,33), men målte ikkje sterkare i Nesseby (1-5 så langt). Ikkje standardmotor."
     }
   ]
 }
