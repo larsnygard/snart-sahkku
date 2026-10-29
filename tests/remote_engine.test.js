@@ -98,6 +98,16 @@ const server = http.createServer((req, res) => {
         const r = orig.call(window.SS, st, rnd);
         st.turn = 1; st.first = 1; return { first: 1, rolls: r.rolls };
       };
+      // Fyrste kast åt CPU-en får alltid ein X: elles kan han lovleg måtte
+      // hoppe over turen (ingen løyste brikker, inga X), og då vert motoren
+      // aldri spurd — det var det som gjorde testen flakete (~1 av 5).
+      let fyrste = true;
+      const origRoll = window.SS.roll;
+      window.SS.roll = function (st, rnd) {
+        const r = origRoll.call(window.SS, st, rnd);
+        if (fyrste) { fyrste = false; st.dice = ['X', 'III', 'II']; st.used = [false, false, false]; }
+        return r;
+      };
       document.getElementById('btn-cpu').click();
       const t0 = Date.now();
       while (Date.now() - t0 < 90000) {
@@ -106,7 +116,13 @@ const server = http.createServer((req, res) => {
         if (st && st.moves > 0) return { moves: st.moves, ms: window.REMOTE.state.ms, err: window.REMOTE.state.err };
       }
       const st = window.__APP && window.__APP.st;
-      return { moves: st ? st.moves : -1, ms: window.REMOTE.state.ms, timeout: true };
+      const a = window.__APP || {};
+      return { moves: st ? st.moves : -1, ms: window.REMOTE.state.ms, timeout: true,
+               diag: { mode: a.mode, engine: a.engine, busy: a.busy, over: a.over,
+                       turn: st && st.turn, phase: st && st.phase,
+                       dice: st && st.dice, first: a.first, me: a.me,
+                       remote: window.REMOTE.connected, err: window.REMOTE.state.err,
+                       logg: (document.getElementById('log').textContent || '').slice(-160) } };
     });
     ok('fjernmotoren spela eit trekk i spelet', played.moves > 0, JSON.stringify(played));
     ok('trekket kom over nettet (målte ms)', played.ms > 0, JSON.stringify(played));

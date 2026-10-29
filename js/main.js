@@ -23,7 +23,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.21.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.22.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -363,7 +363,7 @@
   // validerer, utfører, og sender FULLT autoritativt snapshot — aldri
   // faselaugner. Gjesten renderar berre snapshot. Éin sanning, ingen desync.
   function onlineSnapshot() {
-    NET.send({ t: 'state', s: JSON.parse(SS.serialize(app.st)) });
+    sendNet({ t: 'state', s: JSON.parse(SS.serialize(app.st)) });
   }
   function applySnapshot(s) {
     app.st = SS.deserialize(s.s);
@@ -386,10 +386,10 @@
       settleAndContinue();
     } else {
       app.busy = true; refresh();
-      NET.send({ t: 'rollreq' });
+      sendNet({ t: 'rollreq' });
       clearTimeout(app._rt);
       app._rt = setTimeout(function () {
-        if (app.busy) { app.busy = false; NET.send({ t: 'sync' }); refresh(); }
+        if (app.busy) { app.busy = false; sendNet({ t: 'sync' }); refresh(); }
       }, 6000);
     }
   }
@@ -401,9 +401,9 @@
       settleAndContinue();
     } else {
       app.busy = true; refresh();
-      NET.send({ t: 'reroll', slot: slot });
+      sendNet({ t: 'reroll', slot: slot });
       clearTimeout(app._rt);
-      app._rt = setTimeout(function () { if (app.busy) { app.busy = false; NET.send({ t: 'sync' }); refresh(); } }, 6000);
+      app._rt = setTimeout(function () { if (app.busy) { app.busy = false; sendNet({ t: 'sync' }); refresh(); } }, 6000);
     }
   }
   function onlineMove(mv) {
@@ -421,7 +421,7 @@
       settleAndContinue();
     } else {
       UI.setInteractive(false);
-      NET.send({ t: 'move', mv: mv });
+      sendNet({ t: 'move', mv: mv });
     }
   }
   function onlinePass() {
@@ -433,9 +433,9 @@
       afterTurnChange();
     } else {
       app.busy = true; refresh();
-      NET.send({ t: 'pass' });
+      sendNet({ t: 'pass' });
       clearTimeout(app._rt);
-      app._rt = setTimeout(function () { if (app.busy) { app.busy = false; NET.send({ t: 'sync' }); refresh(); } }, 6000);
+      app._rt = setTimeout(function () { if (app.busy) { app.busy = false; sendNet({ t: 'sync' }); refresh(); } }, 6000);
     }
   }
   function onlineResign() {
@@ -443,7 +443,7 @@
       app.st.winner = 1 - app.st.turn; app.st.winReason = 'overgivelse'; app.st.phase = 'over';
       onlineSnapshot(); checkEnd();
     } else {
-      NET.send({ t: 'resign' });
+      sendNet({ t: 'resign' });
       UI.setInteractive(false);
       app.st.winner = 1 - app.me; app.st.winReason = 'overgivelse'; app.st.phase = 'over';
       checkEnd();
@@ -474,6 +474,80 @@
     });
     if (st.winner != null) UI.log('SEIER: ' + (st.winner === 0 ? 'Menn' : 'Koner') + '! ' + (st.winReason || ''), 'win');
   }
+  // Alle partimeldingar går gjennom her so kamp-id-en (g) alltid kjem med:
+  // fleire parti kan gå i same rom, og da må mottakaren kunne skilje dei.
+  function sendNet(obj) {
+    if (!global.NET || !NET.ready) return;
+    if (app.gameId && obj.g === undefined) obj.g = app.gameId;
+    NET.send(obj);
+  }
+
+  // Lobby: kven er i rommet, og kven utfordrar kven.
+  function initLobby() {
+    if (!global.LOBBY) return;
+    global.LOBBY.init({
+      send: function (o) { NET.send(o); },          // utfordringar treng ingen kamp-id
+      render: renderLobby,
+      onStart: function (gameId, isHost) {
+        app.gameId = gameId;
+        app.host = isHost;
+        app.me = isHost ? 0 : 1;
+        app.onlineStarted = true;
+        $('chaldlg').close();
+        UI.toast(T('lobby.challenged', { name: NET.short(NET.peers[0] || '') }));
+        newOnlineGame();                             // vert lagar partiet; gjest ventar på snapshot
+      },
+      onInvite: function (inv) {
+        $('chal-text').textContent = T('lobby.incoming', { name: inv.short });
+        $('chaldlg').showModal();
+      },
+      onOutcome: function (kind, from) {
+        UI.toast(T(kind === 'no' ? 'lobby.declined' : 'lobby.busy', { name: NET.short(from) }));
+        renderLobby();
+      }
+    });
+  }
+
+  function renderLobby() {
+    var box = $('lobby-list');
+    if (!box || !global.LOBBY) return;
+    var st = global.LOBBY.state;
+    box.innerHTML = '';
+    var others = (st.peers || []).filter(function (id) { return id !== st.myId; });
+    if (!others.length) {
+      var li = doc.createElement('li');
+      li.className = 'lobby-empty';
+      li.textContent = T('lobby.needOpponent');
+      box.appendChild(li);
+      return;
+    }
+    others.forEach(function (id) {
+      var li = doc.createElement('li');
+      li.className = 'lobby-row';
+      var nm = doc.createElement('span');
+      nm.textContent = NET.short(id);
+      li.appendChild(nm);
+      if (st.pending && st.pending.to === id) {
+        var wait = doc.createElement('em');
+        wait.textContent = T('lobby.waiting', { name: NET.short(id) });
+        li.appendChild(wait);
+      } else if (st.gameId) {
+        var busy = doc.createElement('em');
+        busy.textContent = T('lobby.busy', { name: NET.short(id) });
+        li.appendChild(busy);
+      } else {
+        var b = doc.createElement('button');
+        b.className = 'ghost';
+        b.textContent = T('lobby.challenge');
+        b.addEventListener('click', function () {
+          if (global.LOBBY.challenge(id)) UI.toast(T('lobby.challenged', { name: NET.short(id) }));
+        });
+        li.appendChild(b);
+      }
+      box.appendChild(li);
+    });
+  }
+
   function wireNet() {
     NET.handlers.onStatus = function (s) {
       $('net-status').textContent = s;
@@ -483,18 +557,16 @@
       var me = NET.myId ? NET.short(NET.myId) : '—';
       $('my-node').textContent = me;
       if (app.mode === 'online') {
+        // Rommet er ein lobby: alle ser kven som er innom, og eit parti byrjar
+        // berre når to av dei har avtalt det med ei utfordring. Før starta
+        // appen eit parti automatisk så snart nokon kom inn — det gav ein
+        // ufrivillig kamp kvar gong ein tredje person dukka opp.
+        global.LOBBY.setIdentity(NET.myId);
+        global.LOBBY.setPeers(peers);
         var connected = peers.length > 0;
-        if (connected && !app.onlineStarted) {
-          // rene rekkefølger: lavest node-id = vert og starter partiet
-          app.host = NET.isLowest();
-          app.me = app.host ? 0 : 1;
-          app.onlineStarted = true;
-          newOnlineGame();
-          return;
-        }
         if (connected && app.onlineStarted && app.st) {
-          // gjenkopling: vert sender autoritativt snapshot, gjest be om det
-          if (app.host) onlineSnapshot(); else NET.send({ t: 'sync' });
+          // gjenkopling midt i eit parti: vert sender autoritativt snapshot
+          if (app.host) onlineSnapshot(); else sendNet({ t: 'sync' });
           return;
         }
         if (!connected && app.st && !app.over) UI.toast(T('toast.peerLost'));
@@ -502,6 +574,12 @@
     };
     NET.handlers.onMsg = function (m) {
       var d = m.data;
+      // Utfordringar og svar går føre spelmeldingane
+      if (global.LOBBY && global.LOBBY.onMsg(d)) return;
+      // Partimeldingar ber ein kamp-id når vi er i lobby-modus: to andre kan
+      // spele i same rom, og dei meldingane skal ikkje røre vårt parti.
+      if (d.g && app.gameId && d.g !== app.gameId) return;
+      if (d.g && !app.gameId) return;
       if (d.t === 'state') {
         if (!app.host) applySnapshot(d);
         return;
@@ -870,45 +948,58 @@
         UI.toast(T('toast.exportedZip', { n: r.files }));
       }, function (err) { UI.toast(err.message); });
     });
+    // Importerer frå RÅ BYTES og avgjer formatet på innhaldet — ikkje på
+    // endinga eller fyrste teiknet. ZIP, JSON, SPG og BILETE (SPG i EXIF) går
+    // gjennom same vegen, so filveljaren, delingsruta og «opne med» deler henne.
+    function importBytes(bytes, done) {
+      done = done || function () {};
+      if (bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b &&
+          bytes[2] === 0x03 && bytes[3] === 0x04) {              // PK\x03\x04 = zip
+        global.ARCH.importSpgz(bytes).then(done, function (err) {
+          UI.toast('Zip: ' + err.message);
+        });
+        return;
+      }
+      // Bilete: PNG (89 50 4E 47) eller JPEG (FF D8) — les EXIF og ta SPG der
+      if ((bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e) ||
+          (bytes[0] === 0xff && bytes[1] === 0xd8)) {
+        var ex = global.EXIF ? global.EXIF.read(bytes) : null;
+        if (ex && ex.spg) { done(global.ARCH.importSpg(ex.spg)); return; }
+        UI.toast(T('toast.noSpgInImage'));
+        return;
+      }
+      var txt = new TextDecoder('utf-8').decode(bytes).replace(/^\uFEFF/, '');
+      var obj = null;
+      try { obj = JSON.parse(txt); } catch (err) { obj = null; }
+      if (obj && (obj.games || Array.isArray(obj) || obj.steps || obj.fens)) {
+        done(global.ARCH.importBundle(obj));
+        return;
+      }
+      if (/SPG-V1|^\s*\[(Event|Menn|Koner|Date)\b/m.test(txt)) {
+        done(global.ARCH.importSpg(txt));
+        return;
+      }
+      UI.toast(T('toast.unknownFormat'));
+    }
+
+    function afterImport(r) {
+      if (!r) { UI.toast(T('toast.readFailed')); return; }
+      if (r.error && !r.added) { UI.toast(r.error); return; }
+      renderArchive();
+      UI.toast(T('toast.imported', { n: r.added }) +
+               (r.skipped ? ' ' + T('toast.importSkipped', { n: r.skipped }) : '') +
+               (r.error ? ' — ' + r.error : ''));
+    }
+    app.importBytes = importBytes;         // so delingsruta kan bruke henne
+    app.afterImport = afterImport;
+
     $('arch-file').addEventListener('change', function (e) {
       var f = e.target.files && e.target.files[0];
       if (!f) return;
       var rd = new FileReader();
-      rd.onload = function () {
-        var res, done = function (r) {
-          if (!r) { UI.toast(T('toast.readFailed')); return; }
-          if (r.error && !r.added) { UI.toast(r.error); return; }
-          renderArchive();
-          UI.toast('Importerte ' + r.added + ' parti' +
-                   (r.skipped ? ' ' + T('toast.importSkipped', { n: r.skipped }) : '') +
-                   (r.error ? ' — ' + r.error : ''));
-        };
-        // Alt vert lese som BYTES og avgjort på innhaldet — ikkje på endinga
-        // og ikkje på fyrste teiknet. (Ein .spg byrjar med «[Event …]», so
-        // «byrjar på [ = JSON» var feil: JSON.parse kasta og fila vart avvist.)
-        var bytes = new Uint8Array(rd.result);
-        if (bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b &&
-            bytes[2] === 0x03 && bytes[3] === 0x04) {          // PK\x03\x04 = zip
-          global.ARCH.importSpgz(bytes)
-            .then(done, function (err) { UI.toast('Zip: ' + err.message); });
-          return;
-        }
-        var txt = new TextDecoder('utf-8').decode(bytes).replace(/^\uFEFF/, '');
-        var obj = null;
-        try { obj = JSON.parse(txt); } catch (err) { obj = null; }
-        if (obj && (obj.games || Array.isArray(obj) || obj.steps || obj.fens)) {
-          done(global.ARCH.importBundle(obj));
-          return;
-        }
-        if (/SPG-V1|^\s*\[(Event|Menn|Koner|Date)\b/m.test(txt)) {
-          done(global.ARCH.importSpg(txt));
-          return;
-        }
-        UI.toast(T('toast.unknownFormat'));
-      };
+      rd.onload = function () { importBytes(new Uint8Array(rd.result), afterImport); };
       rd.onerror = function () { UI.toast(T('toast.readFailed')); };
       rd.readAsArrayBuffer(f);
-      e.target.value = '';
       e.target.value = '';
     });
     $('btn-arch-clear').addEventListener('click', function () {
@@ -1082,6 +1173,8 @@
       try { NET.leave(); } catch (e) { /* nettverket kan alt vere borte */ }
       app.onlineStarted = false;
       app.busy = false;
+      app.gameId = null;
+      if (global.LOBBY) global.LOBBY.reset();
       clearSave();
       UI.toast('Forlét nettpartiet');
     }
@@ -1208,6 +1301,28 @@
       }, 400);
     }
 
+    // ---- utfordring i lobbyen ------------------------------------------
+    if ($('btn-chal-accept')) {
+      $('btn-chal-accept').addEventListener('click', function () {
+        $('chaldlg').close();
+        global.LOBBY.accept();
+      });
+      $('btn-chal-decline').addEventListener('click', function () {
+        $('chaldlg').close();
+        global.LOBBY.decline();
+      });
+      // Del lenkje: ein annan kan opne ho og hamne rett i rommet hjå meg
+      $('btn-share-challenge').addEventListener('click', function () {
+        if (!NET.seed) { UI.toast(T('lobby.needOpponent')); return; }
+        var url = location.origin + location.pathname +
+                  '#challenge=' + encodeURIComponent(NET.seed) + '&to=' + encodeURIComponent(NET.myId || '');
+        var done = function () { UI.toast(T('lobby.linkCopied')); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done, function () { UI.log(url); });
+        } else { UI.log(url); done(); }
+      });
+    }
+
     $('btn-help').addEventListener('click', function () { $('rules').showModal(); });
     doc.querySelectorAll('[data-close]').forEach(function (b) {
       b.addEventListener('click', function () { b.closest('dialog').close(); });
@@ -1224,6 +1339,47 @@
     } else startApp();
   }
 
+  // Delingslenkjer: #challenge=<rom>&to=<node-id> opnar rommet og utfordrar
+  // med ein gong; #lobby=<rom> opnar berre rommet. Fungerer både i nettlesaren
+  // og i den installerte appen (same URL, same scope).
+  function deepLink() {
+    var h = String(location.hash || '').replace(/^#/, '');
+    if (!h) return false;
+    var q = {};
+    h.split('&').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i > 0) q[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1));
+    });
+    var seed = q.challenge || q.lobby || q.room;
+    if (!seed) return false;
+    app.mode = 'online';
+    app.onlineStarted = false;
+    app.gameId = null;
+    show('room');
+    $('room-seed').value = seed;
+    $('room-hint').textContent = T('room.connecting');
+    $('btn-join').disabled = true;
+    NET.load().then(function () {
+      $('my-node').textContent = NET.short(NET.myId);
+      // ta med motparten sin node-id som bootstrap so vi finn kvarandre
+      return NET.join(q.to ? seed + '#' + q.to : seed);
+    }).then(function () {
+      $('invite-code').textContent = NET.seed + '#' + NET.myId;
+      $('invite-row').style.display = '';
+      $('room-hint').textContent = T('lobby.hint');
+      if (global.LOBBY) global.LOBBY.setIdentity(NET.myId);
+      if (global.LOBBY && q.challenge) {
+        var id = global.LOBBY.challenge(q.to);
+        if (id) UI.toast(T('lobby.challenged', { name: NET.short(q.to) }));
+      }
+      try { history.replaceState({}, '', location.pathname + location.search); } catch (e) {}
+    }).catch(function (e) {
+      $('room-hint').textContent = T('toast.joinFailed', { msg: e.message });
+      $('btn-join').disabled = false;
+    });
+    return true;
+  }
+
   function startApp() {
     // Språkbyte midt i bruk: teikn alt på nytt med nye tekstar.
     doc.addEventListener('langchange', function () {
@@ -1235,6 +1391,7 @@
       }
     });
     wireUI();
+    initLobby();
     wireNet();
     if ('serviceWorker' in navigator) {
       // Ny SW tek over -> sidan må lastast på nytt for å bruke den nye koden.
@@ -1304,7 +1461,44 @@
         return;
       }
     }
-    show('menu');
+    // ---- delingslenkje, delt fil og «opne med» --------------------------
+    // Web Share Target: service workeren legg den delte fila i cachen og
+    // sender brukaren hit. Vi les henne, importerer, og ryddar etter oss.
+    function importShared() {
+      if (!global.caches) return;
+      global.caches.open('sahkku-share-v1').then(function (c) {
+        return c.match('/__shared__').then(function (res) {
+          if (!res) return null;
+          return c.delete('/__shared__').then(function () { return res.arrayBuffer(); });
+        });
+      }).then(function (buf) {
+        if (!buf) return;
+        show('archive');
+        if (app.importBytes) app.importBytes(new Uint8Array(buf), app.afterImport);
+        try { history.replaceState({}, '', location.pathname); } catch (e) {}
+      }).catch(function () { /* ingen delt fil */ });
+    }
+
+    // «Opne med» på skrivebordet (Chromium): installert PWA får fila her.
+    if (global.launchQueue && global.launchQueue.setConsumer) {
+      global.launchQueue.setConsumer(function (params) {
+        var files = (params && params.files) || [];
+        if (!files.length) return;
+        files[0].getFile().then(function (f) {
+          return f.arrayBuffer();
+        }).then(function (buf) {
+          show('archive');
+          if (app.importBytes) app.importBytes(new Uint8Array(buf), app.afterImport);
+        }).catch(function () { /* ikkje lesbar */ });
+      });
+    }
+
+    // Ei lenkje vinn over ein delt fil, og då skal vi IKKJE hamne i menyen —
+    // før vart 'show(menu)' køyrt uansett, so rommet vart skjult att med ein gong.
+    if (!deepLink()) {
+      importShared();
+      show('menu');
+    }
   }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', boot);
   else boot();

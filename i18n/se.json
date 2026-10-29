@@ -231,5 +231,20 @@
   "remote.rateLimited": "serve lea ráddjen (429) — vuorda veahá",
   "remote.badRequest": "serve hilggui jearaldaga",
   "remote.illegal": "motohtor sádđii dohkkemeahtun lávkki ({move})",
-  "remote.chip": "fierrá"
+  "remote.chip": "fierrá",
+  "toast.noSpgInImage": "Govvas ii leat SPG-čállos EXIF:s",
+  "toast.sharedImported": "Vieččojuvvon sisa {n} spealu juogaduvvon fiillas",
+  "lobby.title": "Speallárat lanjas",
+  "lobby.hint": "Vállje speallára geasa hástalit. Hástalus guoskkaha dušše dudno — earát eai oainne dan.",
+  "lobby.challenge": "Hástal",
+  "lobby.waiting": "Vuordá vástádusa {name} …",
+  "lobby.incoming": "{name} hástala duv speallui",
+  "lobby.accept": "Doarve",
+  "lobby.decline": "Hilgo",
+  "lobby.declined": "{name} hilggui",
+  "lobby.busy": "{name} lea gođđosiin",
+  "lobby.challenged": "Hástalii {name}",
+  "lobby.shareLink": "Juoge hástalusa",
+  "lobby.linkCopied": "Liŋka máŋgejuvvon — rahpá lanjja vuostálaččas",
+  "lobby.needOpponent": "Ii eará lanjas vel"
 }

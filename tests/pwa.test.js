@@ -23,6 +23,25 @@ let man = null;
 try { man = JSON.parse(raw); } catch (e) { /* fallet under */ }
 ok('manifest.webmanifest er gyldig JSON', !!man, String(raw.slice(0, 40)).replace(/\n/g, ' '));
 if (man) {
+  // Deling og «opne med»: dette er felt nettlesaren/Android les når nokon
+  // deler ei .spg-fil eller eit bilete til appen.
+  const st = man.share_target || {};
+  ok('share_target med POST + multipart',
+     st.method === 'POST' && st.enctype === 'multipart/form-data' && !!st.action,
+     JSON.stringify(st).slice(0, 120));
+  const files = (st.params && st.params.files) || [];
+  ok('share_target tek imot filer', files.length > 0 && files[0].name === 'files',
+     JSON.stringify(files).slice(0, 120));
+  const acc = ((files[0] || {}).accept || []).join(',');
+  ok('share_target tek .spg', /\.spg/.test(acc), acc);
+  ok('share_target tek bilete', /image\/png/.test(acc) && /image\/jpeg/.test(acc), acc);
+  const fh = man.file_handlers || [];
+  ok('file_handlers for .spg (skrivebord: «opne med»)',
+     fh.length > 0 && (fh[0].accept['application/x-sahkku-spg'] || []).includes('.spg'),
+     JSON.stringify(fh).slice(0, 140));
+  ok('launch_handler navigate-existing', (man.launch_handler || {}).client_mode === 'navigate-existing',
+     JSON.stringify(man.launch_handler));
+
   ok('har name/short_name', !!man.name && !!man.short_name);
   ok('start_url og scope', man.start_url === './' && man.scope === './', JSON.stringify([man.start_url, man.scope]));
   ok('display=standalone (held seg i same vindauge)', man.display === 'standalone', man.display);

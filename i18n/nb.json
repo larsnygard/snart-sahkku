@@ -231,5 +231,20 @@
   "remote.rateLimited": "tenaren har sett tak på førespurnader (429) — vent litt",
   "remote.badRequest": "tenaren avviste førespurnaden",
   "remote.illegal": "motoren sende eit ulovleg trekk ({move})",
-  "remote.chip": "fjern"
+  "remote.chip": "fjern",
+  "toast.noSpgInImage": "Bildet har ingen SPG-notasjon i EXIF",
+  "toast.sharedImported": "Importerte {n} parti frå delt fil",
+  "lobby.title": "Spelarar i rommet",
+  "lobby.hint": "Vel ein spelar å utfordre. Utfordringa gjeld berre dykk to — andre i rommet ser ho ikkje.",
+  "lobby.challenge": "Utfordre",
+  "lobby.waiting": "Ventar på svar frå {name} …",
+  "lobby.incoming": "{name} utfordrar deg til eit parti",
+  "lobby.accept": "Ta imot",
+  "lobby.decline": "Avslå",
+  "lobby.declined": "{name} avslo",
+  "lobby.busy": "{name} er oppteken",
+  "lobby.challenged": "Utfordra {name}",
+  "lobby.shareLink": "Del utfordring",
+  "lobby.linkCopied": "Lenkje kopiert — han opnar rommet hjå den du sender til",
+  "lobby.needOpponent": "Ingen andre i rommet enno"
 }

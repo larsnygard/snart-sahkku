@@ -231,5 +231,20 @@
   "remote.rateLimited": "the server is rate limiting (429) — wait a moment",
   "remote.badRequest": "the server rejected the request",
   "remote.illegal": "the engine sent an illegal move ({move})",
-  "remote.chip": "remote"
+  "remote.chip": "remote",
+  "toast.noSpgInImage": "The image has no SPG notation in its EXIF",
+  "toast.sharedImported": "Imported {n} games from the shared file",
+  "lobby.title": "Players in the room",
+  "lobby.hint": "Pick a player to challenge. The challenge is between the two of you — others do not see it.",
+  "lobby.challenge": "Challenge",
+  "lobby.waiting": "Waiting for {name} to answer …",
+  "lobby.incoming": "{name} challenges you to a game",
+  "lobby.accept": "Accept",
+  "lobby.decline": "Decline",
+  "lobby.declined": "{name} declined",
+  "lobby.busy": "{name} is busy",
+  "lobby.challenged": "Challenged {name}",
+  "lobby.shareLink": "Share challenge",
+  "lobby.linkCopied": "Link copied — it opens the room for whoever you send it to",
+  "lobby.needOpponent": "Nobody else in the room yet"
 }

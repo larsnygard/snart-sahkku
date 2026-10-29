@@ -4,6 +4,30 @@ Det gamle samiske strategispillet **sáhkku** fra Laksefjorden (Lágesvuotna),
 spilbart i nettleseren som en installerbar PWA — mot CPU, i to spillere
 sammesteds, eller over nett via P2P.
 
+**Lobby og utfordringar:** rommet er ein lobby — alle som er innom ser
+kvarandre i lista, og kven som helst kan utfordre ein annan. Partiet byrjar
+fyrst når begge har sagt ja; før starta appen eit parti automatisk så snart
+nokon kom inn, so eit tredje menneske i rommet vart dratt inn i ein kamp.
+Alle partimeldingar ber ein kamp-id, so fleire parti kan gå i same rom utan
+å røre kvarandre. Verten er den lågaste node-id-en av dei to — same regel på
+båe sider, so ingen ekstra rundtur trengst.
+
+**Utfordre med ei lenkje:** «Del utfordring» kopierer
+`https://snart.com/sahkku/#challenge=<rom>&to=<node-id>`. Opnar mottakaren
+henne — i nettlesaren eller i den installerte appen — hamnar han rett i
+rommet og utfordrar deg attende. `#lobby=<rom>` opnar berre rommet.
+
+**SPG frå bilete:** importerer du eit bilete (PNG/JPEG) som SnartSáhkku har
+delt, les appen EXIF-data og tek ut SPG-notasjonen der. Ingenting vert lasta
+opp — heile lesinga skjer i nettlesaren.
+
+**Dele og «opne med»:** manifestet har `share_target`, so SnartSáhkku dukkar
+opp i delingsmenyen på Android og i Chrome på skrivebordet for .spg, .spgz og
+bilete. På skrivebordet har han òg `file_handlers`, so dobbeltklikk på ei
+.spg-fil opnar appen. **På Android kan ein PWA ikkje registrere seg som
+handsamar for filtypar** — der finst berre delingsmenyen; «opne med» for .spg
+krev ein eigen native app.
+
 **Fjernmotor over HTTP:** menyen har «🌐 Fjernmotor …». Der legg du inn
 adressa til ein køyrerande `sahkku_ai.server` og API-nøkkelen hans, og motoren
 dukker opp i motorlista og vert valt med ein gong. Appen er framleis dommaren:
