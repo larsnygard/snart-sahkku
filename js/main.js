@@ -23,7 +23,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.20.1';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.21.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -101,6 +101,37 @@
     return true;
   }
 
+  // Kva motoren vil gjere i ei omkast-stilling: hopp over, kast om, eller trekk.
+  // Delt av den lokale og den fjernkøyrde vegen.
+  function cpuDecide(act) {
+    if (app.over) return;
+    if (act && act.kind === 'pass') {
+      UI.log(T('log.sideSkipped', { side: sideName(app.st.turn) }));
+      SS.passRemaining(app.st);
+      afterTurnChange();
+      return;
+    }
+    if (act && act.kind === 'reroll') {
+      SS.rerollX(app.st, undefined, (act.slot == null ? null : act.slot));
+      UI.log(T('log.sideReroll', { side: sideName(app.st.turn) }));
+      setTimeout(cpuStep, D(550));
+      return;
+    }
+    if (act && act.kind === 'move') {
+      var evm = SS.applyMove(app.st, act.mv);
+      announceEvents(evm);
+      refresh();
+      setTimeout(settleAndContinue, D(60));
+      return;
+    }
+    // Klassisk CPU har ingen strategi for omkast, og omkast er eit VAL:
+    // ho gjer som eit menneske som ikkje vil kaste om — avsluttar turen.
+    // (Før kasta appen om her, heilt utan at nokon hadde valt det.)
+    UI.log(T('log.sideXdead', { side: sideName(app.st.turn) }));
+    SS.passRemaining(app.st);
+    afterTurnChange();
+  }
+
   function settleAndContinue() {
     if (checkEnd()) return;
     var s = SS.settle(app.st);
@@ -119,33 +150,17 @@
         // CPU: omkast er eit VAL, ikkje noko som skjer automatisk. NN-motorane
         // avgjer sjølv; klassisk CPU kastar berre om når ho ikkje kan noko
         // anna (ho har ingen strategi for det).
-        var act = (global.ENG && global.ENG.ready(app.engine))
-          ? global.ENG.action(app.engine, app.st) : null;
-        if (act && act.kind === 'pass') {
-          UI.log(T('log.sideSkipped', { side: sideName(app.st.turn) }));
-          SS.passRemaining(app.st);
-          afterTurnChange();
+        if (global.ENG && global.ENG.isRemote && global.ENG.isRemote(app.engine)) {
+          global.ENG.actionAsync(app.engine, app.st).then(function (act) {
+            if (!app.over) cpuDecide(act);
+          }).catch(function (e) {
+            UI.toast(T('remote.failed', { msg: global.REMOTE ? global.REMOTE.errText(e) : e.message }));
+            cpuDecide(null);
+          });
           return;
         }
-        if (act && act.kind === 'reroll') {
-          SS.rerollX(app.st, undefined, (act.slot == null ? null : act.slot));
-          UI.log(T('log.sideReroll', { side: sideName(app.st.turn) }));
-          setTimeout(cpuStep, D(550));
-          return;
-        }
-        if (act && act.kind === 'move') {
-          var evm = SS.applyMove(app.st, act.mv);
-          announceEvents(evm);
-          refresh();
-          setTimeout(settleAndContinue, D(60));
-          return;
-        }
-        // Klassisk CPU har ingen strategi for omkast, og omkast er eit VAL:
-        // ho gjer som eit menneske som ikkje vil kaste om — avsluttar turen.
-        // (Før kasta appen om her, heilt utan at nokon hadde valt det.)
-        UI.log(T('log.sideXdead', { side: sideName(app.st.turn) }));
-        SS.passRemaining(app.st);
-        afterTurnChange();
+        cpuDecide((global.ENG && global.ENG.ready(app.engine))
+          ? global.ENG.action(app.engine, app.st) : null);
       }
       return;
     }
@@ -207,13 +222,7 @@
     }
   }
 
-  function cpuPlay() {
-    if (app.over) return;
-    var mv = null;
-    if (global.ENG && global.ENG.ready(app.engine)) {
-      mv = global.ENG.move(app.engine, app.st);   // {pid,dir,v,kind} | null
-    }
-    if (!mv) mv = CPU.pick(app.st, app.level); // klassisk CPU (òg reserve)
+  function playEngineMove(mv) {
     if (!mv) { app.busy = false; settleAndContinue(); return; }
     var ev = SS.applyMove(app.st, mv);
     app.busy = false;
@@ -221,6 +230,31 @@
     refresh();
     UI.markLastMove();
     settleAndContinue();
+  }
+
+  // Fjernmotor: trekket kjem over HTTP, so vi må vente asynkront. UI-en står
+  // ikkje fast — han syner «tenkjer …» medan førespurnaden går.
+  function remoteMove() {
+    global.ENG.moveAsync(app.engine, app.st).then(function (mv) {
+      if (app.over) { app.busy = false; return; }
+      playEngineMove(mv || CPU.pick(app.st, app.level));
+    }).catch(function (e) {
+      app.busy = false;
+      UI.toast(T('remote.failed', { msg: global.REMOTE ? global.REMOTE.errText(e) : e.message }));
+      // klassisk reserve so partiet går vidare i staden for å henge
+      playEngineMove(CPU.pick(app.st, app.level));
+    });
+  }
+
+  function cpuPlay() {
+    if (app.over) return;
+    if (global.ENG && global.ENG.isRemote && global.ENG.isRemote(app.engine)) { remoteMove(); return; }
+    var mv = null;
+    if (global.ENG && global.ENG.ready(app.engine)) {
+      mv = global.ENG.move(app.engine, app.st);   // {pid,dir,v,kind} | null
+    }
+    if (!mv) mv = CPU.pick(app.st, app.level); // klassisk CPU (òg reserve)
+    playEngineMove(mv);
   }
 
   // ---------- interaktive handlinger ----------
@@ -630,9 +664,15 @@
       });
       // Standardmotor = manifestets «default» (den nyaste modellen). Klassisk
       // CPU er framleis reserve om noko feilar med lastinga.
-      var want = global.ENG.defaultId ? global.ENG.defaultId() : null;
-      if (want) app.engine = want;
-      else if (!engines.some(function (e) { return e.id === app.engine; })) app.engine = engines[0].id;
+      // Behald valet om det finst i lista. Før vart valet ALLTID sett til
+      // manifestets standard, so eit nyleg vald fjernmotor (eller ein annan
+      // motor) vart overkøyrd kvar gong lista vart fylt på nytt.
+      var finst = engines.some(function (e) { return e.id === app.engine; });
+      if (!finst) {
+        var want = global.ENG.defaultId ? global.ENG.defaultId() : null;
+        app.engine = want && engines.some(function (e) { return e.id === want; })
+          ? want : engines[0].id;
+      }
       sel.value = app.engine;
       syncLevelSelect();
     });
@@ -1119,6 +1159,55 @@
       if (app.mode === 'online') NET.leave();
       app.mode = 'menu'; show('menu');
     });
+    // ---- fjernmotor over HTTP -------------------------------------------
+    function remoteSelect() {
+      if (!global.ENG || !global.REMOTE || !global.REMOTE.connected) return;
+      var e = global.ENG.addRemote({ name: global.REMOTE.name() });
+      fillEngines();
+      app.engine = e.id;
+      if ($('cpu-engine')) $('cpu-engine').value = e.id;
+      UI.toast(T('remote.ok', { name: global.REMOTE.name() }));
+    }
+    if ($('btn-remote')) {
+      $('btn-remote').addEventListener('click', function () {
+        if (global.REMOTE) {
+          $('remote-url').value = global.REMOTE.url() || '';
+          $('remote-key').value = global.REMOTE.state.key || '';
+        }
+        $('remote-status').textContent = '';
+        $('remotedlg').showModal();
+      });
+      $('btn-remote-connect').addEventListener('click', function () {
+        var url = ($('remote-url').value || '').trim();
+        var key = $('remote-key').value || '';
+        if (!url) { $('remote-status').textContent = T('remote.noUrl'); return; }
+        $('remote-status').textContent = T('remote.connecting');
+        $('btn-remote-connect').disabled = true;
+        global.REMOTE.connect(url, key).then(function (info) {
+          $('btn-remote-connect').disabled = false;
+          $('remote-status').textContent = T('remote.ok', { name: info.name });
+          remoteSelect();
+          setTimeout(function () { $('remotedlg').close(); }, 600);
+        }).catch(function (e) {
+          $('btn-remote-connect').disabled = false;
+          $('remote-status').textContent = T('remote.failed', { msg: e.message });
+        });
+      });
+      $('btn-remote-forget').addEventListener('click', function () {
+        if (global.REMOTE) global.REMOTE.clear();
+        $('remote-status').textContent = T('remote.forgotten');
+      });
+    }
+    // Attoppkopling: er adresse og nøkkel lagra, prøver vi stille ved oppstart
+    // (feilar ho, er det ingen ting å seie — tenaren kan vere nede).
+    if (global.REMOTE && global.REMOTE.url()) {
+      setTimeout(function () {
+        global.REMOTE.connect(global.REMOTE.url(), global.REMOTE.state.key)
+          .then(function () { remoteSelect(); })
+          .catch(function () { /* stille */ });
+      }, 400);
+    }
+
     $('btn-help').addEventListener('click', function () { $('rules').showModal(); });
     doc.querySelectorAll('[data-close]').forEach(function (b) {
       b.addEventListener('click', function () { b.closest('dialog').close(); });

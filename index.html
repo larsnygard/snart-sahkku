@@ -26,7 +26,7 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.20.1 · AGPL-3.0</span></p>
+      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.21.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden" data-i18n="menu.resume">▶ Fortsett lagret parti</button>
         <button id="btn-cpu" class="big" data-i18n="menu.playCpu">⚔︎ Spill mot CPU</button>
@@ -34,6 +34,7 @@
         <button id="btn-load-fen" class="big" data-i18n="menu.loadFen">📥 Last stilling (FEN)</button>
         <button id="btn-online" class="big" data-i18n="menu.online">🌐 Spill på nett</button>
         <button id="btn-archive" class="big" data-i18n="menu.archive">📜 Arkiv</button>
+        <button id="btn-remote" class="big" data-i18n="remote.menu">🌐 Fjernmotor …</button>
         <button id="btn-install" class="big hidden" data-i18n="menu.install">⬇︎ Legg til på skjermen</button>
       </div>
       <div class="difficulty">
@@ -171,6 +172,28 @@
   </div>
 </dialog>
 
+<!-- FJERNMOTOR: ein S-UCI-motor som køyrer på ein annan maskin -->
+<dialog id="remotedlg">
+  <h3 data-i18n="remote.title">Fjernmotor over HTTP</h3>
+  <p class="arch-note" data-i18n="remote.note">Motoren køyrer på ein annan maskin.</p>
+  <div class="room-form">
+    <label for="remote-url" data-i18n="remote.url">Adresse:</label>
+    <input id="remote-url" type="url" data-i18n-ph="remote.urlPh" placeholder="https://host:8734"
+           autocomplete="off" spellcheck="false" autocapitalize="off">
+  </div>
+  <div class="room-form">
+    <label for="remote-key" data-i18n="remote.key">API-nøkkel:</label>
+    <input id="remote-key" type="password" data-i18n-ph="remote.keyPh" placeholder=""
+           autocomplete="off" spellcheck="false">
+  </div>
+  <p id="remote-status" class="arch-note"></p>
+  <div class="room-form">
+    <button id="btn-remote-connect" class="big" data-i18n="remote.connect">Kople til</button>
+    <button id="btn-remote-forget" class="ghost" data-i18n="remote.forget">Gløym</button>
+    <button data-close class="ghost" data-i18n="remote.cancel">Avbryt</button>
+  </div>
+</dialog>
+
 <!-- REGLEPANEL -->
 <dialog id="rules">
   <h3 data-i18n="rules.title">Slik spiller du</h3>
@@ -204,6 +227,7 @@
 <script src="js/i18n.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/share.js"></script>
+<script src="js/remote.js"></script>
 <script src="js/fen.js"></script>
 <script src="js/spg.js"></script>
 <script src="js/zip.js"></script>

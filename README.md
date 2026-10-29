@@ -4,6 +4,14 @@ Det gamle samiske strategispillet **sáhkku** fra Laksefjorden (Lágesvuotna),
 spilbart i nettleseren som en installerbar PWA — mot CPU, i to spillere
 sammesteds, eller over nett via P2P.
 
+**Fjernmotor over HTTP:** menyen har «🌐 Fjernmotor …». Der legg du inn
+adressa til ein køyrerande `sahkku_ai.server` og API-nøkkelen hans, og motoren
+dukker opp i motorlista og vert valt med ein gong. Appen er framleis dommaren:
+trekket som kjem over nettet vert matcha mot appen sin eigen lovlege pool, so
+tenaren kan ikkje dytte inn eit ulovleg trekk. Nøkkelen vert lagra berre i
+`localStorage` i denne nettlesaren, aldri i repoet eller i `engines.json`.
+Sjå `sahkku-ai/README.md` §7 for korleis tenaren vert starta.
+
 Spillereglene følger [sahkku.no](https://sahkku.no/docs) (varianten *med
 dronninger*):
 

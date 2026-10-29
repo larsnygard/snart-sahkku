@@ -48,8 +48,20 @@
     return hit || null;
   }
 
+  // Fjernmotor: REMOTE held sambandet; «lasting» er berre eit handtrykk.
+  function addRemote(info) {
+    var entry = { id: 'remote', name: 'Fjernmotor — ' + ((info && info.name) || '?'),
+                  type: 'remote', url: global.REMOTE ? global.REMOTE.url() : '' };
+    list = (list || []).filter(function (e) { return e.id !== 'remote'; }).concat([entry]);
+    mods.remote = { ready: true, err: null, mod: null };
+    return entry;
+  }
+
   function load(id) {
     var e = byId(id);
+    if (e && e.type === 'remote') {
+      return Promise.resolve(!!(global.REMOTE && global.REMOTE.connected));
+    }
     if (!e || e.type !== 'nn') return Promise.resolve(false);
     if (mods[id] && mods[id].ready) return Promise.resolve(true);
     if (mods[id] && mods[id].pending) return mods[id].pending;
@@ -87,7 +99,26 @@
     return entry.pending;
   }
 
-  function ready(id) { return !!(mods[id] && mods[id].ready); }
+  function ready(id) {
+    var e = byId(id);
+    if (e && e.type === 'remote') return !!(global.REMOTE && global.REMOTE.connected);
+    return !!(mods[id] && mods[id].ready);
+  }
+
+  // Asynkrone variantar: lokale motorar svarar straks, fjernmotorar over HTTP.
+  // CPU-løkka i main.js brukar desse, so ho ikkje må blokkere på eit nett.
+  function actionAsync(id, st) {
+    var e = byId(id);
+    if (e && e.type === 'remote') return global.REMOTE.action(st);
+    return Promise.resolve(action(id, st));
+  }
+
+  function moveAsync(id, st) {
+    var e = byId(id);
+    if (e && e.type === 'remote') return global.REMOTE.move(st);
+    var mv = move(id, st);
+    return mv ? Promise.resolve(mv) : Promise.resolve(null);
+  }
 
   function move(id, st) {
     var m = mods[id];
@@ -122,6 +153,8 @@
 
   global.ENG = {
     list: fetchList, byId: byId, load: load, ready: ready, move: move, action: action,
+    moveAsync: moveAsync, actionAsync: actionAsync, addRemote: addRemote,
+    isRemote: function (id) { var e = byId(id); return !!(e && e.type === 'remote'); },
     // standardmotor frå manifestet (til dømes den nyaste modellen), elles null
     defaultId: function () { return defaultId; },
     name: name, type: type, error: function (id) { return mods[id] && mods[id].err; }
