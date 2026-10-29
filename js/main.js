@@ -5,6 +5,10 @@
   var doc = global.document;
   function $(id) { return doc.getElementById(id); }
 
+  // Språk: T() slår opp i gjeldande språkfil; sideName() gjev «Menn»/«Koner».
+  var T = function (key, vars) { return global.I18N ? global.I18N.t(key, vars) : key; };
+  function sideName(o) { return T(o === 0 ? 'side.Menn' : 'side.Koner'); }
+
   var app = {
     mode: 'cpu',       // 'cpu' | 'local' | 'online'
     me: 0,             // min spiller (online)
@@ -19,7 +23,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.18.1';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.19.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -77,18 +81,19 @@
         var q = SS.piece(app.st, e.pid);
         UI.log((q.t === 'q' ? 'DRONNINGA' : 'Soldat') + ' ble slått ut på ' + SS.name(e.at) + '!', 'kill');
       }
-      if (e.type === 'king') UI.log('Kongen ble kapret av ' + (e.by === 0 ? 'menn' : 'koner') + '!', 'king');
+      if (e.type === 'king') UI.log(T('log.kingCaptured', { side: T(e.by === 0 ? 'side.menn' : 'side.koner') }), 'king');
     });
   }
   function checkEnd() {
     var st = app.st;
     if (st.winner == null) return false;
     app.over = true;
-    var who = st.winner === 0 ? 'Menn' : 'Koner';
-    var why = { dronning: 'Dronninga ble slått ut.', utryddelse: 'Alle soldatene var utradert.',
-                overgivelse: 'Motstanderen ga seg.' }[st.winReason] || st.winReason;
-    UI.log('SEIER: ' + who + '! ' + why, 'win');
-    $('end-title').textContent = 'Seier: ' + who + '!';
+    var who = sideName(st.winner);
+    var why = T({ dronning: 'end.reasonQueen', utryddelse: 'end.reasonAnnihilation',
+                  overgivelse: 'end.reasonResign' }[st.winReason] || 'end.reasonQueen');
+    app._endWin = { winner: st.winner, why: why };   // so språkbyte kan teikne dialogen på nytt
+    UI.log(T('log.win', { side: who, reason: why }), 'win');
+    $('end-title').textContent = T(st.winner === 0 ? 'end.winMenn' : 'end.winKoner');
     $('end-reason').textContent = why;
     $('endscore').showModal();
     archiveCurrentGame();
@@ -117,14 +122,14 @@
         var act = (global.ENG && global.ENG.ready(app.engine))
           ? global.ENG.action(app.engine, app.st) : null;
         if (act && act.kind === 'pass') {
-          UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': hoppar over resten');
+          UI.log(T('log.sideSkipped', { side: sideName(app.st.turn) }));
           SS.passRemaining(app.st);
           afterTurnChange();
           return;
         }
         if (act && act.kind === 'reroll') {
           SS.rerollX(app.st, undefined, (act.slot == null ? null : act.slot));
-          UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': kastet om X-ene');
+          UI.log(T('log.sideReroll', { side: sideName(app.st.turn) }));
           setTimeout(cpuStep, D(550));
           return;
         }
@@ -138,7 +143,7 @@
         // Klassisk CPU har ingen strategi for omkast, og omkast er eit VAL:
         // ho gjer som eit menneske som ikkje vil kaste om — avsluttar turen.
         // (Før kasta appen om her, heilt utan at nokon hadde valt det.)
-        UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': X utan trekk, avsluttar turen');
+        UI.log(T('log.sideXdead', { side: sideName(app.st.turn) }));
         SS.passRemaining(app.st);
         afterTurnChange();
       }
@@ -185,7 +190,7 @@
     app.busy = true;
     UI.render();
     SS.roll(app.st);
-    UI.log((app.st.turn === 0 ? 'Menn' : 'Koner') + ': kast ' + app.st.dice.join(' '));
+    UI.log(T('log.sideRolled', { side: sideName(app.st.turn), dice: app.st.dice.join(' ') }));
     app.st.phase = 'move';
     app.busy = false;
     settleAndContinue();
@@ -224,7 +229,7 @@
     if (app.st.phase !== 'roll' || app.busy) return;
     SS.roll(app.st);
     var d = app.st.dice.slice();
-    UI.log('Du kastet ' + d.join(' '));
+    UI.log(T('log.youRolled', { dice: d.join(' ') }));
     app.st.phase = 'move';
     // animasjon
     UI.render();
@@ -237,13 +242,13 @@
     if (app.mode === 'online') return onlineReroll(slot);
     var before = app.st.dice.slice();
     var r = SS.rerollX(app.st, undefined, slot);
-    if (r) UI.log('Kastet om ' + (before.join(' ')) + ' → ' + r.join(' '));
+    if (r) UI.log(T('log.rerolled', { from: before.join(' '), to: r.join(' ') }));
     settleAndContinue();
   }
   function onPass() {
     if (app.mode === 'online') return onlinePass();
     var ev = SS.passRemaining(app.st);
-    UI.log('Gjenværende terninger ble sprunget over');
+    UI.log(T('log.skipped'));
     announceEvents(ev);
     afterTurnChange();
   }
@@ -276,9 +281,9 @@
     app.fens = [];                 // FEN etter kvar endring (arkiv/avspeling)
     UI.clearLog();
     op.rolls.forEach(function (r, ix) {
-      if (op.rolls.length > 1) UI.log('Åpning ' + (ix+1) + ': Menn ' + r.p0.join(' ') + ' · Koner ' + r.p1.join(' '));
+      if (op.rolls.length > 1) UI.log(T('log.opening', { n: ix + 1, p0: r.p0.join(' '), p1: r.p1.join(' ') }));
     });
-    UI.log('Åpning: ' + (op.first === 0 ? 'Menn' : 'Koner') + ' begynner (flegst X-er)');
+    UI.log(T('log.openingFirst', { side: sideName(op.first) }));
     if (app.mode === 'cpu') {
       UI.log('CPU: ' + (global.ENG ? global.ENG.name(app.engine) : app.engine) +
              (app.engine === 'classic' ? ' (nivå ' + app.level + ')' : ''));
@@ -300,9 +305,9 @@
       app.st.turn = op.first;
       UI.clearLog();
       op.rolls.forEach(function (r, ix) {
-        if (op.rolls.length > 1) UI.log('Åpning ' + (ix + 1) + ': Menn ' + r.p0.join(' ') + ' · Koner ' + r.p1.join(' '));
+        if (op.rolls.length > 1) UI.log(T('log.opening', { n: ix + 1, p0: r.p0.join(' '), p1: r.p1.join(' ') }));
       });
-      UI.log('Åpning: ' + (op.first === 0 ? 'Menn' : 'Koner') + ' begynner (flest X-er)');
+      UI.log(T('log.openingFirst', { side: sideName(op.first) }));
       refresh();
       onlineSnapshot();
       // om verten vann opninga: eigen tur; elles: gjesten sin tur
@@ -342,7 +347,7 @@
     if (app.host) {
       SS.roll(app.st);
       app.st.phase = 'move';
-      UI.log('Du kastet ' + app.st.dice.join(' '));
+      UI.log(T('log.youRolled', { dice: app.st.dice.join(' ') }));
       onlineSnapshot();
       settleAndContinue();
     } else {
@@ -358,7 +363,7 @@
     if (app.st.turn !== app.me) return;
     if (app.host) {
       var r = SS.rerollX(app.st, undefined, slot);
-      if (r) { UI.log('Kastet om X-ene: ' + r.join(' ')); onlineSnapshot(); }
+      if (r) { UI.log(T('log.rerolledX', { dice: r.join(' ') })); onlineSnapshot(); }
       settleAndContinue();
     } else {
       app.busy = true; refresh();
@@ -373,7 +378,7 @@
       var legal = SS.legalMoves(app.st, app.st.turn).some(function (m) {
         return m.pid === mv.pid && m.v === mv.v && m.kind === mv.kind && (m.dir === mv.dir);
       });
-      if (!legal) { UI.toast('Ulovleg trekk'); return; }
+      if (!legal) { UI.toast(T('log.illegal')); return; }
       var ev = SS.applyMove(app.st, mv);
       announceEvents(ev);
       UI.clearSelection();
@@ -418,9 +423,9 @@
         var lastR = p.rolls[p.rolls.length - 1];
         var x = function (d) { return d.filter(function (v) { return v === 'X'; }).length; };
         p.rolls.forEach(function (r, ix) {
-          if (p.rolls.length > 1) UI.log('Åpning ' + (ix + 1) + ': Menn ' + r.p0.join(' ') + ' · Koner ' + r.p1.join(' '));
+          if (p.rolls.length > 1) UI.log(T('log.opening', { n: ix + 1, p0: r.p0.join(' '), p1: r.p1.join(' ') }));
         });
-        UI.log('Åpning: ' + (x(lastR.p0) > x(lastR.p1) ? 'Menn' : 'Koner') + ' begynner (flest X-er)');
+        UI.log(T('log.openingFirst', { side: sideName(x(lastR.p0) > x(lastR.p1) ? 0 : 1) }));
         return;
       }
       var side = p.t === 0 ? 'Menn' : 'Koner';
@@ -428,9 +433,9 @@
         UI.log(side + (ix > 0 ? ' kasta om X-ene: ' : ': kast ') + d.join(' '));
       });
       p.mv.forEach(function (m) {
-        var nm = m.t === 'k' ? 'Kongen' : m.t === 'q' ? 'Dronninga' : (m.o === 0 ? 'Menn' : 'Koner');
-        if (m.rel) UI.log(nm + ' løsna på ' + SS.sqName(m.to));
-        else UI.log(nm + ' ' + SS.sqName(m.from) + '→' + SS.sqName(m.to) + (m.k > 0 ? ' slo ' + m.k : '') + (m.kg ? ' — kongen kapra!' : ''));
+        var nm = m.t === 'k' ? T('piece.king') : m.t === 'q' ? T('piece.queen') : sideName(m.o);
+        if (m.rel) UI.log(T('log.released', { piece: nm, sq: SS.sqName(m.to) }));
+        else UI.log(nm + ' ' + SS.sqName(m.from) + '→' + SS.sqName(m.to) + (m.k > 0 ? ' ' + T('log.took', { n: m.k }) : '') + (m.kg ? T('log.capturedKing') : ''));
       });
     });
     if (st.winner != null) UI.log('SEIER: ' + (st.winner === 0 ? 'Menn' : 'Koner') + '! ' + (st.winReason || ''), 'win');
@@ -440,7 +445,7 @@
       $('net-status').textContent = s;
     };
     NET.handlers.onPeers = function (peers) {
-      $('peer-list').textContent = peers.length ? peers.map(NET.short).join(', ') : 'ingen';
+      $('peer-list').textContent = peers.length ? peers.map(NET.short).join(', ') : T('room.noPeers');
       var me = NET.myId ? NET.short(NET.myId) : '—';
       $('my-node').textContent = me;
       if (app.mode === 'online') {
@@ -458,7 +463,7 @@
           if (app.host) onlineSnapshot(); else NET.send({ t: 'sync' });
           return;
         }
-        if (!connected && app.st && !app.over) UI.toast('Motspillar forsvann — spelet er redda, vent på gjenoppkopling');
+        if (!connected && app.st && !app.over) UI.toast(T('toast.peerLost'));
       }
     };
     NET.handlers.onMsg = function (m) {
@@ -561,16 +566,16 @@
 
   // ---------- SPG-notasjon: last ned / kopier ----------
   function spgMeta() {
-    var m = { event: { cpu: 'Parti mot CPU', local: 'Parti ved same skjerm', online: 'Parti på nett' }[app.mode] || 'Sáhkku-parti' };
+    var m = { event: { cpu: T('spg.eventCpu'), local: T('spg.eventLocal'), online: T('spg.eventOnline') }[app.mode] || 'Sáhkku-parti' };
     // SPG 1.2: tidspunktet partiet byrja ([Date]/[Time]/[UTC]), ikkje no.
     if (app.startTs) m.start = app.startTs;
     m.comment = 'SnartSáhkku ' + APP_VERSION +
       (app.mode === 'cpu' ? ', mot ' + (global.ENG ? global.ENG.name(app.engine) : app.engine) : '') +
-      '. Terningar og trekk er registrerte; kommentarar er frie.';
+      '. ' + T('spg.comment');
     // Datamaskin-merke etter standarden: «(c) <motor>». Koner er CPU-en.
     if (app.mode === 'cpu') {
       m.koner = 'Gálgut (c) ' + (app.engine === 'classic'
-        ? 'klassisk nivå ' + app.level
+        ? T('spg.classicLevel', { n: app.level })
         : (global.ENG ? global.ENG.name(app.engine) : app.engine));
     }
     if (app.nesseby) m.event += ' — Nesseby';
@@ -587,11 +592,11 @@
       a.download = fname;
       doc.body.appendChild(a); a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-      UI.log('Notasjon eksportert: ' + fname);
+      UI.log(T('log.notationExported', { fname: fname }));
     } catch (e) {
       // fallback: kopier til utklippstavla
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(txt).then(function () { UI.log('Notasjon kopiert til utklippstavla'); });
+        navigator.clipboard.writeText(txt).then(function () { UI.log(T('log.notationCopied')); });
       }
     }
   }
@@ -640,7 +645,7 @@
     var st;
     try { st = SS.fromFEN(txt); }
     catch (e) {
-      $('fen-error').textContent = 'Ugyldig FEN: ' + (e && e.message ? e.message : e);
+      $('fen-error').textContent = T('fen.invalid', { msg: (e && e.message ? e.message : e) });
       return;
     }
     app.st = st;
@@ -650,9 +655,9 @@
     if (app.mode === 'menu' || app.mode === 'online') app.mode = 'local';
     $('fenload').close();
     UI.clearLog();
-    UI.log('Stilling lasta frå FEN (' + (st.turn === 0 ? 'menn' : 'koner') + ' i tur)');
+    UI.log(T('toast.fenLoaded', { info: T(st.turn === 0 ? 'side.menn' : 'side.koner') }));
     show('game');
-    if (st.winner != null) { refresh(); UI.toast('Stillinga er eit ferdigspela parti'); return; }
+    if (st.winner != null) { refresh(); UI.toast(T('toast.gameOverPosition')); return; }
     if (st.phase === 'roll') { rollPhase(); return; }
     refresh();
     if (!humanTurn() && app.mode === 'cpu') setTimeout(cpuStep, D(500));
@@ -681,7 +686,7 @@
       a.download = fname;
       doc.body.appendChild(a); a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-    } catch (e) { UI.toast('Kunne ikkje laste ned'); }
+    } catch (e) { UI.toast(T('toast.downloadFailed')); }
   }
 
   function archiveCurrentGame() {
@@ -700,7 +705,7 @@
       spg: (global.SPG && global.SPG.toSPG) ? global.SPG.toSPG(app.st, spgMeta()) : ''
     };
     var lagra = global.ARCH.save(rec);
-    if (lagra) { app.lastId = rec.id || (lagra && lagra.id); UI.log('Partiet er lagra i arkivet'); }
+    if (lagra) { app.lastId = rec.id || (lagra && lagra.id); UI.log(T('log.savedToArchive')); }
     app.lastRec = rec;
   }
 
@@ -709,9 +714,9 @@
     var dateStr = when.toLocaleDateString() + ' ' + String(when.getHours()).padStart(2, '0') + ':' +
                   String(when.getMinutes()).padStart(2, '0');
     var mode = g.mode === 'cpu'
-      ? ('CPU ' + (g.engine && g.engine !== 'classic' ? g.engine : 'nivå ' + (g.level || 2)))
-      : (g.mode === 'local' ? 'to spillere' : 'nett');
-    var res = g.result === '1-0' ? 'Menn vann' : (g.result === '0-1' ? 'Koner vann' : 'ikkje avslutta');
+      ? ('CPU ' + (g.engine && g.engine !== 'classic' ? g.engine : T('archive.cpuLevel', { n: g.level || 2 })))
+      : (g.mode === 'local' ? T('archive.local') : T('archive.online'));
+    var res = g.result === '1-0' ? T('archive.resultMenn') : (g.result === '0-1' ? T('archive.resultKoner') : T('archive.resultOpen'));
     var row = doc.createElement('div');
     row.className = 'arch-row';
     row.innerHTML = '<div class="arch-info"><b>' + res + '</b><span class="arch-sub">' + dateStr +
@@ -725,11 +730,11 @@
       b.addEventListener('click', fn);
       acts.appendChild(b);
     }
-    mkBtn('Vis', '', function () { openReplay(g.id); });
+    mkBtn(T('archive.view'), '', function () { openReplay(g.id); });
     mkBtn('SPG', 'ghost', function () {
       downloadText(g.spg || '', 'sahkku-' + fileStamp(g.utc || g.ts) + '.spg');
     });
-    mkBtn('Slett', 'ghost', function () { global.ARCH.remove(g.id); renderArchive(); });
+    mkBtn(T('archive.delete'), 'ghost', function () { global.ARCH.remove(g.id); renderArchive(); });
     row.appendChild(acts);
     return row;
   }
@@ -739,7 +744,7 @@
     box.innerHTML = '';
     var games = global.ARCH.list();
     if (!games.length) {
-      box.innerHTML = '<p class="arch-empty">Ingen parti i arkivet enno. Spel eit parti ferdig, so dukkar det opp her.</p>';
+      box.innerHTML = '<p class="arch-empty">' + T('archive.empty') + '</p>';
       return;
     }
     games.forEach(function (g) { box.appendChild(archRow(g)); });
@@ -801,18 +806,18 @@
     $('btn-arch-back').addEventListener('click', function () { show('menu'); });
     $('btn-arch-export').addEventListener('click', function () {
       var all = global.ARCH.dumpAll();
-      if (!all.games.length) { UI.toast('Arkivet er tomt'); return; }
+      if (!all.games.length) { UI.toast(T('toast.archiveEmpty')); return; }
       downloadText(JSON.stringify(all, null, 1),
                    'sahkku-arkiv-' + new Date().toISOString().slice(0, 10) + '.json');
-      UI.toast(all.games.length + ' parti lasta ned');
+      UI.toast(T('toast.imported', { n: all.games.length }));
     });
     $('btn-arch-import').addEventListener('click', function () { $('arch-file').click(); });
     // ---- eksport: SPG (éi fil, mange parti) og SPGZ (zip) ---------------
     $('btn-arch-spg').addEventListener('click', function () {
       var r = global.ARCH.exportSpgText();
-      if (!r.games) { UI.toast('Ingen parti med notasjon i arkivet'); return; }
+      if (!r.games) { UI.toast(T('toast.noSpgGames')); return; }
       downloadText(r.text, 'sahkku-arkiv-' + fileStamp() + '.spg');
-      UI.toast(r.games + ' parti skrivne til SPG' +
+      UI.toast(T('toast.exportedSpg', { n: r.games }) +
                (r.missing ? ' (' + r.missing + ' utan notasjon vart hoppa over)' : ''));
     });
     $('btn-arch-spgz').addEventListener('click', function () {
@@ -822,7 +827,7 @@
         a.download = 'sahkku-arkiv-' + fileStamp() + '.spgz';
         doc.body.appendChild(a); a.click();
         setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-        UI.toast(r.files + ' parti i zip-fila');
+        UI.toast(T('toast.exportedZip', { n: r.files }));
       }, function (err) { UI.toast(err.message); });
     });
     $('arch-file').addEventListener('change', function (e) {
@@ -831,11 +836,11 @@
       var rd = new FileReader();
       rd.onload = function () {
         var res, done = function (r) {
-          if (!r) { UI.toast('Kunne ikkje lese fila'); return; }
+          if (!r) { UI.toast(T('toast.readFailed')); return; }
           if (r.error && !r.added) { UI.toast(r.error); return; }
           renderArchive();
           UI.toast('Importerte ' + r.added + ' parti' +
-                   (r.skipped ? ' (' + r.skipped + ' vart ikkje lesne)' : '') +
+                   (r.skipped ? ' ' + T('toast.importSkipped', { n: r.skipped }) : '') +
                    (r.error ? ' — ' + r.error : ''));
         };
         // Alt vert lese som BYTES og avgjort på innhaldet — ikkje på endinga
@@ -859,17 +864,17 @@
           done(global.ARCH.importSpg(txt));
           return;
         }
-        UI.toast('Kjenner ikkje formatet — ventar JSON-arkiv, SPG eller SPGZ');
+        UI.toast(T('toast.unknownFormat'));
       };
-      rd.onerror = function () { UI.toast('Kunne ikkje lese fila'); };
+      rd.onerror = function () { UI.toast(T('toast.readFailed')); };
       rd.readAsArrayBuffer(f);
       e.target.value = '';
       e.target.value = '';
     });
     $('btn-arch-clear').addEventListener('click', function () {
-      if (!global.ARCH.list().length) { UI.toast('Arkivet er tomt'); return; }
-      if (global.confirm && !global.confirm('Slette alle lagra parti?')) return;
-      global.ARCH.clear(); renderArchive(); UI.toast('Arkivet er tømt');
+      if (!global.ARCH.list().length) { UI.toast(T('toast.archiveEmpty')); return; }
+      if (global.confirm && !global.confirm(T('archive.confirmClear'))) return;
+      global.ARCH.clear(); renderArchive(); UI.toast(T('toast.archiveCleared'));
     });
     $('btn-prev').addEventListener('click', function () { replayStep(-1); });
     $('btn-next').addEventListener('click', function () { replayStep(1); });
@@ -906,7 +911,7 @@
           UI.toast(engName(app.engine) + ' klar');
           newGame();
         }, function (e) {
-          UI.toast(engName(app.engine) + ' feila — spelar med klassisk CPU');
+          UI.toast(engName(app.engine) + ' ' + T('toast.engineFailed'));
           if (global.console) console.warn('motor-last feila:', e);
           app.engine = 'classic';
           newGame();
@@ -922,7 +927,7 @@
         syncLevelSelect();
         if (id && id !== 'classic') {
           global.ENG.load(id).catch(function (e) {
-            UI.toast(engName(id) + ' feila — klassisk CPU vert brukt');
+            UI.toast(engName(id) + ' ' + T('toast.engineFailed'));
             if (global.console) console.warn('motor-last feila:', e);
             $('cpu-engine').value = 'classic';
             syncLevelSelect();
@@ -942,7 +947,7 @@
       });
     }
     $('btn-resume').addEventListener('click', function () {
-      if (!resumeGame()) { UI.toast('Fann ikje noko lagra parti'); show('menu'); }
+      if (!resumeGame()) { UI.toast(T('toast.noSavedGame')); show('menu'); }
     });
     $('btn-spg').addEventListener('click', exportSpg);
     $('btn-export-spg').addEventListener('click', exportSpg);
@@ -951,7 +956,7 @@
       var fen = SS.toFEN(app.st);
       function done() { UI.toast('FEN kopiert'); UI.log('FEN: ' + fen); }
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(fen).then(done, function () { UI.log('FEN: ' + fen); UI.toast('Kunne ikkje kopiere — sjå loggen'); });
+        navigator.clipboard.writeText(fen).then(done, function () { UI.log('FEN: ' + fen); UI.toast(T('toast.copyFailed')); });
       } else {
         var ta = doc.createElement('textarea');
         ta.value = fen; doc.body.appendChild(ta); ta.select();
@@ -979,13 +984,13 @@
         // vis invitasjonskode så gjesten kan bootstrappe seg inn
         $('invite-code').textContent = NET.seed + '#' + NET.myId;
         $('invite-row').style.display = '';
-        $('room-hint').textContent = 'Del invitasjonskoden med motspilleren. Spillet starter når begge er i rommet.';
+        $('room-hint').textContent = T('room.inviteHint');
         app.mode = 'online';
         app.onlineStarted = false;
         app.host = NET.isLowest();
         app.me = app.host ? 0 : 1;
       } catch (e) {
-        UI.toast('Kunne ikke bli med: ' + e.message);
+        UI.toast(T('toast.joinFailed', { msg: e.message }));
         $('room-hint').textContent = 'Feil: ' + e.message;
       }
       $('btn-join').disabled = false;
@@ -993,7 +998,7 @@
     $('btn-copy-invite').addEventListener('click', async function () {
       var code = $('invite-code').textContent;
       try { await navigator.clipboard.writeText(code); UI.toast('Invitasjonskodel kopiert'); }
-      catch (e) { UI.toast('Kunne ikke kopiere — marker og kopier manuelt'); }
+      catch (e) { UI.toast(T('toast.copyManual')); }
     });
     // --- nettdiagnostikk ---
     $('btn-diag').addEventListener('click', async function () {
@@ -1074,22 +1079,22 @@
       rec = rec || {};
       var spg = rec.spg || ((global.SPG && global.SPG.toSPG) ? global.SPG.toSPG(st, spgMeta()) : '');
       var stamp = fileStamp();
-      var stilling = (at != null && total != null) ? (' · stilling ' + at + '/' + total) : '';
+      var stilling = (at != null && total != null) ? (' · ' + T('review.position') + ' ' + at + '/' + total) : '';
       SHARE.image(st, {
         spg: spg,
         software: 'SnartSáhkku ' + APP_VERSION,
-        title: 'Sáhkku — ' + (st.winner === 0 ? 'Menn vann' : st.winner === 1 ? 'Koner vann' : 'ikkje avslutta'),
+        title: st.winner == null ? T('share.titleOpen') : T('share.titleWin', { side: sideName(st.winner) }),
         subtitle: (app.mode === 'cpu' ? ('CPU: ' + (app.engine === 'classic' ? 'nivå ' + app.level : app.engine)) : ''),
-        footer: (st.winner === 0 ? 'Menn' : st.winner === 1 ? 'Koner' : '—') + ' · ' +
-                ({ dronning: 'dronninga slått ut', utryddelse: 'utryddelse', overgivelse: 'gav seg' }[st.winReason] || 'ikkje avslutta') +
-                ' · ' + (st.moves || 0) + ' trekk' + (st.nesseby ? ' · Nesseby' : '') + stilling,
+        footer: (st.winner == null ? '—' : sideName(st.winner)) + ' · ' +
+                T({ dronning: 'share.queenOut', utryddelse: 'share.annihilated', overgivelse: 'share.resigned' }[st.winReason] || 'share.unfinished') +
+                ' · ' + T('share.moves', { n: st.moves || 0 }) + (st.nesseby ? ' · Nesseby' : '') + stilling,
         stamp: stamp.slice(0, 10) + ' ' + stamp.slice(11, 13) + ':' + stamp.slice(13, 15) + ' UTC · snart.com/sahkku'
       }).then(function (img) {
         return SHARE.share(img.blob, 'sahkku-' + stamp + '.png', 'Sáhkku');
       }).then(function (kva) {
-        UI.toast(kva === 'delt' ? 'Biletet er delt' : 'Biletet er lasta ned');
+        UI.toast(kva === 'delt' ? T('toast.shared') : T('toast.downloaded'));
       }).catch(function (e) {
-        UI.toast('Kunne ikkje lage bilete: ' + e.message);
+        UI.toast(T('toast.imageFailed', { msg: e.message }));
       });
     }
     $('btn-share').addEventListener('click', function () { sharePosition(app.lastRec, null, null); });
@@ -1120,7 +1125,26 @@
     });
   }
 
+  // Last språkfila FØR appen teiknar, so ingen tekst blinkar på feil språk.
   function boot() {
+    if (global.I18N) {
+      global.I18N.init().then(startApp).catch(function (e) {
+        if (global.console) console.warn('i18n feila:', e);
+        startApp();
+      });
+    } else startApp();
+  }
+
+  function startApp() {
+    // Språkbyte midt i bruk: teikn alt på nytt med nye tekstar.
+    doc.addEventListener('langchange', function () {
+      if (app.st) UI.render();
+      if (app.mode === 'archive') renderArchive();
+      if (app._endWin && $('endscore').open) {
+        $('end-title').textContent = T(app._endWin.winner === 0 ? 'end.winMenn' : 'end.winKoner');
+        $('end-reason').textContent = app._endWin.why;
+      }
+    });
     wireUI();
     wireNet();
     if ('serviceWorker' in navigator) {
@@ -1145,7 +1169,7 @@
       function pendingUpdate() {
         app._updateReady = true;
         if (canReloadNow()) { reloadForUpdate(); return; }
-        UI.toast('Ny versjon er klar — ho vert lasta når partiet er ferdig');
+        UI.toast(T('toast.newVersion'));
       }
       if (hadSW) navigator.serviceWorker.addEventListener('controllerchange', pendingUpdate);
       app._checkUpdate = function () {           // kallast når vi kjem til menyen
@@ -1174,18 +1198,18 @@
         show('room');
         $('room-seed').value = rec.room;
         $('btn-join').disabled = true;
-        $('room-hint').textContent = 'Koplar til rommet att…';
+        $('room-hint').textContent = T('room.connecting');
         NET.load().then(function () {
           $('my-node').textContent = NET.short(NET.myId);
           return NET.join(rec.room);
         }).then(function () {
           $('invite-code').textContent = NET.seed + '#' + NET.myId;
           $('invite-row').style.display = '';
-          $('room-hint').textContent = 'Rommet er attopna. Del invitasjonskoden om motspillar manglar.';
+          $('room-hint').textContent = T('room.reopened');
           $('btn-join').disabled = false;
           $('btn-resume').click();   // gjenopprett partiet frå lagring
         }).catch(function (e) {
-          $('room-hint').textContent = 'Klarte ikje å kople til att: ' + e.message;
+          $('room-hint').textContent = T('toast.reconnectFailed', { msg: e.message });
           $('btn-join').disabled = false;
         });
         return;

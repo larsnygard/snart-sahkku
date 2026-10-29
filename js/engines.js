@@ -19,6 +19,7 @@
 //       ENG.name(id)        -> visingsnamn
 (function (global) {
   'use strict';
+  var T = function (key, vars) { return global.I18N ? global.I18N.t(key, vars) : key; };
   var MANIFEST = 'engines/engines.json';
   var list = null;                 // [{id,name,type,…}]
   var defaultId = null;            // manifestets «default» (nyaste motor)
@@ -76,7 +77,7 @@
             });
         } catch (err) { reject(err); }
       };
-      s.onerror = function () { reject(new Error('fann ikkje ' + e.script)); };
+      s.onerror = function () { reject(new Error(T('engines.notFound') + e.script)); };
       document.head.appendChild(s);
     }).catch(function (err) {
       entry.err = err;
@@ -95,7 +96,7 @@
       var mv = m.mod.exported.chooseMove(st);
       return (mv && mv.pid !== undefined) ? mv : null;
     } catch (e) {
-      if (global.console) console.warn('motor ' + id + ': trekk feila', e);
+      if (global.console) console.warn('engine ' + id + ': ' + T('engines.moveFailed'), e);
       return null;
     }
   }

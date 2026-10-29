@@ -62,8 +62,14 @@ const server = http.createServer((req, res) => {
         tittel: el.parentNode.title || '',
       };
     };
+    // orda kjem frå språkfila no — les dei same stad som appen
+    const ord = {
+      sold: window.I18N.t('piece.soldierPl'),
+      queen: window.I18N.t('ui.capturedQueen'),
+      king: window.I18N.t('ui.capturedKing'),
+    };
     return { koner: tell('caplist-p1'), menn: tell('caplist-p0'),
-             drap: st.kills, kongeEigar: SS.king(st).o };
+             drap: st.kills, kongeEigar: SS.king(st).o, ord: ord };
   });
 
   // Koner (side 1) tok 3 soldatar + menn-dronninga
@@ -71,12 +77,14 @@ const server = http.createServer((req, res) => {
   ok('Koner: dronninga er markert', res.koner.dronning === 1, JSON.stringify(res.koner));
   ok('Koner: ingen konge (Menn eig han)', res.koner.konge === 0, JSON.stringify(res.koner));
   ok('Koner: tittelen nemner 3 soldatar og dronninga',
-     /3 soldatar/.test(res.koner.tittel) && /dronninga/.test(res.koner.tittel), res.koner.tittel);
+     res.koner.tittel.indexOf('3') >= 0 &&
+     res.koner.tittel.indexOf(res.ord.sold) >= 0 &&
+     res.koner.tittel.indexOf(res.ord.queen) >= 0, res.koner.tittel);
 
   // Menn (side 0) tok 2 soldatar og eig kongen
   ok('Menn: 2 soldatprikkar', res.menn.prikkar === 2, JSON.stringify(res.menn));
   ok('Menn: kongen er markert', res.menn.konge === 1, JSON.stringify(res.menn));
-  ok('Menn: tittelen nemner kongen', /kapra kongen/.test(res.menn.tittel), res.menn.tittel);
+  ok('Menn: tittelen nemner kongen', res.menn.tittel.indexOf(res.ord.king) >= 0, res.menn.tittel);
 
   // Tom tilstand: ingenting fanga -> strek, ikkje tom boks
   const tom = await page.evaluate(() => {

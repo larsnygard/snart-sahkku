@@ -12,6 +12,7 @@
 // vert oppføringa lagra ukomprimert (framleis ei gyldig zip-fil).
 (function (global) {
   'use strict';
+  var T = function (key, vars) { return global.I18N ? global.I18N.t(key, vars) : key; };
 
   var CRC = (function () {
     var t = new Uint32Array(256);
@@ -110,7 +111,7 @@
     for (var i = bytes.length - 22; i >= 0 && i >= bytes.length - 66000; i--) {
       if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
     }
-    if (eocd < 0) return Promise.reject(new Error('ikkje ei zip-fil'));
+    if (eocd < 0) return Promise.reject(new Error(T('zip.notZip')));
     var n = dv.getUint16(eocd + 10, true), cdOff = dv.getUint32(eocd + 16, true);
     var items = [], p = cdOff;
     for (var k = 0; k < n; k++) {

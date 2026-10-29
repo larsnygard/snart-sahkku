@@ -12,6 +12,7 @@
 //       ARCH.clear() · ARCH.stepsFrom(st) · ARCH.replay(rec, n) · ARCH.findMove
 (function (global) {
   'use strict';
+  var T = function (key, vars) { return global.I18N ? global.I18N.t(key, vars) : key; };
   var KEY = 'sahkku.archive.v1';
   var MAX = 200;                       // hald arkivet lite; eldste fell ut
 
@@ -51,7 +52,7 @@
   function importBundle(obj) {
     var games = (obj && obj.games) || (Array.isArray(obj) ? obj : null) ||
                 (obj && (obj.steps || obj.fens) ? [obj] : null);
-    if (!games || !games.length) return { added: 0, skipped: 0, error: 'fann ingen parti i fila' };
+    if (!games || !games.length) return { added: 0, skipped: 0, error: T('archive.errNoGames') };
     var cur = read(), ids = {}, added = 0, skipped = 0;
     cur.forEach(function (g) { if (g && g.id) ids[g.id] = 1; });
     games.forEach(function (g) {
@@ -93,10 +94,10 @@
 
   // ei .spgz er ei zip-fil med .spg-oppføringar
   function importSpgz(bytes) {
-    if (!global.ZIP) return Promise.resolve({ added: 0, skipped: 0, error: 'zip-støtte manglar' });
+    if (!global.ZIP) return Promise.resolve({ added: 0, skipped: 0, error: T('archive.errZip') });
     return global.ZIP.read(bytes).then(function (items) {
       var spg = items.filter(function (it) { return /\.spg$/i.test(it.name) || it.name.indexOf('.') < 0; });
-      if (!spg.length) return { added: 0, skipped: 0, error: 'fann ingen .spg-filer i zip-en' };
+      if (!spg.length) return { added: 0, skipped: 0, error: T('archive.errNoSpgInZip') };
       var all = spg.map(function (it) { return it.text; }).join('\n');
       return importSpg(all, { idPrefix: 'spgz' });
     });
@@ -136,7 +137,7 @@
 
   // .spgz: kvart parti som si eiga .spg-oppføring i ein zip
   function exportSpgzBlob(filter) {
-    if (!global.ZIP) return Promise.reject(new Error('zip-støtte manglar'));
+    if (!global.ZIP) return Promise.reject(new Error(T('archive.errZip')));
     var games = (filter || read()).filter(function (g) { return g && g.spg; });
     var files = games.map(function (g, i) {
       var day = String(g.ts || '').slice(0, 10) || 'parti';
@@ -145,7 +146,7 @@
         .replace(/[^\w.\-]+/g, '_').slice(0, 60);
       return { name: nm + '.spg', text: g.spg };
     });
-    if (!files.length) return Promise.reject(new Error('ingen parti med notasjon'));
+    if (!files.length) return Promise.reject(new Error(T('archive.errNoNotation')));
     return global.ZIP.write(files).then(function (bytes) {
       return { blob: new Blob([bytes], { type: 'application/zip' }), files: files.length };
     });

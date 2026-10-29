@@ -3,6 +3,7 @@
   'use strict';
   var SS = global.SS;
   var doc = global.document;
+  var T = function (key, vars) { return global.I18N ? global.I18N.t(key, vars) : key; };
 
   var ui = {
     st: null,            // spilltilstand
@@ -141,7 +142,7 @@
         var q = doc.createElement('span');
         q.className = 'capq';
         q.textContent = '♀';
-        q.title = 'fiendedronninga er slått ut — partiet er vunne';
+        q.title = T('ui.queenOutTitle');
         list.appendChild(q);
       }
       if (ownsKing) {
@@ -157,10 +158,13 @@
         none.textContent = '–';
         list.appendChild(none);
       }
-      box.title = (side === 0 ? 'Menn' : 'Koner') + ' har fanga ' + soldiers +
-        ' soldat' + (soldiers === 1 ? '' : 'ar') +
-        (gotQueen ? ' og fiendedronninga' : '') +
-        (ownsKing ? ' og kapra kongen' : '');
+      box.title = T('ui.capturedTitle', {
+        side: T(side === 0 ? 'side.Menn' : 'side.Koner'),
+        n: soldiers,
+        soldiers: T(soldiers === 1 ? 'piece.soldier' : 'piece.soldierPl'),
+        queen: gotQueen ? T('ui.capturedQueen') : '',
+        king: ownsKing ? T('ui.capturedKing') : ''
+      });
     });
   }
 
@@ -168,11 +172,11 @@
     var st = ui.st;
     if (!st) return;
     turnEl.className = 'chip ' + (st.turn === 0 ? 'p0' : 'p1');
-    turnEl.textContent = 'Tur: ' + (st.turn === 0 ? 'menn (olbmát)' : 'koner (gálgut)');
+    turnEl.textContent = T('game.turn') + ' ' + T(st.turn === 0 ? 'side.mennOlmat' : 'side.konerGalgut');
     var k = SS.king(st);
     kingEl.className = 'chip ' + (k.o == null ? 'neutral' : (k.o === 0 ? 'p0' : 'p1'));
-    kingEl.textContent = k.o == null ? 'Kongen løs' :
-      (k.o === 0 ? 'Kongen: menn (raud)' : 'Kongen: koner (blå)');
+    kingEl.textContent = k.o == null ? T('game.kingFree')
+      : T('ui.kingChipMine', { side: T(k.o === 0 ? 'side.Menn' : 'side.Koner') });
     label0.parentNode.classList.toggle('active-p0', st.turn === 0);
     label1.parentNode.classList.toggle('active-p1', st.turn === 1);
     renderDice();
@@ -235,7 +239,7 @@
         if (used) el.classList.add('used');
         el.textContent = face === '_' ? '·' : face;
         if (solo) {
-          el.title = 'Klikk for å kaste om denne X-en';
+          el.title = T('ui.xRerollTitle');
           el.onclick = function () { if (ui.onReroll) ui.onReroll(ix); };
         }
         box.appendChild(el);
@@ -249,7 +253,7 @@
     // sjølv (og berre den eine, om ein slo fleire).
     var pb = doc.createElement('button');
     pb.id = 'btn-pass';
-    pb.textContent = 'Hopp over';
+    pb.textContent = T('ui.pass');
     pb.style.display = 'none';
     pb.onclick = function () { if (ui.onPass) ui.onPass(); };
     actionEl.innerHTML = '';
@@ -335,7 +339,7 @@
     var p = SS.piece(st, pid);
     if (!p || p.captured) return;
     var lm = SS.legalMoves(st, st.turn).filter(function (m) { return m.pid === pid; });
-    if (!lm.length) { toast('Brikken kan ikke røre seg med gjenværende terning'); return; }
+    if (!lm.length) { toast(T('ui.cannotMove')); return; }
     ui.sel = pid;
     ui.targets = lm.map(function (m) {
       var dest;
@@ -365,8 +369,8 @@
         var mine = p.o === ui.st.turn ||
           (p.t === 'q' && p.o === ui.st.turn) ||
           (p.t === 'k' && p.o === ui.st.turn);
-        if (p.t === 'k' && p.o == null) { toast('Kongen er løs — den kan ikke flyttes'); return; }
-        if (!mine) { toast('Det er ikke din brikke'); return; }
+        if (p.t === 'k' && p.o == null) { toast(T('ui.kingFreeNoMove')); return; }
+        if (!mine) { toast(T('ui.notYours')); return; }
         selectPiece(pid);
         return;
       }

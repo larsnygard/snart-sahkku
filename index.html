@@ -15,8 +15,8 @@
 <header class="topbar">
   <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Snart<b>Sáhkku</b></span></div>
   <div class="topbtns">
-    <button id="btn-net" class="ghost" title="Nettspill">🌐 <span id="net-status">frakoblet</span></button>
-    <button id="btn-help" class="ghost" title="Regler">?</button>
+    <button id="btn-net" class="ghost" data-i18n-title="nav.netTitle">🌐 <span id="net-status" data-i18n="nav.netOffline">frakoblet</span></button>
+    <button id="btn-help" class="ghost" data-i18n-title="nav.helpTitle">?</button>
   </div>
 </header>
 
@@ -26,76 +26,77 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger. <span class="ver">v1.18.1 · AGPL-3.0</span></p>
+      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.19.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
-        <button id="btn-resume" class="big hidden">▶ Fortsett lagra parti</button>
-        <button id="btn-cpu" class="big">⚔︎ Spill mot CPU</button>
-        <button id="btn-local" class="big">👥 To spillere her</button>
-        <button id="btn-load-fen" class="big">📥 Last stilling (FEN)</button>
-        <button id="btn-online" class="big">🌐 Spill på nett</button>
-        <button id="btn-archive" class="big">📜 Arkiv</button>
-        <button id="btn-install" class="big hidden">⬇︎ Legg til på skjermen</button>
+        <button id="btn-resume" class="big hidden" data-i18n="menu.resume">▶ Fortsett lagret parti</button>
+        <button id="btn-cpu" class="big" data-i18n="menu.playCpu">⚔︎ Spill mot CPU</button>
+        <button id="btn-local" class="big" data-i18n="menu.local">👥 To spillere her</button>
+        <button id="btn-load-fen" class="big" data-i18n="menu.loadFen">📥 Last stilling (FEN)</button>
+        <button id="btn-online" class="big" data-i18n="menu.online">🌐 Spill på nett</button>
+        <button id="btn-archive" class="big" data-i18n="menu.archive">📜 Arkiv</button>
+        <button id="btn-install" class="big hidden" data-i18n="menu.install">⬇︎ Legg til på skjermen</button>
       </div>
       <div class="difficulty">
         <label>CPU:
           <select id="cpu-level">
-            <option value="1">Lett</option>
-            <option value="2" selected>Litt harder</option>
-            <option value="3">Tøff</option>
+            <option value="1" data-i18n="menu.level1">Lett</option>
+            <option value="2" selected data-i18n="menu.level2">Litt hardere</option>
+            <option value="3" data-i18n="menu.level3">Tøff</option>
           </select>
         </label>
-        <label class="nesseby-label" title="Valfri regel: kongen kan ikkje kaprast ved landing før nokon har nådd motstandarens heimrad; den fyrste soldaten som når dit kaprar kongen.">
-          <input type="checkbox" id="chk-nesseby" checked> Nesseby
+        <label class="nesseby-label" data-i18n-title="menu.nessebyTitle">
+          <input type="checkbox" id="chk-nesseby" checked> <span data-i18n="menu.nesseby">Nesseby</span>
         </label>
-        <label>Motor:
-          <select id="cpu-engine"><option value="classic">Klassisk CPU</option></select>
+        <label><span data-i18n="menu.engine">Motor:</span>
+          <select id="cpu-engine"><option value="classic" data-i18n="menu.engineClassic">Klassisk CPU</option></select>
+        </label>
+        <label><span data-i18n="menu.language">Språk:</span>
+          <select id="sel-lang"></select>
         </label>
       </div>
-      <p class="engine-note" id="engine-note">Klassisk CPU er rask og føreseieleg. Den nevrale motoren
-        (trent med sjølvspel i <a href="https://github.com/larsnygard/sahkku-ai">sahkku-ai</a>) spelar
-        meir menneskeleg, men lastar nokre MB og tenkjer ~0,5 s per trekk.</p>
+      <p class="engine-note" id="engine-note" data-i18n-html="menu.engineNote">Klassisk CPU er rask og forutsigbar. Den nevrale motoren
+        (trent med selvspill i <a href="https://github.com/larsnygard/sahkku-ai">sahkku-ai</a>) spiller
+        mer menneskelig, men laster noen MB og tenker ~0,5 s per trekk.</p>
     </div>
   </section>
 
   <!-- ONLINEMENY -->
   <section id="room" class="screen hidden">
-    <h2>Nettspill</h2>
-    <p>Del et <b>romnavn</b> med motspilleren. Begge åpner spillet og skriver det samme navnet — dere finner hverandre via iroh (kryptert over relay).</p>
+    <h2 data-i18n="room.title">Nettspill</h2>
+    <p data-i18n-html="room.lead">Del et romnavn med motspilleren.</p>
     <div class="room-form">
-      <input id="room-seed" type="text" placeholder="romnavn, eller lim inn invitasjonskoden" autocomplete="off" spellcheck="false" maxlength="200" autocapitalize="off">
-      <button id="btn-join">Bli med i rommet</button>
+      <input id="room-seed" type="text" data-i18n-ph="room.seedPlaceholder" placeholder="romnavn" autocomplete="off" spellcheck="false" maxlength="200" autocapitalize="off">
+      <button id="btn-join" data-i18n="room.join">Bli med i rommet</button>
     </div>
     <div id="room-info" class="room-info">
-      <div>Din node: <code id="my-node">—</code></div>
-      <div id="invite-row" style="display:none">Invitasjonskode (del denne): <code id="invite-code"></code> <button id="btn-copy-invite" class="ghost" style="min-height:32px;padding:5px 10px">Kopier</button></div>
-      <div>Medspillere: <span id="peer-list">ingen</span></div>
+      <div><span data-i18n="room.myNode">Din node:</span> <code id="my-node">—</code></div>
+      <div id="invite-row" style="display:none"><span data-i18n="room.invite">Invitasjonskode (del denne):</span> <code id="invite-code"></code> <button id="btn-copy-invite" class="ghost" style="min-height:32px;padding:5px 10px" data-i18n="room.copy">Kopier</button></div>
+      <div><span data-i18n="room.peers">Medspillere:</span> <span id="peer-list" data-i18n="room.noPeers">ingen</span></div>
       <div id="room-hint"></div>
       <details id="netdiag" style="margin-top:8px">
-        <summary style="cursor:pointer;color:var(--muted)">Nettdiagnostikk ( Relay·pkarr·dial )</summary>
+        <summary style="cursor:pointer;color:var(--muted)" data-i18n="room.diag">Nettdiagnostikk</summary>
         <div id="diag-out" style="font-size:12px;line-height:1.6;color:var(--muted);word-break:break-all"></div>
         <div class="room-form" style="margin:8px 0">
-          <input id="diag-peer" type="text" placeholder="motspillers node-id (valgfritt)" spellcheck="false">
-          <button id="btn-diag" class="ghost">Kjør</button>
+          <input id="diag-peer" type="text" data-i18n-ph="room.diagPeer" placeholder="node-id" spellcheck="false">
+          <button id="btn-diag" class="ghost" data-i18n="room.run">Kjør</button>
         </div>
       </details>
     </div>
-    <button id="btn-back-menu" class="ghost">Til hovedmenyen</button>
+    <button id="btn-back-menu" class="ghost" data-i18n="room.back">Til hovedmenyen</button>
   </section>
 
   <!-- ARKIV: lagra parti, med avspeling -->
   <section id="archive" class="screen hidden">
-    <h2>📜 Partiarkiv</h2>
-    <p class="arch-note">Avslutta parti vert lagra her (berre i denne nettlesaren).
-       Vel <b>Vis</b> for å bla gjennom partiet trekk for trekk, <b>SPG</b> for å
-       laste ned notasjonen, eller <b>Slett</b>.</p>
+    <h2 data-i18n="archive.title">📜 Partiarkiv</h2>
+    <p class="arch-note" data-i18n="archive.note">Fullførte parti lagres her.</p>
     <div id="arch-list" class="arch-list"></div>
     <div class="arch-actions">
-      <button id="btn-arch-export" class="ghost" title="Heile arkivet som JSON (ta med alt, kan importerast att)">⬇ JSON</button>
-      <button id="btn-arch-spg" class="ghost" title="Alle parti som éi SPG-fil (same form som PGN-samlingar)">⬇ SPG</button>
-      <button id="btn-arch-spgz" class="ghost" title="Alle parti som .spgz — zip med éi .spg per parti">⬇ SPGZ</button>
-      <button id="btn-arch-import" class="ghost">⬆ Importer</button>
-      <button id="btn-arch-clear" class="ghost">Tøm alt</button>
-      <button id="btn-arch-back" class="ghost">Til hovedmenyen</button>
+      <button id="btn-arch-export" class="ghost" data-i18n-title="archive.jsonTitle" data-i18n="archive.json">⬇ JSON</button>
+      <button id="btn-arch-spg" class="ghost" data-i18n-title="archive.spgTitle" data-i18n="archive.spg">⬇ SPG</button>
+      <button id="btn-arch-spgz" class="ghost" data-i18n-title="archive.spgzTitle" data-i18n="archive.spgz">⬇ SPGZ</button>
+      <button id="btn-arch-import" class="ghost" data-i18n="archive.import">⬆ Importer</button>
+      <button id="btn-arch-clear" class="ghost" data-i18n="archive.clear">Tøm alt</button>
+      <button id="btn-arch-back" class="ghost" data-i18n="archive.back">Til hovedmenyen</button>
       <input type="file" id="arch-file" accept=".json,.spg,.spgz,.zip,application/json,text/plain,application/zip" hidden>
     </div>
   </section>
@@ -104,104 +105,103 @@
   <section id="game" class="screen hidden">
     <div class="boardwrap" id="boardwrap">
       <div class="board" id="board"></div>
-      <div class="edge edge-p0"><span id="label-p0">Menn · olbmát</span></div>
-      <div class="edge edge-p1"><span id="label-p1">Koner · gálgut</span></div>
+      <div class="edge edge-p0"><span id="label-p0" data-i18n="game.menn">Menn · olbmát</span></div>
+      <div class="edge edge-p1"><span id="label-p1" data-i18n="game.koner">Koner · gálgut</span></div>
     </div>
     <div class="hud">
       <div class="turnbox">
-        <span id="turn-indicator" class="chip p0">Tur: menn</span>
-        <span id="king-chip" class="chip neutral">Kongen løs</span>
+        <span id="turn-indicator" class="chip p0" data-i18n="game.turn">Tur:</span>
+        <span id="king-chip" class="chip neutral" data-i18n="game.kingFree">Kongen løs</span>
       </div>
       <div class="dicerow">
         <div class="dicepanel" id="dice-p0">
-          <span class="dicelabel">Menn · olbmát</span>
+          <span class="dicelabel" data-i18n="game.menn">Menn · olbmát</span>
           <div class="dicebox" id="dicebox-p0"></div>
         </div>
         <div class="dicepanel" id="dice-p1">
-          <span class="dicelabel">Koner · gálgut</span>
+          <span class="dicelabel" data-i18n="game.koner">Koner · gálgut</span>
           <div class="dicebox" id="dicebox-p1"></div>
         </div>
-        <label class="autocast" id="autocast-wrap"
-               title="Kast terningane automatisk når det er din tur. Omkast av X er framleis manuelt.">
-          <input type="checkbox" id="chk-autocast"> Autokast
+        <label class="autocast" id="autocast-wrap" data-i18n-title="game.autocastTitle">
+          <input type="checkbox" id="chk-autocast"> <span data-i18n="game.autocast">Autokast</span>
         </label>
       </div>
       <div class="capturedrow">
         <div class="capbox p0" id="cap-p0">
-          <span class="caplabel">Menn fanga</span>
+          <span class="caplabel" data-i18n="game.capturedByMenn">Menn fanget</span>
           <span class="caplist" id="caplist-p0"></span>
         </div>
         <div class="capbox p1" id="cap-p1">
-          <span class="caplabel">Koner fanga</span>
+          <span class="caplabel" data-i18n="game.capturedByKoner">Koner fanget</span>
           <span class="caplist" id="caplist-p1"></span>
         </div>
       </div>
       <div class="actionbox" id="actionbox"></div>
     </div>
     <div id="replay-bar" class="replay-bar hidden">
-      <button id="btn-rw" class="ghost" title="Til start">⏮</button>
-      <button id="btn-prev" class="ghost" title="Førre trekk">◀</button>
+      <button id="btn-rw" class="ghost" data-i18n-title="review.start">⏮</button>
+      <button id="btn-prev" class="ghost" data-i18n-title="review.prev">◀</button>
       <span id="replay-count" class="replay-count">0 / 0</span>
-      <button id="btn-next" class="ghost" title="Neste trekk">▶</button>
-      <button id="btn-ff" class="ghost" title="Til slutt">⏭</button>
-      <button id="btn-share-rev" class="ghost" title="Del stillinga som bilete med SPG-notasjonen i EXIF">🖼 Del</button>
-      <button id="btn-replay-back" class="ghost">Til arkivet</button>
+      <button id="btn-next" class="ghost" data-i18n-title="review.next">▶</button>
+      <button id="btn-ff" class="ghost" data-i18n-title="review.end">⏭</button>
+      <button id="btn-share-rev" class="ghost" data-i18n-title="review.shareTitle" data-i18n="review.share">🖼 Del</button>
+      <button id="btn-replay-back" class="ghost" data-i18n="review.back">Til arkivet</button>
     </div>
     <div id="log" class="log" aria-live="polite"></div>
     <div class="gamebtns">
-      <button id="btn-menu" class="ghost">Meny</button>
-      <button id="btn-leave" class="ghost hidden" title="Forlat nettpartiet (koplar ned og gløymer det)">🚪 Forlat</button>
-      <button id="btn-spg" class="ghost" title="Notasjonsfil (SPG) for partiet">📜 Notasjon</button>
-      <button id="btn-fen" class="ghost" title="Kopier stillinga som S-UCI-FEN">📋 Kopier FEN</button>
-      <button id="btn-surrender" class="ghost">Gi seg</button>
+      <button id="btn-menu" class="ghost" data-i18n="game.menu">Meny</button>
+      <button id="btn-leave" class="ghost hidden" data-i18n-title="game.leaveTitle" data-i18n="game.leave">🚪 Forlat</button>
+      <button id="btn-spg" class="ghost" data-i18n-title="game.spgTitle" data-i18n="game.spg">📜 Notasjon</button>
+      <button id="btn-fen" class="ghost" data-i18n-title="game.copyFenTitle" data-i18n="game.copyFen">📋 Kopier FEN</button>
+      <button id="btn-surrender" class="ghost" data-i18n="game.surrender">Gi seg</button>
     </div>
   </section>
 </main>
 
 <!-- LAST STILLING FRÅ FEN -->
 <dialog id="fenload">
-  <h3>Last stilling frå FEN</h3>
-  <p class="arch-note">Lim inn ein S-UCI-FEN — den du fekk med «Kopier FEN», eller ei
-     stilling du vil prøve. Partiet held fram herfrå.</p>
+  <h3 data-i18n="fen.title">Last stilling fra FEN</h3>
+  <p class="arch-note" data-i18n="fen.note">Lim inn en S-UCI-FEN.</p>
   <textarea id="fen-text" rows="4" spellcheck="false" autocomplete="off"
             autocapitalize="off" placeholder="g-g-g-… w roll - 000 H2 0:0 0 *"></textarea>
   <p id="fen-error" class="fen-error"></p>
   <div class="room-form">
-    <button id="btn-fen-do" class="big">Last stilling</button>
-    <button data-close class="ghost">Avbryt</button>
+    <button id="btn-fen-do" class="big" data-i18n="fen.load">Last stilling</button>
+    <button data-close class="ghost" data-i18n="fen.cancel">Avbryt</button>
   </div>
 </dialog>
 
 <!-- REGLEPANEL -->
 <dialog id="rules">
-  <h3>Slik spiller du</h3>
+  <h3 data-i18n="rules.title">Slik spiller du</h3>
   <ul>
-    <li><b>Brettet</b>: 3 rekker, 15 linjer (A–O). Midtfeltet H2 er <i>Slottet</i>; D2 og L2 er X-merker.</li>
-    <li><b>Brikkene</b>: 15 soldater hver (olbmát/gálgut), ei dronning (dronnet) hver, og en felles konge (gonagas) på Slottet.</li>
-    <li><b>Terningene</b> (birccut): X, II, III og blank. X tel som 1. Du kan alltid kaste om X-fjes ved å klikke på sjølve terningen — éin om gongen om du slo fleire. <i>Bortsett</i> frå når ei vekking er det einaste du kan gjere (inga brikker er løsgjorte), då må du vekkje i staden. Etter eit omkast gjeld vanlege reglar for det nye fjeset, òg om det òg er ein X. II, III og blank er faste.</li>
-    <li><b>X</b> løser den fremste soldaten i rekkja di. Du kan òg bruke X til å flytte ein allereie løsgjort brikke eitt felt (eller kongen/dronninga di om de er i spel). II/III flytter ei løsgjort brikke to/tre felt.</li>
-    <li>Soldater går kun <b>framover</b> i syklusen (din rekke → midtraden → fiendens rekke → midtraden → heim). Dei kan passere alle brikker undervegs, men kan <b>aldri lande</b> på linjer der det står brikker som ikkje er løsgjorte.</li>
-    <li>Konge og dronning går rett <b>opp og ned</b> i same kolonne, og langs <b>tallsyklusen</b> (åttetalet) — begge vegar. Dei kan hoppe over brikker (berre landinga er regulert), og dei kan ikkje snu midt i eit kast. Kongen <b>slår ut</b> fiendtlege soldatar og dronninga (tek du dronninga, vinn du), men kan ikkje lande på eigne brikker eller på uutløyste brikker. Dronninga slår fiender som ein soldat og kaprar kongen.</li>
-    <li><b>Nesseby</b> (valfri, kryss av i menyen): då kan kongen ikkje kaprast ved landing før nokon har nådd motstandarens heimrad — og den fyrste soldaten som når dit, kaprar kongen for si side.</li>
-    <li>Soldater slår fiender dei landar på. Landar du på kongen, <b>kaprar</b> du han. Eigne soldatar kan stå saman på same linje.</li>
-    <li>Rekkjefølgje: bruk X-ene først, så III-ane, så II-ane. Kan du ikkje gjere noko lovleg med den aktuele terningen, går resten av kastet tapt.</li>
-    <li><b>Vinn</b>: slå ut fiendens dronning, eller utrydd alle soldatane hans (sjølv om han har kongen).</li>
+    <li data-i18n-html="rules.board"></li>
+    <li data-i18n-html="rules.pieces"></li>
+    <li data-i18n-html="rules.dice"></li>
+    <li data-i18n-html="rules.xmove"></li>
+    <li data-i18n-html="rules.soldier"></li>
+    <li data-i18n-html="rules.kingqueen"></li>
+    <li data-i18n-html="rules.nesseby"></li>
+    <li data-i18n-html="rules.landing"></li>
+    <li data-i18n-html="rules.order"></li>
+    <li data-i18n-html="rules.win"></li>
   </ul>
-  <button data-close>Lukk</button>
+  <button data-close data-i18n="rules.close">Lukk</button>
 </dialog>
 
 <dialog id="endscore">
-  <h3 id="end-title">Spallet er slutt</h3>
+  <h3 id="end-title" data-i18n="end.title">Spillet er slutt</h3>
   <p id="end-reason"></p>
   <div class="gamebtns">
-    <button id="btn-review" class="big">🔍 Gå gjennom partiet</button>
-    <button id="btn-share" class="big" title="Bilete av sluttstillinga med SPG-notasjonen i EXIF">🖼 Del bilete</button>
-    <button id="btn-export-spg" class="big">💾 Last ned notasjon (SPG)</button>
-    <button id="btn-rematch" class="big">Omkamp</button>
-    <button id="btn-endmenu" class="ghost">Meny</button>
+    <button id="btn-review" class="big" data-i18n="end.review">🔍 Gå gjennom partiet</button>
+    <button id="btn-share" class="big" data-i18n-title="end.shareTitle" data-i18n="end.share">🖼 Del bilde</button>
+    <button id="btn-export-spg" class="big" data-i18n="end.spg">💾 Last ned notasjon (SPG)</button>
+    <button id="btn-rematch" class="big" data-i18n="end.rematch">Omkamp</button>
+    <button id="btn-endmenu" class="ghost" data-i18n="end.menu">Meny</button>
   </div>
 </dialog>
 
+<script src="js/i18n.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/share.js"></script>
 <script src="js/fen.js"></script>

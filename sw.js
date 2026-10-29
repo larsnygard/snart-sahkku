@@ -1,9 +1,10 @@
 // SnartSáhkku SW — cache-first for alle assets (installbar, offlinespill)
-const CACHE = 'sahkku-v53';
+const CACHE = 'sahkku-v54';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
-  './js/share.js',
+  './js/share.js', './js/i18n.js',
+  './i18n/nb.json', './i18n/nn.json', './i18n/se.json', './i18n/en.json',
   './js/online.js', './js/archive.js', './js/engines.js', './js/main.js',
   './engines/engines.json', './engines/nais2.js', './icons/icon.svg',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png',
