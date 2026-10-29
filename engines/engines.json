@@ -118,12 +118,12 @@
     },
     {
       "id": "nais3",
-      "name": "NAIS.3",
+      "name": "NAIS.3 (eksperiment)",
       "type": "nn",
       "script": "engines/nais3.js",
       "weights": "engines/nais3.weights.json",
       "lookahead": 4,
-      "note": "Trena 1 t oppå NAIS.2 med to menneskeparti blanda inn (12 % av kvar batch): policy berre frå vinnaren sine trekk, taparsida berre verdi. Unngår stupet som kosta NAIS.2 dronninga (p for tapande trekk 0,65 -> 0,33), men målte ikkje sterkare i Nesseby (1-5 så langt). Ikkje standardmotor."
+      "note": "Trena 1 t oppå NAIS.2 med to menneskeparti blanda inn (12 % av kvar batch). Lærte den konkrete leksa — sannsynet for trekket som kosta NAIS.2 dronninga gjekk frå 0,65 til 0,33, og verdien av stillinga frå -0,62 til -0,96 — men vart klart svakare: 26,7 % mot NAIS.2 i Nesseby (8-22, n=30) og 90 % mot klassisk nivå 3 (NAIS.2: 95 %). Doseringa var feil: to tapte parti i 12 % av kvar batch lærte nettet pessimisme for Koner-sida. Ikkje tilrådd for spel."
     }
   ]
 }
