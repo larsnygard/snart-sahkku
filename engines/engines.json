@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "nais2",
+  "default": "nais4",
   "engines": [
     {
       "id": "classic",
@@ -132,7 +132,7 @@
       "script": "engines/nais4.js",
       "weights": "engines/nais4.weights.json",
       "lookahead": 4,
-      "note": "Trena 2 syklusar (400 parti kvar, ~215 000 prøver) på RTX 3070 Ti oppå NAIS.2, berre Nesseby-parti med éi aggressiv side. 100 % mot klassisk nivå 3 (40-0, 20-0 som Menn og 20-0 som Giera) — beste standardresultatet i serien (NAIS.2: 95 %). Nesseby mot NAIS.2: sjå note når benken er ferdig."
+      "note": "Trena 2 syklusar (400 parti kvar, ~215 000 prøver) på RTX 3070 Ti oppå NAIS.2, berre Nesseby-parti med éi aggressiv side. Målt: 63,3 % mot NAIS.2 i Nesseby (19-11, n=30, jamt fordelt på sider) og 100 % mot klassisk nivå 3 (40-0). Standardmotor."
     }
   ]
 }
