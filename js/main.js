@@ -17,7 +17,7 @@
     over: false,
     autocast: false    // «Autokast»: kast terningane automatisk når turen kjem
   };
-  var APP_VERSION = 'v1.16.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.17.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -32,6 +32,9 @@
   // ---------- skjermbytter ----------
   function show(id) {
     if (id === 'menu' && app._checkUpdate) setTimeout(app._checkUpdate, 150);
+    if (id === 'game' && $('btn-leave')) {
+      $('btn-leave').classList.toggle('hidden', app.mode !== 'online');
+    }
     ['menu', 'room', 'game', 'archive'].forEach(function (s) {
       $(s).classList.toggle('hidden', s !== id);
     });
@@ -574,7 +577,7 @@
   function exportSpg() {
     if (!app.st) return;
     var txt = global.SPG.toSPG(app.st, spgMeta());
-    var fname = 'sahkku-' + new Date().toISOString().slice(0, 10) + '.spg';
+    var fname = 'sahkku-' + fileStamp(app.startTs) + '.spg';
     try {
       var blob = new Blob([txt], { type: 'text/plain' });
       var a = doc.createElement('a');
@@ -597,6 +600,7 @@
 
   // Testkrok: let testane drive den verkelege settle-/kaste-vegen
   global.__settle = settleAndContinue;
+  global.__fileStamp = fileStamp;
   global.__rollPhase = rollPhase;
   function syncLevelSelect() {
     var lv = $('cpu-level');
@@ -657,6 +661,16 @@
   // ---------- arkiv: lagre, liste, avspele, slette ----------
   var review = null, prevMode = 'cpu';
 
+  // Filnamn med UTC-tidsstempel: 2026-10-29T1220Z. Sorterbart, og utan
+  // kolon so det går på alle filsystem. `iso` kan vere eit partis starttid.
+  function fileStamp(iso) {
+    var d = iso ? new Date(iso) : new Date();
+    if (isNaN(d.getTime())) d = new Date();
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate()) +
+      'T' + p(d.getUTCHours()) + p(d.getUTCMinutes()) + 'Z';
+  }
+
   function downloadText(txt, fname) {
     try {
       var blob = new Blob([txt], { type: 'text/plain' });
@@ -709,7 +723,7 @@
     }
     mkBtn('Vis', '', function () { openReplay(g.id); });
     mkBtn('SPG', 'ghost', function () {
-      downloadText(g.spg || '', 'sahkku-' + String(g.ts).slice(0, 10) + '.spg');
+      downloadText(g.spg || '', 'sahkku-' + fileStamp(g.utc || g.ts) + '.spg');
     });
     mkBtn('Slett', 'ghost', function () { global.ARCH.remove(g.id); renderArchive(); });
     row.appendChild(acts);
@@ -793,7 +807,7 @@
     $('btn-arch-spg').addEventListener('click', function () {
       var r = global.ARCH.exportSpgText();
       if (!r.games) { UI.toast('Ingen parti med notasjon i arkivet'); return; }
-      downloadText(r.text, 'sahkku-' + new Date().toISOString().slice(0, 10) + '.spg');
+      downloadText(r.text, 'sahkku-arkiv-' + fileStamp() + '.spg');
       UI.toast(r.games + ' parti skrivne til SPG' +
                (r.missing ? ' (' + r.missing + ' utan notasjon vart hoppa over)' : ''));
     });
@@ -801,7 +815,7 @@
       global.ARCH.exportSpgzBlob().then(function (r) {
         var a = doc.createElement('a');
         a.href = URL.createObjectURL(r.blob);
-        a.download = 'sahkku-' + new Date().toISOString().slice(0, 10) + '.spgz';
+        a.download = 'sahkku-arkiv-' + fileStamp() + '.spgz';
         doc.body.appendChild(a); a.click();
         setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
         UI.toast(r.files + ' parti i zip-fila');
@@ -1011,13 +1025,29 @@
       await installPrompt.userChoice.catch(function () {});
       installPrompt = null; $('btn-install').classList.add('hidden');
     });
+    // Forlating av eit nettparti: kopie ned, GLØYM det lagra partiet, og gå
+    // til menyen. Utan clearSave() dreg boot() deg rett inn i det same rommet
+    // att ved neste oppstart — det var «ingen veg ut av eit dødt nettparti».
+    function leaveOnline() {
+      if (app.mode !== 'online') return;
+      try { NET.leave(); } catch (e) { /* nettverket kan alt vere borte */ }
+      app.onlineStarted = false;
+      app.busy = false;
+      clearSave();
+      UI.toast('Forlét nettpartiet');
+    }
     $('btn-back-menu').addEventListener('click', function () {
-      NET.leave(); app.mode = 'menu'; show('menu');
+      leaveOnline(); app.mode = 'menu'; show('menu');
     });
     $('btn-menu').addEventListener('click', function () {
-      if (app.mode === 'online') NET.leave();
-      app.mode = 'menu'; show('menu');
+      leaveOnline(); app.mode = 'menu'; show('menu');
     });
+    // Eigen knapp i spelet: «Forlat» for nettparti (Gi seg krev samband)
+    if ($('btn-leave')) {
+      $('btn-leave').addEventListener('click', function () {
+        leaveOnline(); app.mode = 'menu'; show('menu');
+      });
+    }
     $('btn-rematch').addEventListener('click', function () {
       $('endscore').close();
       if (app.mode === 'online') {
@@ -1076,8 +1106,16 @@
       $('btn-resume').classList.remove('hidden');
       var what = { cpu: 'CPU-parti', local: 'to spelarar', online: 'nettparti' }[rec.mode] || 'parti';
       $('btn-resume').textContent = '▶ Fortsett ' + what + ' (' + SS.name(SS.king(rec.st).at) + ' · ' + (rec.st.turn === 0 ? 'Menn' : 'Koner') + ' i trekket)';
-      // nettparti: gjenopprett rommet automatisk — sessiona skal halde fram åleine
-      if (rec.mode === 'online' && rec.room) {
+      // nettparti: gjenopprett rommet automatisk berre om det er FERSKT.
+      // Eit dødt rom frå ein tidlegare dag skal ikkje ta over skjermen; då
+      // ligg partiet i arkivet/menyen i staden.
+      var _ferskt = (function () {
+        try {
+          var t = Date.parse(rec.ts || '');
+          return !isNaN(t) && (Date.now() - t) < 6 * 3600 * 1000;
+        } catch (e) { return false; }
+      })();
+      if (rec.mode === 'online' && rec.room && _ferskt) {
         app.mode = 'online'; app.onlineStarted = false;
         show('room');
         $('room-seed').value = rec.room;
