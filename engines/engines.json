@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "ail0.10",
+  "default": "nais1",
   "engines": [
     {
       "id": "classic",
@@ -97,6 +97,15 @@
       "weights": "engines/ail0.10.weights.json",
       "lookahead": 4,
       "note": "Trena på RTX 3070 (12 kjernar), éin syklus oppå AIL0.9. 96,7 % mot klassisk nivå 3 — jamstilt med AIL0.9."
+    },
+    {
+      "id": "nais1",
+      "name": "NAIS.1",
+      "type": "nn",
+      "script": "engines/nais1.js",
+      "weights": "engines/nais1.weights.json",
+      "lookahead": 4,
+      "note": "Ny serie: trena 4 t oppå AIL0.10 med 50 % Nesseby-parti og éi side som spelar aggressivt (slag x2,5, framrykk x1,4). Kan begge regelsetta (flaget g[15]). 92,5 % mot klassisk nivå 3."
     }
   ]
 }
