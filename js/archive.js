@@ -81,10 +81,26 @@
       var g = global.SPG.parseOne(chunk);
       if (!g.events.length && !Object.keys(g.tags).length) { skipped++; return; }
       var rec;
-      try { rec = global.SPG.toRecord(g, { name: chunk.slice(0, 40) }); }
-      catch (e) { skipped++; err = err || e.message; return; }
+      try {
+        rec = global.SPG.toRecord(g, { name: chunk.slice(0, 40) });
+      } catch (e) {
+        // Eldre filer manglar [Variant]-tag. Ein Nesseby-fil som vert spela opp
+        // med vanlege reglar bryt saman midtvegs («ukjent trekk»), so då prøver
+        // vi same partiet med Nesseby på — går det opp, var det det.
+        try {
+          rec = global.SPG.toRecord(g, { name: chunk.slice(0, 40), nesseby: true });
+          if (rec) rec.nesseby = true;
+        } catch (e2) { skipped++; err = err || e.message; return; }
+      }
       if (!rec.plies) { skipped++; return; }
       rec.spg = chunk.trim() + '\n';
+      // Importerte Nesseby-parti utan [Variant]-tag: skriv han inn, so fila
+      // fortel kva reglar ho er spela med neste gong ho vert eksportert.
+      if (rec.nesseby && rec.spg.indexOf('[Variant') < 0) {
+        rec.spg = /^SPG-V1\s*$/m.test(rec.spg)
+          ? rec.spg.replace(/^(SPG-V1)\s*$/m, '[Variant "Nesseby"]\n$1')
+          : '[Variant "Nesseby"]\n' + rec.spg;
+      }
       rec.id = opts.idPrefix ? opts.idPrefix + '-' + rec.plies + '-' + hash(rec.fens[0] + rec.result)
                              : 'spg-' + rec.plies + '-' + hash(rec.fens[0] + rec.result);
       recs.push(rec);

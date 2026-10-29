@@ -58,6 +58,9 @@
     L.push('[Koner "' + (meta.koner || meta.black || 'Gálgut') + '"]');
     L.push('[Result "' + (st.winner === 0 ? '1-0' : st.winner === 1 ? '0-1' : '*') + '"]');
     if (st.winReason) L.push('[Termination "' + st.winReason + '"]');
+    // Regelvarianten må stå i fila: utan han kan ein Nesseby-fil ikkje spelast
+    // opp rett att (kongen byter eigar under dei vanlege reglane).
+    if (st.nesseby) L.push('[Variant "Nesseby"]');
     L.push('SPG-V1');
     L.push('');
     // SPG 1.2: kommentarar, same syntaks som PGN ({…} og ; til linjeslutt).
@@ -105,7 +108,10 @@
 
   var TAG = /^\[(\w+)\s+"(.*)"\]\s*$/;
   var OPEN = /^1\.\s+open(?:#(\d+))?:\s*M\((X|II|III|_)\s+(X|II|III|_)\s+(X|II|III|_)\)\s+K\((X|II|III|_)\s+(X|II|III|_)\s+(X|II|III|_)\)\s*(?:->\s*([MK]))?\s*$/;
-  var ROLL = /^(\d+)\.\s+([MK]):\s+(X|II|III|_)\s+(X|II|III|_)\s+(X|II|III|_)(?:\s*\(omkast\s*#(\d+)\))?\s*$/;
+  // SPG 1.2/§4.2: omkast-merket står ETTER sida og før kolon —
+  // «10. M (omkast #1): II _ X». Vi tek òg den hale-forma nokon skreiv, so
+  // gamle filer ikkje brest.
+  var ROLL = /^(\d+)\.\s+([MK])(?:\s*\(omkast\s*#(\d+)\))?:\s+(X|II|III|_)\s+(X|II|III|_)\s+(X|II|III|_)(?:\s*\(omkast\s*#(\d+)\))?\s*$/;
   var MOVE = /^(?:(II|III):\s*)?([MkKQ])([A-O][123])->([A-O][123])(§|x \[[^\]]*\])?\s*$/;
   var REL = /^X->([A-O][123])\s*$/;
   var END = /^(1-0|0-1|\*)\s*(?:\{(\w+)\})?\s*$/;
@@ -140,12 +146,17 @@
 
   function parseOne(text) {
     var st = stripComments(text);
-    var tags = {}, events = [], result = null, reason = '', bad = null;
+    var tags = {}, events = [], result = null, reason = '', bad = null, nesseby = false;
     st.text.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
       var m = TAG.exec(line);
-      if (m) { tags[m[1]] = m[2]; return; }
+      if (m) {
+        tags[m[1]] = m[2];
+        // [Variant "Nesseby"] — same namnet som skrivaren brukar
+        if (/^variant$/i.test(m[1]) && /nesseby/i.test(m[2])) nesseby = true;
+        return;
+      }
       if (line === 'SPG-V1') return;
       m = OPEN.exec(line);
       if (m) {
@@ -155,7 +166,8 @@
       }
       m = ROLL.exec(line);
       if (m) {
-        events.push({ k: m[6] ? 'reroll' : 'roll', faces: [m[3], m[4], m[5]],
+        var reroll = m[3] || m[7];
+        events.push({ k: reroll ? 'reroll' : 'roll', faces: [m[4], m[5], m[6]],
                       side: m[2] === 'M' ? 0 : 1 });
         return;
       }
@@ -169,7 +181,7 @@
       if (!bad) bad = line;
     });
     return { tags: tags, events: events, result: result, reason: reason,
-             comments: st.comments, bad: bad };
+             comments: st.comments, bad: bad, nesseby: nesseby };
   }
 
   // Eitt eller fleire parti i same fil (som PGN): eit nytt parti byrjar på
@@ -214,12 +226,17 @@
 
   // Spel eit parsa parti opp att; gjev arkiv-oppføring (steps + fens).
   function toRecord(g, meta) {
-    var st = SS.newGame({ first: 0 });
+    // Regelmodusen må med: under Nesseby kan kongen ikkje kaprast ved landing,
+    // so ein Nesseby-fil som vert spela opp med vanlege reglar hamnar i heilt
+    // feil stilling (kongen byter eigar) og seinare trekk vert ulovlege.
+    var nb = (meta && meta.nesseby != null) ? !!meta.nesseby
+           : (g.nesseby != null ? !!g.nesseby : false);
+    var st = SS.newGame({ first: 0, nesseby: nb });
     var steps = [], fens = [SS.toFEN(st)], applied = 0, first = null;
     var curStep = null;
     g.events.forEach(function (ev) {
       if (ev.k === 'open') {
-        st = SS.newGame({ first: ev.first });
+        st = SS.newGame({ first: ev.first, nesseby: nb });
         first = ev.first;
         st.turn = ev.first;
         fens = [SS.toFEN(st)];
@@ -266,6 +283,7 @@
       engine: g.tags.Koner && /\(c\)/.test(g.tags.Koner) ? g.tags.Koner.replace(/^.*\(c\)\s*/, '') : '',
       level: 2,
       first: first === null ? 0 : first,
+      nesseby: !!nb,
       result: g.result || '*',
       reason: g.reason || (g.tags.Termination || ''),
       plies: applied,
