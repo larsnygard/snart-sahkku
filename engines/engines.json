@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "nais1",
+  "default": "nais2",
   "engines": [
     {
       "id": "classic",
@@ -106,6 +106,15 @@
       "weights": "engines/nais1.weights.json",
       "lookahead": 4,
       "note": "Ny serie: trena 4 t oppå AIL0.10 med 50 % Nesseby-parti og éi side som spelar aggressivt (slag x2,5, framrykk x1,4). Kan begge regelsetta (flaget g[15]). 92,5 % mot klassisk nivå 3."
+    },
+    {
+      "id": "nais2",
+      "name": "NAIS.2",
+      "type": "nn",
+      "script": "engines/nais2.js",
+      "weights": "engines/nais2.weights.json",
+      "lookahead": 4,
+      "note": "Nesseby-trena (100 % av partia) oppå NAIS.1, 4 t. Kongekapringa er no jamt fordelt (Menn 47 % / Giera 53 %, før 0/100). 95 % mot klassisk nivå 3."
     }
   ]
 }
