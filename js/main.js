@@ -24,7 +24,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.23.1';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.23.2';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -694,10 +694,28 @@
     if (app.nesseby) m.event += ' — Nesseby';
     return m;
   }
+  // Kva notasjon skal lastast ned no?
+  //   - I GJENNOMGANGEN er app.st ein oppspela tilstand frå arkivet. Han har
+  //     inga `log` (trekka vart spela opp på nytt, ikkje registrerte), so
+  //     SPG.toSPG gav eit hovud utan trekk. Der må den LAGRA teksten brukast.
+  //   - Elles: generer frå den levande tilstanden, som før.
+  function currentSpgText() {
+    if (app.mode === 'review' && review && review.rec) {
+      return review.rec.spg || '';
+    }
+    if (app.st && app.st.log && app.st.log.length) {
+      return global.SPG.toSPG(app.st, spgMeta());
+    }
+    if (app.lastRec && app.lastRec.spg) return app.lastRec.spg;
+    return global.SPG.toSPG(app.st, spgMeta());
+  }
+
   function exportSpg() {
     if (!app.st) return;
-    var txt = global.SPG.toSPG(app.st, spgMeta());
-    var fname = 'sahkku-' + fileStamp(app.startTs) + '.spg';
+    var txt = currentSpgText();
+    if (!txt) { UI.toast(T('toast.noSpgGames')); return; }
+    var fname = 'sahkku-' + fileStamp(app.mode === 'review' && review && review.rec
+      ? (review.rec.utc || review.rec.ts) : app.startTs) + '.spg';
     try {
       var blob = new Blob([txt], { type: 'text/plain' });
       var a = doc.createElement('a');
