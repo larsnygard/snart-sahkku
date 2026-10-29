@@ -78,6 +78,20 @@ const server = http.createServer((req, res) => {
   const navsAfterLoad = navs;
   await page.waitForTimeout(3500);            // lat SW registrere seg og ev. oppdatere
 
+  // Standardmotor: manifestets «default» (nyaste modell), ikkje den hardkoda
+  // startverdien 'classic'. Regresjonen kom av at fillEngines() handsama
+  // startverdien som eit brukarval.
+  await page.waitForFunction(
+    () => window.ENG && window.__APP && document.getElementById('cpu-engine').options.length > 1,
+    null, { timeout: 20000 });
+  const defEng = await page.evaluate(async () => {
+    const j = await (await fetch('./engines/engines.json', { cache: 'no-store' })).json();
+    return { want: j['default'], got: window.__APP.engine,
+             sel: document.getElementById('cpu-engine').value };
+  });
+  ok('appen startar på manifestets standardmotor',
+     defEng.got === defEng.want && defEng.sel === defEng.want, JSON.stringify(defEng));
+
   const state = await page.evaluate(() => ({
     harKrok: typeof window.__APP._checkUpdate === 'function',
     updateReady: !!window.__APP._updateReady,

@@ -20,10 +20,11 @@
     busy: false,
     over: false,
     autocast: false,   // «Autokast»: kast terningane automatisk når turen kjem
+    enginePicked: false, // true når BRUKAREN har valt motor (ikkje berre startverdien)
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.23.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.23.1';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -742,10 +743,11 @@
       });
       // Standardmotor = manifestets «default» (den nyaste modellen). Klassisk
       // CPU er framleis reserve om noko feilar med lastinga.
-      // Behald valet om det finst i lista. Før vart valet ALLTID sett til
-      // manifestets standard, so eit nyleg vald fjernmotor (eller ein annan
-      // motor) vart overkøyrd kvar gong lista vart fylt på nytt.
-      var finst = engines.some(function (e) { return e.id === app.engine; });
+      // Behald valet om det finst i lista — men berre når BRUKAREN har valt.
+      // Startverdien er 'classic', som òg finst i lista; vart han handsama som
+      // eit val, fekk alle klassisk CPU som standard i staden for manifestets
+      // «default» (den nyaste modellen).
+      var finst = app.enginePicked && engines.some(function (e) { return e.id === app.engine; });
       if (!finst) {
         var want = global.ENG.defaultId ? global.ENG.defaultId() : null;
         app.engine = want && engines.some(function (e) { return e.id === want; })
@@ -1055,6 +1057,7 @@
       $('cpu-engine').addEventListener('change', function () {
         var id = $('cpu-engine').value;
         app.engine = id || 'classic';       // byte midt i partiet skal gjelde straks
+        app.enginePicked = true;            // no er dette eit VAL, ikkje startverdien
         syncLevelSelect();
         if (id && id !== 'classic') {
           global.ENG.load(id).catch(function (e) {
@@ -1258,6 +1261,7 @@
       var e = global.ENG.addRemote({ name: global.REMOTE.name() });
       fillEngines();
       app.engine = e.id;
+      app.enginePicked = true;
       if ($('cpu-engine')) $('cpu-engine').value = e.id;
       UI.toast(T('remote.ok', { name: global.REMOTE.name() }));
     }
