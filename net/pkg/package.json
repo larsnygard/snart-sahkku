@@ -2,8 +2,8 @@
   "name": "snart-sahkku-net",
   "type": "module",
   "description": "iroh-powered P2P networking for the SnartSahkku browser PWA (gossip rooms via room seeds)",
-  "version": "0.1.0",
-  "license": "MIT OR Apache-2.0",
+  "version": "1.0.0",
+  "license": "AGPL-3.0-or-later",
   "files": [
     "snart_sahkku_net_bg.wasm",
     "snart_sahkku_net.js",

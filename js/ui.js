@@ -232,8 +232,8 @@
       if (isMineTurn && st.phase === 'roll') {
         var b = doc.createElement('button');
         b.className = 'die roll';
-        b.textContent = '🎲';
         b.id = 'die-roll';
+        b.setAttribute('role', 'button');
         b.setAttribute('aria-label', T('a11y.roll'));
         b.title = 'Kast terningene';
         b.addEventListener('click', function () { if (ui.interactive && ui.onRoll) ui.onRoll(); });

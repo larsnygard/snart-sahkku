@@ -31,6 +31,7 @@
   <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Snart<b>Sáhkku</b></span></div>
   <div class="topbtns">
     <button id="btn-net" class="ghost" data-i18n-title="nav.netTitle">🌐 <span id="net-status" data-i18n="nav.netOffline">frakoblet</span></button>
+    <button id="btn-profile" class="ghost prof-btn" data-i18n-title="profile.open" data-i18n-aria="profile.open"></button>
     <button id="btn-settings" class="ghost" data-i18n-title="nav.settingsTitle" data-i18n-aria="nav.settingsTitle">⚙</button>
     <button id="btn-help" class="ghost" data-i18n-title="nav.helpTitle" data-i18n-aria="nav.helpTitle">?</button>
   </div>
@@ -42,13 +43,14 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.27.0 · AGPL-3.0</span></p>
+      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.28.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden" data-i18n="menu.resume">▶ Fortsett lagret parti</button>
         <button id="btn-cpu" class="big" data-i18n="menu.playCpu">⚔︎ Spill mot CPU</button>
         <button id="btn-local" class="big" data-i18n="menu.local">👥 To spillere her</button>
         <button id="btn-load-fen" class="big" data-i18n="menu.loadFen">📥 Last stilling (FEN)</button>
         <button id="btn-online" class="big" data-i18n="menu.online">🌐 Spill på nett</button>
+        <button id="btn-profile-menu" class="big" data-i18n="profile.open">👤 Profil</button>
         <button id="btn-archive" class="big" data-i18n="menu.archive">📜 Arkiv</button>
         <button id="btn-remote" class="big" data-i18n="remote.menu">🌐 Fjernmotor …</button>
         <button id="btn-install" class="big hidden" data-i18n="menu.install">⬇︎ Legg til på skjermen</button>
@@ -121,6 +123,35 @@
       <button id="btn-arch-clear" class="ghost" data-i18n="archive.clear">Tøm alt</button>
       <button id="btn-arch-back" class="ghost" data-i18n="archive.back">Til hovedmenyen</button>
       <input type="file" id="arch-file" accept=".json,.spg,.spgz,.zip,.png,.jpg,.jpeg,.webp,application/json,text/plain,application/zip,image/*" hidden>
+    </div>
+  </section>
+
+  <!-- PROFIL: namn, kallenamn og bilete -->
+  <section id="profile" class="screen hidden">
+    <h2 data-i18n="profile.title">Profil</h2>
+    <p class="arch-note" data-i18n="profile.hint">Namnet og biletet fylgjer partiet i notasjonen og i nettspel. Ingenting vert sendt til ein server.</p>
+    <div class="prof-head">
+      <img id="prof-avatar-preview" class="prof-avatar" alt="">
+      <div class="prof-fields">
+        <label class="prof-field">
+          <span data-i18n="profile.nick">Kallenamn</span>
+          <input id="prof-nick" type="text" maxlength="24" autocomplete="nickname" spellcheck="false">
+        </label>
+        <label class="prof-field">
+          <span data-i18n="profile.realName">Namn</span>
+          <input id="prof-real" type="text" maxlength="40" autocomplete="name" spellcheck="false">
+        </label>
+        <div class="prof-badge">
+          <span data-i18n="profile.shownAs">Vist som:</span>
+          <strong id="prof-name-badge">—</strong>
+        </div>
+      </div>
+    </div>
+    <h3 id="avatar-heading" data-i18n="profile.avatar">Vel bilete</h3>
+    <div class="avatar-grid" id="avatar-grid" role="radiogroup" aria-labelledby="avatar-heading"></div>
+    <div class="room-form">
+      <button id="btn-profile-save" class="big" data-i18n="profile.save">Lagre profilen</button>
+      <button id="btn-profile-back" class="ghost" data-i18n="profile.back">Til hovedmenyen</button>
     </div>
   </section>
 
@@ -281,6 +312,7 @@
 
 <script src="js/i18n.js"></script>
 <script src="js/theme.js"></script>
+<script src="js/profile.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/share.js"></script>
 <script src="js/remote.js"></script>

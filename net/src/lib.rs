@@ -162,28 +162,6 @@ impl Net {
         let gossip = Gossip::builder().spawn(endpoint.clone());
         endpoint.set_alpns(vec![iroh_gossip::ALPN.to_vec()]);
 
-        // Browser endpoints cannot hole-punch; all connections arrive via
-        // relays. Route gossip connections to the gossip actor.
-        {
-            let endpoint = endpoint.clone();
-            let gossip = gossip.clone();
-            spawn_local(async move {
-                loop {
-                    let accepting = match endpoint.accept().await {
-                        Some(a) => a,
-                        None => break, // endpoint closed
-                    };
-                    let conn = match accepting.await {
-                        Ok(c) => c,
-                        Err(_) => continue,
-                    };
-                    if conn.alpn() == iroh_gossip::ALPN {
-                        let _ = gossip.handle_connection(conn).await;
-                    }
-                }
-            });
-        }
-
         let rc = Rc::new(Inner {
             endpoint,
             gossip,
@@ -196,6 +174,40 @@ impl Net {
         if !rc.poll_started.get() {
             rc.poll_started.set(true);
             spawn_peer_poll(rc.clone());
+        }
+
+        // Browser endpoints cannot hole-punch; all connections arrive via
+        // relays. Route gossip connections to the gossip actor, AND attach the
+        // inbound peer to every topic we already subscribed to. Without the
+        // join_peers call the peer could send to us while we could not send to
+        // it (or the other way round) — one-way rooms, which is what made
+        // online games hang.
+        {
+            let rc2 = rc.clone();
+            spawn_local(async move {
+                let endpoint = rc2.endpoint.clone();
+                let gossip = rc2.gossip.clone();
+                loop {
+                    let accepting = match endpoint.accept().await {
+                        Some(a) => a,
+                        None => break, // endpoint closed
+                    };
+                    let conn = match accepting.await {
+                        Ok(c) => c,
+                        Err(_) => continue,
+                    };
+                    if conn.alpn() != iroh_gossip::ALPN {
+                        continue;
+                    }
+                    let remote = conn.remote_id();
+                    if gossip.handle_connection(conn).await.is_ok() {
+                        let txs: Vec<_> = rc2.joins.borrow().values().map(|j| j.tx.clone()).collect();
+                        for tx in txs {
+                            let _ = tx.join_peers(vec![remote]).await;
+                        }
+                    }
+                }
+            });
         }
         Ok(Net { rc })
     }

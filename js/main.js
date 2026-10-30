@@ -13,6 +13,7 @@
     mode: 'cpu',       // 'cpu' | 'local' | 'online'
     me: 0,             // min spiller (online)
     level: 2,          // klassisk CPU: 1-3
+    names: [null, null],   // spelarnamn (profil + motspelar i nettspel)
     engine: 'classic', // motor-id frå engines/engines.json; vert sett til manifestets
                        // «default» (nyaste modell) so snart lista er lasta
     st: null,
@@ -24,7 +25,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.26.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.28.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -42,7 +43,7 @@
     if (id === 'game' && $('btn-leave')) {
       $('btn-leave').classList.toggle('hidden', app.mode !== 'online');
     }
-    ['menu', 'room', 'game', 'archive'].forEach(function (s) {
+    ['menu', 'room', 'profile', 'game', 'archive'].forEach(function (s) {
       $(s).classList.toggle('hidden', s !== id);
     });
   }
@@ -66,6 +67,7 @@
     UI.render();
     UI.markLastMove();
     UI.setInteractive(!app.busy && !app.over && app.st.winner == null && humanTurn());
+    updateNameLabels();
     saveGame();
   }
   function describeMv(mv) {
@@ -304,6 +306,103 @@
     settleAndContinue();
   }
 
+  // ---------- profil ----------
+  function profileFill() {
+    if (!global.PROFILE) return;
+    var pr = global.PROFILE.get();
+    var nick = $('prof-nick'), real = $('prof-real'), prev = $('prof-avatar-preview');
+    if (nick) nick.value = pr.nick || '';
+    if (real) real.value = pr.realName || '';
+    if (prev) { prev.src = global.PROFILE.url(pr.avatar); prev.alt = global.PROFILE.avatarLabel(pr.avatar); }
+    renderAvatarGrid(pr.avatar);
+    var badge = $('prof-name-badge');
+    if (badge) badge.textContent = global.PROFILE.name();
+    updateNameLabels();
+  }
+
+  function renderAvatarGrid(sel) {
+    var grid = $('avatar-grid');
+    if (!grid || !global.PROFILE) return;
+    grid.innerHTML = '';
+    global.PROFILE.avatars.forEach(function (id) {
+      var b = doc.createElement('button');
+      b.type = 'button';
+      b.className = 'avatar-opt';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(id === sel));
+      b.dataset.avatar = id;
+      var img = doc.createElement('img');
+      img.src = global.PROFILE.url(id);
+      img.alt = '';
+      img.loading = 'lazy';
+      var nm = doc.createElement('span');
+      nm.textContent = global.PROFILE.avatarLabel(id);
+      b.appendChild(img); b.appendChild(nm);
+      b.addEventListener('click', function () {
+        grid.querySelectorAll('.avatar-opt').forEach(function (o) {
+          o.setAttribute('aria-checked', String(o === b));
+        });
+        var prev = $('prof-avatar-preview');
+        if (prev) { prev.src = global.PROFILE.url(id); prev.alt = global.PROFILE.avatarLabel(id); }
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  // Namnemerka på brettet — berre når vi veit namna.
+  function updateNameLabels() {
+    var l0 = $('label-p0'), l1 = $('label-p1');
+    if (!l0 || !l1) return;
+    var n0 = app.names && app.names[0], n1 = app.names && app.names[1];
+    l0.textContent = n0 ? n0 + ' · ' + T('game.menn') : T('game.menn');
+    l1.textContent = n1 ? n1 + ' · ' + T('game.koner') : T('game.koner');
+  }
+
+  function saveProfile() {
+    if (!global.PROFILE) return;
+    var pick = doc.querySelector('#avatar-grid .avatar-opt[aria-checked="true"]');
+    global.PROFILE.set({
+      nick: $('prof-nick') ? $('prof-nick').value : '',
+      realName: $('prof-real') ? $('prof-real').value : '',
+      avatar: pick ? pick.dataset.avatar : undefined
+    });
+    profileFill();
+    UI.toast(T('profile.saved'));
+    if (app.mode === 'online' && app.me != null) app.names[app.me] = global.PROFILE.name();
+    updateNameLabels();
+  }
+
+  function wireOnlineSelfHeal() {
+    clearInterval(app._heal);
+    app._heal = setInterval(function () {
+      if (app.mode !== 'online' || app.host || app.over || app.busy) return;
+      var st = app.st;
+      if (!st || st.winner != null) return;
+      if (st.turn !== app.me) return;
+      if (global.UI && UI.interactive) return;      // alt er bra
+      sendNet({ t: 'sync' });
+    }, 3000);
+  }
+
+  function wireProfile() {
+    if (!global.PROFILE) return;
+    global.PROFILE.init();
+    var open = function () { profileFill(); show('profile'); };
+    if ($('btn-profile')) $('btn-profile').addEventListener('click', open);
+    if ($('btn-profile-menu')) $('btn-profile-menu').addEventListener('click', open);
+    if ($('btn-profile-back')) $('btn-profile-back').addEventListener('click', function () { show('menu'); });
+    if ($('btn-profile-save')) $('btn-profile-save').addEventListener('click', saveProfile);
+    ['prof-nick', 'prof-real'].forEach(function (id) {
+      if ($(id)) $(id).addEventListener('input', function () {
+        var badge = $('prof-name-badge');
+        if (!badge) return;
+        var n = ($('prof-nick').value || '').trim() || ($('prof-real').value || '').trim() || T('profile.anon');
+        badge.textContent = n;
+      });
+    });
+    doc.addEventListener('langchange', function () { profileFill(); });
+  }
+
   // ---------- oppstart ----------
   function newGame() {
     app.over = false;
@@ -363,6 +462,23 @@
   // Gjesten sender intensjonar (rollreq/move/reroll/pass/resign), vert
   // validerer, utfører, og sender FULLT autoritativt snapshot — aldri
   // faselaugner. Gjesten renderar berre snapshot. Éin sanning, ingen desync.
+  // Gjesten kan miste eit snapshot (gossip er ikkje garantert levering). Då
+  // står han fast: UI-en er skrudd av og ingen melding kjem. Denne vakthunden
+  // ber om nytt snapshot til noko skjer — og ein roleg puls fangar alle andre
+  // tilfelle der gjesten sit fast i eigen tur.
+  function armSyncWatchdog() {
+    if (app.mode !== 'online' || app.host) return;
+    clearTimeout(app._wd);
+    var started = Date.now();
+    var again = function () {
+      if (app.mode !== 'online' || app.host || app.over) return;
+      if (Date.now() - started > 15000) return;
+      sendNet({ t: 'sync' });
+      app._wd = setTimeout(again, 2500);
+    };
+    app._wd = setTimeout(again, 2500);
+  }
+
   function onlineSnapshot() {
     sendNet({ t: 'state', s: JSON.parse(SS.serialize(app.st)) });
   }
@@ -371,6 +487,8 @@
     app.over = app.st.winner != null;
     app.busy = false;
     clearTimeout(app._rt);
+    clearInterval(app._ri);
+    clearTimeout(app._wd);
     UI.clearSelection();
     renderLogFromState(app.st);
     refresh();
@@ -386,12 +504,21 @@
       onlineSnapshot();
       settleAndContinue();
     } else {
+      // Gjesten eig ikkje terningane; han ber verten kaste. Meldinga kan
+      // kome fram medan verten enno er i førre trekk, so vi held fram til eit
+      // snapshot svarar (applySnapshot nullstiller app.busy) — maks 6 forsøk.
       app.busy = true; refresh();
-      sendNet({ t: 'rollreq' });
       clearTimeout(app._rt);
-      app._rt = setTimeout(function () {
-        if (app.busy) { app.busy = false; sendNet({ t: 'sync' }); refresh(); }
-      }, 6000);
+      clearInterval(app._ri);
+      var tries = 0;
+      var ask = function () {
+        if (!app.busy || app.mode !== 'online') return;
+        if (app.st.turn !== app.me || app.st.phase !== 'roll') { app.busy = false; refresh(); return; }
+        if (++tries > 6) { app.busy = false; sendNet({ t: 'sync' }); refresh(); return; }
+        sendNet({ t: 'rollreq' });
+      };
+      ask();
+      app._ri = setInterval(ask, 1200);
     }
   }
   function onlineReroll(slot) {
@@ -403,6 +530,7 @@
     } else {
       app.busy = true; refresh();
       sendNet({ t: 'reroll', slot: slot });
+      armSyncWatchdog();
       clearTimeout(app._rt);
       app._rt = setTimeout(function () { if (app.busy) { app.busy = false; sendNet({ t: 'sync' }); refresh(); } }, 6000);
     }
@@ -423,6 +551,7 @@
     } else {
       UI.setInteractive(false);
       sendNet({ t: 'move', mv: mv });
+      armSyncWatchdog();
     }
   }
   function onlinePass() {
@@ -436,7 +565,12 @@
       app.busy = true; refresh();
       sendNet({ t: 'pass' });
       clearTimeout(app._rt);
-      app._rt = setTimeout(function () { if (app.busy) { app.busy = false; sendNet({ t: 'sync' }); refresh(); } }, 6000);
+      clearInterval(app._ri);
+      app._ri = setInterval(function () {
+        if (!app.busy || app.mode !== 'online') { clearInterval(app._ri); return; }
+        if (app.st.turn !== app.me) { clearInterval(app._ri); app.busy = false; refresh(); return; }
+        sendNet({ t: 'sync' });
+      }, 1500);
     }
   }
   function onlineResign() {
@@ -489,11 +623,20 @@
     global.LOBBY.init({
       send: function (o) { NET.send(o); },          // utfordringar treng ingen kamp-id
       render: renderLobby,
-      onStart: function (gameId, isHost) {
+      profile: function () {
+        return global.PROFILE ? { name: global.PROFILE.name(), avatar: global.PROFILE.get().avatar } : null;
+      },
+      onStart: function (gameId, isHost, other) {
         app.gameId = gameId;
         app.host = isHost;
         app.me = isHost ? 0 : 1;
         app.onlineStarted = true;
+        // Namn på begge sider: vår eigen profil + motparten sitt hello/chal.
+        var mine = global.PROFILE ? global.PROFILE.name() : '';
+        var theirs = (global.LOBBY && LOBBY.state.profiles && LOBBY.state.profiles[other] || {}).name || '';
+        app.names[app.me] = mine || T('profile.anon');
+        app.names[1 - app.me] = theirs || NET.short(other || '');
+        updateNameLabels();
         $('chaldlg').close();
         UI.toast(T('lobby.challenged', { name: NET.short(NET.peers[0] || '') }));
         newOnlineGame();                             // vert lagar partiet; gjest ventar på snapshot
@@ -525,8 +668,16 @@
     others.forEach(function (id) {
       var li = doc.createElement('li');
       li.className = 'lobby-row';
+      var prof = (st.profiles && st.profiles[id]) || {};
+      if (prof.avatar) {
+        var av = doc.createElement('img');
+        av.className = 'lobby-av';
+        av.src = 'img/avatars/avatar-' + prof.avatar + '.jpg';
+        av.alt = '';
+        li.appendChild(av);
+      }
       var nm = doc.createElement('span');
-      nm.textContent = NET.short(id);
+      nm.textContent = prof.name || NET.short(id);
       li.appendChild(nm);
       if (st.pending && st.pending.to === id) {
         var wait = doc.createElement('em');
@@ -564,6 +715,7 @@
         // ufrivillig kamp kvar gong ein tredje person dukka opp.
         global.LOBBY.setIdentity(NET.myId);
         global.LOBBY.setPeers(peers);
+        if (peers.length && NET.redial) NET.redial();
         var connected = peers.length > 0;
         if (connected && app.onlineStarted && app.st) {
           // gjenkopling midt i eit parti: vert sender autoritativt snapshot
@@ -588,16 +740,29 @@
       if (!app.host) return;   // berre verten utfører
       var foe = 1;              // gjesten sin side
       if (d.t === 'rollreq') {
+        // Verten er den einaste som kastar (autoritativ RNG). Kan vi ikkje
+        // kaste no — t.d. fordi meldinga kom før vi sjølve var ferdige med
+        // førre trekk — svarar vi med eit snapshot i staden for å teie:
+        // då nullstiller gjesten «ventar»-flagget og kan trykkje på nytt.
+        // (Før vart slike meldingar kasta, og spelet sto og hang.)
         if (app.st.phase === 'roll' && app.st.turn === foe) {
           SS.roll(app.st);
           app.st.phase = 'move';
-          UI.log('Koner kastet ' + app.st.dice.join(' '));
+          UI.log(T('log.sideRolled', { side: sideName(foe), dice: app.st.dice.join(' ') }));
+          refresh();
+          onlineSnapshot();
+          // Kast utan brukande terningar skal avslutte turen med éin gong.
+          settleAndContinue();
+        } else {
           onlineSnapshot();
         }
       } else if (d.t === 'reroll') {
         if (app.st.turn === foe && SS.canRerollX(app.st)) {
           SS.rerollX(app.st, undefined, (d.slot == null ? null : d.slot));
-          UI.log('Koner kasta om X-ene: ' + app.st.dice.join(' '));
+          UI.log(T('log.rerolledX', { dice: app.st.dice.join(' ') }));
+          refresh();
+          onlineSnapshot();
+        } else {
           onlineSnapshot();
         }
       } else if (d.t === 'move') {
@@ -686,6 +851,13 @@
       (app.mode === 'cpu' ? ', mot ' + (global.ENG ? global.ENG.name(app.engine) : app.engine) : '') +
       '. ' + T('spg.comment');
     // Datamaskin-merke etter standarden: «(c) <motor>». Koner er CPU-en.
+    // Profilen er namnet vårt i notasjonen (SPG 1.1: «Etternamn, Fornamn»).
+    var meName = global.PROFILE ? global.PROFILE.spgName() : '';
+    if (meName) m.menn = meName;
+    if (app.mode === 'online') {
+      if (app.names && app.names[0]) m.menn = app.names[0];
+      if (app.names && app.names[1]) m.koner = app.names[1];
+    }
     if (app.mode === 'cpu') {
       m.koner = 'Gálgut (c) ' + (app.engine === 'classic'
         ? T('spg.classicLevel', { n: app.level })
@@ -694,6 +866,9 @@
     if (app.nesseby) m.event += ' — Nesseby';
     return m;
   }
+  app.spgMeta = spgMeta;      // testbart handtak (tests/profile.test.js)
+  app.refresh = refresh;
+
   // Kva notasjon skal lastast ned no?
   //   - I GJENNOMGANGEN er app.st ein oppspela tilstand frå arkivet. Han har
   //     inga `log` (trekka vart spela opp på nytt, ikkje registrerte), so
@@ -1123,6 +1298,7 @@
       show('room');
       NET.load().then(function () {
         $('my-node').textContent = NET.short(NET.myId);
+        if (global.LOBBY && LOBBY.hello) LOBBY.hello();
       }).catch(function (e) {
         UI.toast('Nettverk feilet: ' + e.message);
       });
@@ -1141,6 +1317,7 @@
         app.onlineStarted = false;
         app.host = NET.isLowest();
         app.me = app.host ? 0 : 1;
+        if (global.LOBBY && LOBBY.hello) LOBBY.hello();
       } catch (e) {
         UI.toast(T('toast.joinFailed', { msg: e.message }));
         $('room-hint').textContent = 'Feil: ' + e.message;
@@ -1356,6 +1533,8 @@
     if (global.I18N) {
       global.I18N.init().then(function () {
         if (global.THEME) global.THEME.init();
+    wireProfile();
+    wireOnlineSelfHeal();
         return startApp();
       }).catch(function (e) {
         if (global.console) console.warn('i18n feila:', e);

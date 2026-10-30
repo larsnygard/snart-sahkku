@@ -1,8 +1,8 @@
 // SnartSáhkku SW — cache-first for alle assets (installbar, offlinespill)
-const CACHE = 'sahkku-v68';
+const CACHE = 'sahkku-v71';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
-  './css/style.css', './css/theme.css', './js/theme.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
+  './css/style.css', './css/theme.css', './js/theme.js', './js/profile.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
   './js/share.js', './js/i18n.js', './js/remote.js', './js/exif.js', './js/lobby.js',
   './i18n/nb.json', './i18n/nn.json', './i18n/se.json', './i18n/en.json',
   './js/online.js', './js/archive.js', './js/engines.js', './js/main.js',
@@ -11,7 +11,11 @@ const ASSETS = [
   './img/board-stone.jpg', './img/board-birch.jpg', './img/board-basalt.jpg',
   './img/piece-birch.svg', './img/piece-birch-queen.svg',
   './img/piece-walnut.svg', './img/piece-walnut-queen.svg', './img/piece-king.svg',
-  './img/castle-sun.svg', './img/mark-x.svg',
+  './img/castle-sun.svg', './img/mark-x.svg', './img/dice-question.svg',
+  './img/avatars/avatar-troll.jpg', './img/avatars/avatar-fenris.jpg',
+  './img/avatars/avatar-ratatoskr.jpg', './img/avatars/avatar-noaide.jpg',
+  './img/avatars/avatar-gufihtar.jpg', './img/avatars/avatar-stallo.jpg',
+  './img/avatars/avatar-alfur.jpg', './img/avatars/avatar-nykur.jpg',
   './net/pkg/snart_sahkku_net.js', './net/pkg/snart_sahkku_net_bg.wasm'
 ];
 self.addEventListener('install', (e) => {

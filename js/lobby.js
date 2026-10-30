@@ -24,8 +24,30 @@
     pending: null,      // {id, from} — eg har utfordra nokon
     incoming: null,     // {id, from} — nokon har utfordra meg
     gameId: null,       // kamp-id når eit parti er i gang
-    hooks: {}           // render, send, onStart
+    profiles: {},       // node-id -> {name, avatar} (frå hello/chal)
+    hooks: {}           // render, send, onStart, profile
   };
+
+  // Profilen vår fylgjer meldingane, so motparten ser kallenamn og bilete.
+  function me() {
+    return (L.hooks.profile && L.hooks.profile()) || { name: '', avatar: '' };
+  }
+  function withMe(o) {
+    var p = me();
+    if (p.name) o.name = String(p.name).slice(0, 24);
+    if (p.avatar) o.avatar = String(p.avatar).slice(0, 24);
+    return o;
+  }
+  function remember(m) {
+    if (!m || !m.from) return;
+    var prev = L.profiles[m.from];
+    var next = { name: (m.name || (prev && prev.name) || '').slice(0, 24),
+                 avatar: (m.avatar || (prev && prev.avatar) || '').slice(0, 24) };
+    if (!prev || prev.name !== next.name || prev.avatar !== next.avatar) {
+      L.profiles[m.from] = next;
+      if (L.hooks.render) L.hooks.render();
+    }
+  }
 
   function short(id) { return (id || '').slice(0, 8); }
 
@@ -56,7 +78,7 @@
     if (L.pending || L.gameId) return null;              // éi utfordring om gongen
     var id = newId();
     L.pending = { id: id, to: to };
-    send({ t: 'chal', id: id, from: L.myId, to: to });
+    send(withMe({ t: 'chal', id: id, from: L.myId, to: to }));
     if (L.hooks.render) setPeers(L.peers);
     return id;
   }
@@ -75,6 +97,8 @@
 
   function onMsg(m) {
     if (!m || !m.t) return false;
+    if (m.t === 'hello') { remember(m); return true; }
+    if (m.t === 'chal' || m.t === 'chal-yes') remember(m);
     if (m.t === 'chal') {
       if (m.to && m.to !== L.myId) return true;          // ikkje til meg
       if (L.gameId) { send({ t: 'chal-busy', id: m.id, from: L.myId }); return true; }
@@ -104,7 +128,7 @@
   function accept() {
     if (!L.incoming) return null;
     var m = L.incoming;
-    send({ t: 'chal-yes', id: m.id, from: L.myId });
+    send(withMe({ t: 'chal-yes', id: m.id, from: L.myId }));
     startGame(m.id, m.from);
     return m.id;
   }
@@ -117,6 +141,12 @@
     return true;
   }
 
+  // Annonser kven vi er når vi kjem inn i eit rom.
+  function hello() {
+    if (!L.myId) return;
+    send(withMe({ t: 'hello', from: L.myId }));
+  }
+
   function reset() {
     L.pending = null; L.incoming = null; L.gameId = null;
     if (L.hooks.render) setPeers(L.peers);
@@ -124,7 +154,7 @@
 
   global.LOBBY = {
     init: init, setIdentity: setIdentity, setPeers: setPeers,
-    challenge: challenge, accept: accept, decline: decline, reset: reset,
+    challenge: challenge, accept: accept, decline: decline, reset: reset, hello: hello,
     onMsg: onMsg, hostFor: hostFor,
     get state() { return L; }
   };

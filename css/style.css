@@ -401,7 +401,16 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
   box-shadow: 0 0 0 2px var(--yellow), 0 4px 18px rgba(255,209,102,.18);
 }
 .dicelabel { font-size: 12px; letter-spacing: .4px; opacity: .85; }
-.die.roll { font-size: 20px; padding: 8px 20px; width: auto; height: 34px; clip-path: none; border-radius: 10px; }
+.die.roll {
+  /* Ustøypt terning: beinterning med spørjeteikn, ikkje terning-emoji. */
+  width: 76px; height: 40px; padding: 0;
+  background: url('../img/dice-question.svg') center / contain no-repeat;
+  border: none; box-shadow: none; clip-path: none; border-radius: 0;
+  color: transparent; font-size: 0;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.45));
+}
+.die.roll:hover { filter: drop-shadow(0 2px 6px rgba(255,209,102,.55)); }
+.die.roll:active { transform: scale(.96); }
 .die.empty { opacity: .25; }
 /* Beinterningar: langterning sett frå sida — kvass ende, beinfarge, mørke
    innskorne merkje. Merket «X» må spelast fyrst, so det får gullramme. */
@@ -587,3 +596,65 @@ dialog button[data-close] { margin-top: 10px; width: 100%; }
 #settings .opt input[type="checkbox"]:checked { border-color: var(--yellow); }
 #settings .opt input[type="checkbox"]:checked::after { transform: scale(1); }
 #settings p { font-size: 0.85rem; line-height: 1.5; color: var(--muted); }
+
+
+/* ------------------------------------------------------------------------
+   Profil: namn, kallenamn, bilete
+   ------------------------------------------------------------------------ */
+.prof-btn { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px; }
+.prof-btn img {
+  width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+  border: 1px solid var(--line); display: block;
+}
+.prof-head { display: flex; gap: 18px; align-items: flex-start; margin: 16px 0 18px; }
+.prof-avatar {
+  width: 116px; height: 116px; border-radius: 20px; object-fit: cover;
+  border: 2px solid var(--line); background: var(--panel-2); flex: 0 0 auto;
+}
+.prof-fields { flex: 1; display: grid; gap: 10px; min-width: 0; }
+.prof-field { display: grid; gap: 4px; font-size: 0.82rem; color: var(--muted); }
+.prof-field input {
+  font: inherit; color: var(--ink); background: var(--input-bg);
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 44px;
+}
+.prof-badge { font-size: 0.9rem; color: var(--muted); }
+.prof-badge strong { color: var(--ink); }
+.avatar-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px; margin: 10px 0 18px; max-width: 560px;
+}
+@media (max-width: 460px) {
+  .avatar-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.avatar-opt {
+  padding: 0; border-radius: 14px; overflow: hidden; cursor: pointer;
+  border: 2px solid transparent; background: var(--panel-2);
+}
+.avatar-opt img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.avatar-opt span { display: block; font-size: 10.5px; padding: 5px 4px; color: var(--muted); text-align: center; }
+.avatar-opt[aria-checked="true"] { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,209,102,.22); }
+.avatar-opt[aria-checked="true"] span { color: var(--ink); }
+@media (max-width: 460px) {
+  .prof-head { gap: 12px; }
+  .prof-avatar { width: 84px; height: 84px; border-radius: 16px; }
+}
+
+/* Lobby: liten avatar framfor kallenamnet */
+.lobby-row { display: flex; align-items: center; gap: 8px; }
+.lobby-row .lobby-av {
+  width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+  border: 1px solid var(--line); flex: 0 0 auto;
+}
+.lobby-row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Smal telefon: fire knappar i topplinja (nett, profil, innstillingar, hjelp)
+   sprengde breidda. Skjul nettstatus-teksten og stram inn. */
+@media (max-width: 480px) {
+  .topbar { padding: 8px 8px; gap: 6px; }
+  .brand { font-size: 16px; gap: 6px; }
+  .brand img { width: 22px; height: 22px; }
+  #net-status { display: none; }
+  .topbtns { gap: 6px; }
+  .topbtns button { padding: 4px 7px; min-height: 38px; font-size: 0.95rem; }
+  .prof-btn img { width: 24px; height: 24px; }
+}
