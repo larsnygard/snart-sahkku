@@ -7,7 +7,7 @@ V notch (the laddjogahpir horns), the king is a stepped post. Royals get a gold 
 
 Two sets share the grammar and the viewBox; only the heights differ, so a set can
 be swapped by CSS alone (see [data-pieces] in css/style.css):
-  classic  soldiers 74/110  — tall pins
+  classic  soldiers 68/110  — tall pins, wider body
   short    soldiers 46/110  — squat pins, wider base (easier to tell apart on a phone)
 
 Run: /usr/bin/python3 tools/make_piece_svgs.py   (writes img/piece-*.svg)
@@ -30,7 +30,7 @@ GOLD = ("#ffe19a", "#d8a53a")
 
 # height per kind, half-width of the front edges, filename suffix
 SETS = {
-    "classic": {"man": 74, "woman": 74, "king": 88, "half_top": 10, "half_base": 17, "suffix": ""},
+    "classic": {"man": 60, "woman": 60, "king": 74, "half_top": 13, "half_base": 22, "suffix": ""},
     "short":   {"man": 46, "woman": 46, "king": 66, "half_top": 12, "half_base": 19, "suffix": "-short"},
 }
 
