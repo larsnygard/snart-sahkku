@@ -133,6 +133,15 @@
       "weights": "engines/nais4.weights.json",
       "lookahead": 4,
       "note": "Trena 2 syklusar (400 parti kvar, ~215 000 prøver) på RTX 3070 Ti oppå NAIS.2, berre Nesseby-parti med éi aggressiv side. Målt: 63,3 % mot NAIS.2 i Nesseby (19-11, n=30, jamt fordelt på sider) og 100 % mot klassisk nivå 3 (40-0). Standardmotor."
+    },
+    {
+      "id": "nais5",
+      "name": "NAIS.5",
+      "type": "nn",
+      "script": "engines/nais5.js",
+      "weights": "engines/nais5.weights.json",
+      "lookahead": 4,
+      "note": "Trena 11 syklusar oppå NAIS.4 (235 000 prøver) på RTX 3070 Ti. Målt: sjå note når benken er ferdig. Vald som standard fyrst når han slår NAIS.4 i Nesseby."
     }
   ]
 }
