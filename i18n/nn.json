@@ -292,5 +292,6 @@
   "profile.av.gufihtar": "Gufihtar",
   "profile.av.stallo": "Stallo",
   "profile.av.alfur": "Alv",
-  "profile.av.nykur": "Nykur"
+  "profile.av.nykur": "Nykur",
+  "toast.slowLink": "Sambandet er tregt — hald fram, verten sjekkar trekket"
 }

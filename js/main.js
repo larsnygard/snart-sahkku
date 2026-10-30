@@ -176,7 +176,7 @@
     saveGame();
     if (checkEnd()) { if (app.mode === 'online' && app.host) onlineSnapshot(); return; }
     rollPhase();
-    if (app.mode === 'online' && app.host) onlineSnapshot();
+    if (app.mode === 'online' && app.host) { onlineSnapshot(); armAutoroll(); }
   }
 
   // Autokast: kast med ein gong når det er vår tur i kastefasen. Berre sjølve
@@ -466,6 +466,24 @@
   // står han fast: UI-en er skrudd av og ingen melding kjem. Denne vakthunden
   // ber om nytt snapshot til noko skjer — og ein roleg puls fangar alle andre
   // tilfelle der gjesten sit fast i eigen tur.
+  // Om verten ikkje svarar i det heile (snapshot tapt), låser vi ikkje gjesten:
+  // han får spele vidare på sin eigen (autoritative-nok) tilstand, og verten
+  // validerer trekket uansett. Det er betre å kunne spele enn å fryse.
+  function armUnstick() {
+    if (app.mode !== 'online' || app.host) return;
+    clearTimeout(app._us);
+    var snaps = app._snaps || 0;
+    app._us = setTimeout(function () {
+      if (app.mode !== 'online' || app.host || app.over) return;
+      if ((app._snaps || 0) !== snaps) return;            // svar kom
+      if (app.st && app.st.winner != null) return;
+      app.busy = false;
+      UI.setInteractive(true);
+      refresh();
+      UI.toast(T('toast.slowLink'));
+    }, 2500);
+  }
+
   function armSyncWatchdog() {
     if (app.mode !== 'online' || app.host) return;
     clearTimeout(app._wd);
@@ -479,10 +497,33 @@
     app._wd = setTimeout(again, 2500);
   }
 
+  // Verten eig terningane. Om gjesten si kast-melding ikkje kjem fram (eller
+  // vert ignorert fordi verten enno er i førre trekk), kastar verten sjølv
+  // etter eit par sekund — spelet skal aldri kunne stoppe på ei tapt melding.
+  function hostAutoroll() {
+    clearTimeout(app._ar);
+    if (app.mode !== 'online' || !app.host || app.over || !app.st) return;
+    if (app.st.turn !== 1 || app.st.phase !== 'roll' || app.st.winner != null) return;
+    SS.roll(app.st);
+    app.st.phase = 'move';
+    UI.log(T('log.sideRolled', { side: sideName(1), dice: app.st.dice.join(' ') }));
+    refresh();
+    onlineSnapshot();
+    settleAndContinue();
+  }
+
+  function armAutoroll() {
+    clearTimeout(app._ar);
+    if (app.mode !== 'online' || !app.host) return;
+    if (!app.st || app.st.turn !== 1 || app.st.phase !== 'roll') return;
+    app._ar = setTimeout(hostAutoroll, 1600);
+  }
+
   function onlineSnapshot() {
     sendNet({ t: 'state', s: JSON.parse(SS.serialize(app.st)) });
   }
   function applySnapshot(s) {
+    app._snaps = (app._snaps || 0) + 1;
     app.st = SS.deserialize(s.s);
     app.over = app.st.winner != null;
     app.busy = false;
@@ -519,6 +560,7 @@
       };
       ask();
       app._ri = setInterval(ask, 1200);
+      armUnstick();
     }
   }
   function onlineReroll(slot) {
@@ -531,6 +573,7 @@
       app.busy = true; refresh();
       sendNet({ t: 'reroll', slot: slot });
       armSyncWatchdog();
+      armUnstick();
       clearTimeout(app._rt);
       app._rt = setTimeout(function () { if (app.busy) { app.busy = false; sendNet({ t: 'sync' }); refresh(); } }, 6000);
     }
@@ -552,6 +595,7 @@
       UI.setInteractive(false);
       sendNet({ t: 'move', mv: mv });
       armSyncWatchdog();
+      armUnstick();
     }
   }
   function onlinePass() {
@@ -715,7 +759,6 @@
         // ufrivillig kamp kvar gong ein tredje person dukka opp.
         global.LOBBY.setIdentity(NET.myId);
         global.LOBBY.setPeers(peers);
-        if (peers.length && NET.redial) NET.redial();
         var connected = peers.length > 0;
         if (connected && app.onlineStarted && app.st) {
           // gjenkopling midt i eit parti: vert sender autoritativt snapshot
@@ -740,6 +783,7 @@
       if (!app.host) return;   // berre verten utfører
       var foe = 1;              // gjesten sin side
       if (d.t === 'rollreq') {
+        clearTimeout(app._ar);
         // Verten er den einaste som kastar (autoritativ RNG). Kan vi ikkje
         // kaste no — t.d. fordi meldinga kom før vi sjølve var ferdige med
         // førre trekk — svarar vi med eit snapshot i staden for å teie:

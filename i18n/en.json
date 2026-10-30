@@ -292,5 +292,6 @@
   "profile.av.gufihtar": "Gufihtar",
   "profile.av.stallo": "Stallo",
   "profile.av.alfur": "Elf",
-  "profile.av.nykur": "Nykur"
+  "profile.av.nykur": "Nykur",
+  "toast.slowLink": "Slow connection — carry on, the host will check the move"
 }

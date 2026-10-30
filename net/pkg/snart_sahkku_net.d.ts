@@ -44,6 +44,11 @@ export class Net {
     free(): void;
     [Symbol.dispose](): void;
     /**
+     * This node's iroh node id as a hex string (stable for the session).
+     * Kor mange innkommande gossip-samband vi har teke imot (diagnostikk).
+     */
+    accepted(): number;
+    /**
      * Diagnostics: this endpoint's address as JSON
      * `{"id": "<hex>", "addrs": ["relay:<url>", "ip:<sockaddr>", ...]}`.
      */
@@ -74,9 +79,6 @@ export class Net {
      * spawns the gossip protocol and the relay-accept loop.
      */
     static new(): Promise<Net>;
-    /**
-     * This node's iroh node id as a hex string (stable for the session).
-     */
     node_id(): string;
     /**
      * Debug aid: JSON with this node's relay connection states, e.g.
@@ -112,6 +114,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_net_free: (a: number, b: number) => void;
+    readonly net_accepted: (a: number) => number;
     readonly net_addr: (a: number, b: number) => void;
     readonly net_dial: (a: number, b: number, c: number) => number;
     readonly net_join: (a: number, b: number, c: number) => number;
@@ -138,15 +141,15 @@ export interface InitOutput {
     readonly intounderlyingsource_cancel: (a: number) => void;
     readonly intounderlyingsource_pull: (a: number, b: number) => number;
     readonly ring_core_0_17_14__bn_mul_mont: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
-    readonly __wasm_bindgen_func_elem_11015: (a: number, b: number, c: number, d: number) => void;
     readonly __wasm_bindgen_func_elem_11017: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_4993: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_3090: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_6212: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_4856: (a: number, b: number) => void;
-    readonly __wasm_bindgen_func_elem_5628: (a: number, b: number) => void;
-    readonly __wasm_bindgen_func_elem_5669: (a: number, b: number) => void;
-    readonly __wasm_bindgen_func_elem_10915: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_11019: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_4995: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_3092: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_6214: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_4858: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_5630: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_5671: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_10917: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

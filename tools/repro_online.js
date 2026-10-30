@@ -143,6 +143,7 @@ async function snap(page) {
         if (!btn) { console.log(name, 'no roll button though phase=roll', JSON.stringify(s)); continue; }
         await btn.click();
         let after = await snap(p);
+        await sleep(800);
         // vent på at kastet landar (fasen går til move, eller turen går vidare)
         for (let w = 0; w < 10 && after.phase === 'roll' && after.turn === s.turn; w++) {
           await sleep(300);
@@ -191,7 +192,7 @@ async function snap(page) {
           const target = await p.$('#board .cell.target');
           if (target) {
             await target.click().catch(() => {});
-            await sleep(500);
+            await sleep(1200);
             console.log(`step ${step} ${name} moved | interactive:`,
                         await p.evaluate(() => UI.interactive));
             acted = true; moved = true;
@@ -223,6 +224,22 @@ async function snap(page) {
       }
     }
     if (!acted) {
+      // storleikstest: kor stort er eit snapshot no, og kjem eit slikt fram?
+      const probe = await B.evaluate(async () => {
+        const st = __APP.st;
+        const payload = { t: 'sizetest', s: JSON.parse(SS.serialize(st)) };
+        const len = JSON.stringify(payload).length;
+        window.__sizeGot = null;
+        await NET.send(payload);
+        return { len };
+      });
+      await sleep(2000);
+      const sizeGot = await A.evaluate(() => {
+        const el = (window.__msgs || []).filter(x => x.indexOf('sizetest') === 0);
+        return el.length;
+      });
+      console.log('snapshot size test:', JSON.stringify(probe), 'arrived:', sizeGot);
+
       // gi sjølvhelinga (3 s puls + sync) tid før vi kallar det stopp
       for (let w = 0; w < 15 && !acted; w++) {
         await sleep(1000);
@@ -235,6 +252,18 @@ async function snap(page) {
         }
       }
       if (acted) continue;
+      // prøv ei manuell synk frå kvar side og sjå om noko kjem tilbake
+      for (const [n, pg] of [['A', A], ['B', B]]) {
+        await pg.evaluate(() => { window.__got2 = []; const h = NET.handlers.onMsg;
+          NET.handlers.onMsg = function (m) { window.__got2.push(m.data && m.data.t); return h(m); };
+          NET.send({ t: 'sync' }); });
+      }
+      await sleep(2500);
+      for (const [n, pg] of [['A', A], ['B', B]]) {
+        console.log(n, 'after manual sync:', JSON.stringify(await pg.evaluate(() => ({
+          got: window.__got2, interactive: window.UI.interactive, heal: !!__APP._heal,
+        }))));
+      }
       const a = await snap(A), b = await snap(B);
       console.log('!! no side could act. A:', JSON.stringify(a), 'B:', JSON.stringify(b));
       for (const [n, pg] of [['A', A], ['B', B]]) {

@@ -44,6 +44,7 @@ struct Inner {
     on_message: RefCell<Option<Function>>,
     on_peers: RefCell<Option<Function>>,
     poll_started: Cell<bool>,
+    accepted: Cell<u32>,
 }
 
 fn js_err(msg: impl std::fmt::Display) -> JsError {
@@ -159,7 +160,13 @@ impl Net {
             .bind()
             .await
             .map_err(js_err)?;
-        let gossip = Gossip::builder().spawn(endpoint.clone());
+        // iroh-gossip sin standardgrense er 4096 byte. Eit fullt speletilstand-
+        // snapshot (brett + trekkliste) veks forbi det etter nokre trekk, og
+        // meldinga vart då BORTE — gjesten slutta å få oppdateringar og spelet
+        // hang. 256 kB gjev god plass til eit langt parti.
+        let gossip = Gossip::builder()
+            .max_message_size(256 * 1024)
+            .spawn(endpoint.clone());
         endpoint.set_alpns(vec![iroh_gossip::ALPN.to_vec()]);
 
         let rc = Rc::new(Inner {
@@ -170,6 +177,7 @@ impl Net {
             on_message: RefCell::new(None),
             on_peers: RefCell::new(None),
             poll_started: Cell::new(false),
+            accepted: Cell::new(0),
         });
         if !rc.poll_started.get() {
             rc.poll_started.set(true);
@@ -200,6 +208,7 @@ impl Net {
                         continue;
                     }
                     let remote = conn.remote_id();
+                    rc2.accepted.set(rc2.accepted.get() + 1);
                     if gossip.handle_connection(conn).await.is_ok() {
                         let txs: Vec<_> = rc2.joins.borrow().values().map(|j| j.tx.clone()).collect();
                         for tx in txs {
@@ -213,6 +222,11 @@ impl Net {
     }
 
     /// This node's iroh node id as a hex string (stable for the session).
+    /// Kor mange innkommande gossip-samband vi har teke imot (diagnostikk).
+    pub fn accepted(&self) -> u32 {
+        self.rc.accepted.get()
+    }
+
     pub fn node_id(&self) -> String {
         self.rc.endpoint.id().to_string()
     }

@@ -67,22 +67,6 @@
     if (!net.ready) return;
     await net.net.send(net.seed, JSON.stringify(obj));
   };
-  // Båe sider må ha kvarandre i svermen. Gjesten dillar verten ved join, men
-  // verten kan sitje att utan gjesten som nabo — då kjem ingenting FRÅ gjesten
-  // (spelet heng). Ved kvar peer-endring dillar vi derfor alle vi kjenner på
-  // nytt; join_with kallar join_peers etter handtrykket, so begge retningar
-  // vert abonnert.
-  var redialTimer = null;
-  net.redial = function () {
-    if (!net.net || !net.seed) return;
-    var peers = (net.peers || []).slice();
-    if (!peers.length) return;
-    clearTimeout(redialTimer);
-    redialTimer = setTimeout(function () {
-      net.net.joinWith(net.seed, peers).catch(function () { /* prøv igjen ved neste endring */ });
-    }, 300);
-  };
-
   // min node-id som er «mindst» blant meg + peers (deterministisk rolle)
   net.isLowest = function () {
     var ids = net.peers.concat([net.myId]).sort();
