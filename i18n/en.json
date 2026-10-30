@@ -296,5 +296,21 @@
   "toast.slowLink": "Slow connection — carry on, the host will check the move",
   "settings.pieces": "Piece set",
   "settings.piecesClassic": "Classic (tall)",
-  "settings.piecesShort": "Short (low)"
+  "settings.piecesShort": "Short (low)",
+  "profile.av.ulda": "Ulda",
+  "profile.av.haldi": "Háldi",
+  "profile.av.bieggolmmai": "Bieggolmmái",
+  "profile.av.vuovdegaddi": "Vuovdegáddi",
+  "profile.av.jiehtanas": "Jiehtanas",
+  "profile.av.cahceravga": "Čáhcerávga",
+  "profile.av.boazu": "Boazu",
+  "profile.av.goaskin": "Goaskin",
+  "profile.av.huldra": "Huldra",
+  "profile.av.nisse": "Nisse",
+  "profile.av.draug": "Draug",
+  "profile.av.selkie": "Selkie",
+  "profile.av.fossegrim": "Fossegrim",
+  "profile.av.dverg": "Dverg",
+  "profile.av.mare": "Mare",
+  "profile.av.lindorm": "Lindorm"
 }

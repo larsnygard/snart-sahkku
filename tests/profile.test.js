@@ -41,17 +41,18 @@ const server = http.createServer((req, res) => {
   const initial = await page.evaluate(() => window.PROFILE.get());
   ok('profil finst med standardverdiar', initial && typeof initial.avatar === 'string' && initial.avatar.length > 0,
      JSON.stringify(initial));
-  ok('åtte bilete i galleriet', (await page.evaluate(() => window.PROFILE.avatars.length)) === 8);
+  const nAvatars = await page.evaluate(() => window.PROFILE.avatars.length);
+  ok('24 bilete i galleriet', nAvatars === 24, nAvatars);
 
   // ---- 2. profilskjermen kan opnast og fyllast ut ----
   await page.click('#btn-profile-menu');
   await page.waitForSelector('#profile:not(.hidden)');
   ok('profilskjermen opnar', true);
   const tiles = await page.$$('#avatar-grid .avatar-opt');
-  ok('galleriet er rendra', tiles.length === 8, tiles.length);
+  ok('galleriet er rendra', tiles.length === 24, tiles.length);
   const imgsOk = await page.evaluate(() => {
     const imgs = [...document.querySelectorAll('#avatar-grid img')];
-    return imgs.length === 8 && imgs.every(i => i.naturalWidth > 0);
+    return imgs.length === 24 && imgs.every(i => i.naturalWidth > 0);
   });
   ok('alle bileta lastar', imgsOk);
 

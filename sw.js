@@ -1,5 +1,5 @@
 // SnartSáhkku SW — cache-first for alle assets (installbar, offlinespill)
-const CACHE = 'sahkku-v75';
+const CACHE = 'sahkku-v76';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css', './css/theme.css', './js/theme.js', './js/profile.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
@@ -19,6 +19,22 @@ const ASSETS = [
   './img/avatars/avatar-ratatoskr.jpg', './img/avatars/avatar-noaide.jpg',
   './img/avatars/avatar-gufihtar.jpg', './img/avatars/avatar-stallo.jpg',
   './img/avatars/avatar-alfur.jpg', './img/avatars/avatar-nykur.jpg',
+  './img/avatars/avatar-ulda.jpg',
+  './img/avatars/avatar-haldi.jpg',
+  './img/avatars/avatar-bieggolmmai.jpg',
+  './img/avatars/avatar-vuovdegaddi.jpg',
+  './img/avatars/avatar-jiehtanas.jpg',
+  './img/avatars/avatar-cahceravga.jpg',
+  './img/avatars/avatar-boazu.jpg',
+  './img/avatars/avatar-goaskin.jpg',
+  './img/avatars/avatar-huldra.jpg',
+  './img/avatars/avatar-nisse.jpg',
+  './img/avatars/avatar-draug.jpg',
+  './img/avatars/avatar-selkie.jpg',
+  './img/avatars/avatar-fossegrim.jpg',
+  './img/avatars/avatar-dverg.jpg',
+  './img/avatars/avatar-mare.jpg',
+  './img/avatars/avatar-lindorm.jpg',
   './net/pkg/snart_sahkku_net.js', './net/pkg/snart_sahkku_net_bg.wasm'
 ];
 self.addEventListener('install', (e) => {

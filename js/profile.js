@@ -14,7 +14,12 @@
   // (img/avatars/avatar-<id>.jpg). Ingen menneske — dette er troll, vetter og
   // huldrefolk, teikna som små plysjvesen med store augo.
   var AVATARS = ['troll', 'fenris', 'ratatoskr', 'noaide',
-                 'gufihtar', 'stallo', 'alfur', 'nykur'];
+                 'gufihtar', 'stallo', 'alfur', 'nykur',
+                 // andre bolk: samiske vette og norrøne/islandske vesen
+                 'ulda', 'haldi', 'bieggolmmai', 'vuovdegaddi',
+                 'jiehtanas', 'cahceravga', 'boazu', 'goaskin',
+                 'huldra', 'nisse', 'draug', 'selkie',
+                 'fossegrim', 'dverg', 'mare', 'lindorm'];
 
   var p = { realName: '', nick: '', avatar: AVATARS[0] };
 
