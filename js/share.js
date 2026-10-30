@@ -96,85 +96,167 @@
   }
 
   // ---------- teikning av brettet ----------
-  var CELL = 40, PAD = 18, HEAD = 36, FOOT = 44;
+  // Mørk steinhell med innhogde sárgat og treskorne brikker — same uttrykk
+  // som i spelet (sjå css/style.css og img/piece-*.svg).
+  var CW = 44, RH = 88, PAD = 20, HEAD = 42, FOOT = 54;
   var COL = {
-    bg: '#0e141b', cell: '#18212c', edge: '#2b3a4a', label: '#7f93a8',
-    red: '#e05a4d', redDark: '#b23a2e', blue: '#4a82d8', blueDark: '#2a58a8',
-    gold: '#ffd97a', goldDark: '#d8a53a', ink: '#e7eef8', dim: '#9db0c4'
+    bg: '#0e1116', panel: '#171b21', panelEdge: 'rgba(255,255,255,.09)',
+    line: 'rgba(226,235,245,.52)', lineEdge: 'rgba(0,0,0,.55)',
+    gold: '#ffd166', goldDark: '#c99a2e', ink: '#eef2ff', dim: '#9fb0d0',
+    birch: ['#f2dfbe', '#e2c79f', '#b98f5c', 'rgba(60,38,16,.65)'],
+    walnut: ['#8a5c3c', '#63412a', '#3c2415', 'rgba(24,12,4,.75)'],
+    ebony: ['#4a4038', '#2b241f', '#15110e', 'rgba(0,0,0,.8)']
   };
 
-  function disc(g, x, y, r, c1, c2, ring) {
-    var grd = g.createLinearGradient(x, y - r, x, y + r);
-    grd.addColorStop(0, c1); grd.addColorStop(1, c2);
-    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
-    g.fillStyle = grd; g.fill();
-    g.lineWidth = 1.4; g.strokeStyle = ring; g.stroke();
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r); g.closePath();
+  }
+
+  // Ei brikke sett litt ovanfrå: frontflate + to sidefasetter + toppflate.
+  // kind: 'man' | 'woman' | 'king'; royal legg gullband på.
+  function piece(g, cx, baseY, h, kind, royal, home) {
+    var pal = kind === 'king' ? COL.ebony : (kind === 'woman' ? COL.walnut : COL.birch);
+    if (kind === 'king') pal = COL.ebony;
+    var front = pal[0], light = pal[1], dark = pal[2], stroke = pal[3];
+    var wTop = h * 0.19, wBase = h * 0.31, d = h * 0.075;
+    var topY = baseY - h;
+    g.save();
+    if (home) g.globalAlpha = 0.55;
+
+    function frontPath() {
+      g.beginPath();
+      g.moveTo(cx - wTop, topY);
+      if (kind === 'woman') {                       // V-snitt (laddjogahpir)
+        var nY = topY - h * 0.16, wHorn = wTop * 0.62;
+        g.lineTo(cx - wHorn, nY); g.lineTo(cx, topY - h * 0.06); g.lineTo(cx + wHorn, nY);
+      }
+      g.lineTo(cx + wTop, topY);
+      g.lineTo(cx + wBase, baseY);
+      g.lineTo(cx - wBase, baseY);
+      g.closePath();
+    }
+
+    // sidefasetter (bak frontflata)
+    g.beginPath();
+    g.moveTo(cx - wTop, topY); g.lineTo(cx - wBase, baseY);
+    g.lineTo(cx - wBase - d, baseY - h * 0.07); g.lineTo(cx - wTop - d, topY - h * 0.07);
+    g.closePath(); g.fillStyle = light; g.fill(); g.strokeStyle = stroke; g.lineWidth = 0.8; g.stroke();
+
+    g.beginPath();
+    g.moveTo(cx + wTop, topY); g.lineTo(cx + wBase, baseY);
+    g.lineTo(cx + wBase + d, baseY - h * 0.07); g.lineTo(cx + wTop + d, topY - h * 0.07);
+    g.closePath(); g.fillStyle = dark; g.fill(); g.stroke();
+
+    // frontflate med tresjattering
+    var grd = g.createLinearGradient(cx, topY, cx, baseY);
+    grd.addColorStop(0, front); grd.addColorStop(0.55, pal[1]); grd.addColorStop(1, pal[2]);
+    frontPath(); g.fillStyle = grd; g.fill(); g.strokeStyle = stroke; g.lineWidth = 1; g.stroke();
+
+    // toppflate
+    g.beginPath();
+    g.moveTo(cx - wTop, topY); g.lineTo(cx - wTop - 1.5, topY - h * 0.055);
+    g.lineTo(cx + wTop + 1.5, topY - h * 0.055); g.lineTo(cx + wTop, topY);
+    g.closePath(); g.fillStyle = light; g.fill(); g.stroke();
+
+    if (royal) {                                     // gullband
+      var by = topY + h * 0.30;
+      g.fillStyle = COL.gold; g.fillRect(cx - wTop - 0.5, by, wTop * 2 + 1, h * 0.075);
+      g.fillStyle = COL.goldDark; g.fillRect(cx - wTop - 0.5, by + h * 0.05, wTop * 2 + 1, h * 0.025);
+    }
+    g.restore();
+  }
+
+  function castleMark(g, x, y, r) {
+    g.strokeStyle = 'rgba(255,209,102,.8)'; g.lineWidth = 1.4;
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke();
+    for (var k = 0; k < 8; k++) {
+      var a = k * Math.PI / 4;
+      g.beginPath();
+      g.moveTo(x + Math.cos(a) * r * 1.35, y + Math.sin(a) * r * 1.35);
+      g.lineTo(x + Math.cos(a) * r * 1.85, y + Math.sin(a) * r * 1.85);
+      g.stroke();
+    }
+    g.fillStyle = 'rgba(255,209,102,.9)'; g.beginPath(); g.arc(x, y, r * 0.3, 0, Math.PI * 2); g.fill();
+  }
+
+  function xMark(g, x, y, r) {
+    g.strokeStyle = 'rgba(255,209,102,.7)'; g.lineWidth = 1.6;
+    g.beginPath();
+    g.moveTo(x - r, y - r); g.lineTo(x + r, y + r);
+    g.moveTo(x + r, y - r); g.lineTo(x - r, y + r);
+    g.stroke();
   }
 
   function render(st, meta) {
     var SS = global.SS;
-    var W = PAD * 2 + 15 * CELL, H = HEAD + 3 * CELL + FOOT + PAD;
+    var W = PAD * 2 + 15 * CW, H = HEAD + 3 * RH + FOOT;
     var cv = doc.createElement('canvas');
     cv.width = W; cv.height = H;
     var g = cv.getContext('2d');
 
-    g.fillStyle = COL.bg; g.fillRect(0, 0, W, H);
+    // bakgrunn + steinhell
+    var bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#12161c'); bg.addColorStop(1, '#0a0d11');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+
+    var bx = PAD - 8, by0 = HEAD - 8, bw = 15 * CW + 16, bh = 3 * RH + 16;
+    roundRect(g, bx, by0, bw, bh, 12);
+    var panel = g.createLinearGradient(0, by0, 0, by0 + bh);
+    panel.addColorStop(0, '#1b212a'); panel.addColorStop(1, '#12161c');
+    g.fillStyle = panel; g.fill();
+    g.strokeStyle = COL.panelEdge; g.lineWidth = 1; g.stroke();
+
+    // sárgat: mørk kant + lys kjerne = innhogd i steinen
+    for (var c = 0; c < 15; c++) {
+      var x = PAD + c * CW + CW / 2;
+      g.strokeStyle = COL.lineEdge; g.lineWidth = 3;
+      g.beginPath(); g.moveTo(x, HEAD + 4); g.lineTo(x, HEAD + 3 * RH - 4); g.stroke();
+      g.strokeStyle = COL.line; g.lineWidth = 1.3;
+      g.beginPath(); g.moveTo(x, HEAD + 4); g.lineTo(x, HEAD + 3 * RH - 4); g.stroke();
+    }
+
+    // slottet (H2) og sáhkku-merka (C2/M2)
+    var midY = HEAD + RH + RH / 2;
+    castleMark(g, PAD + 7 * CW + CW / 2, midY - RH * 0.12, 11);
+    xMark(g, PAD + 2 * CW + CW / 2, midY - RH * 0.12, 7);
+    xMark(g, PAD + 12 * CW + CW / 2, midY - RH * 0.12, 7);
 
     // tittelrad
     g.fillStyle = COL.ink;
-    g.font = 'bold 17px system-ui, "Segoe UI", sans-serif';
+    g.font = '600 16px system-ui, "Segoe UI", sans-serif';
     g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-    g.fillText(meta.title || 'Sáhkku', PAD, 24);
-    g.textAlign = 'right';
-    g.fillStyle = COL.dim;
-    g.font = '13px system-ui, "Segoe UI", sans-serif';
-    g.fillText(meta.subtitle || '', W - PAD, 24);
+    g.fillText(meta.title || 'Sáhkku', PAD, 26);
+    g.textAlign = 'right'; g.fillStyle = COL.dim;
+    g.font = '12px system-ui, "Segoe UI", sans-serif';
+    g.fillText(meta.subtitle || '', W - PAD, 26);
 
-    // rutenett: rad 2 øvst, rad 0 nedst (som UI utan spegelvending)
+    // brikker: rad 2 øvst, rad 0 nedst (som UI utan spegelvending)
     for (var row = 2; row >= 0; row--) {
-      for (var c = 0; c < 15; c++) {
-        var i = SS.idx(c, row);
-        var x = PAD + c * CELL, y = HEAD + (2 - row) * CELL;
-        g.fillStyle = i === SS.CASTLE ? '#20303f' : COL.cell;
-        g.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
-        g.strokeStyle = COL.edge; g.lineWidth = 1;
-        g.strokeRect(x + 0.5, y + 0.5, CELL - 1, CELL - 1);
-        // brikker
+      for (var col = 0; col < 15; col++) {
+        var i = SS.idx(col, row);
+        var cx = PAD + col * CW + CW / 2;
+        var rowTop = HEAD + (2 - row) * RH;
+        var baseY = rowTop + RH * 0.80;
         var occ = SS.occ(st, i).filter(function (p) { return !p.captured; });
         occ.forEach(function (p, k) {
-          var cx = x + CELL / 2 + (k ? 5 : 0), cy = y + CELL / 2 - (k ? 5 : 0);
-          var r = 14;
-          if (p.t === 'k') {
-            disc(g, cx, cy, r, COL.gold, COL.goldDark, '#ffe9ad');
-            g.fillStyle = '#5a3d10'; g.font = 'bold 16px serif';
-            g.textAlign = 'center'; g.textBaseline = 'middle';
-            g.fillText('♚', cx, cy + 1);
-          } else if (p.t === 'q') {
-            disc(g, cx, cy, r, p.o === 0 ? COL.red : COL.blue,
-                 p.o === 0 ? COL.redDark : COL.blueDark, COL.gold);
-            g.fillStyle = '#fff6e0'; g.font = 'bold 15px serif';
-            g.textAlign = 'center'; g.textBaseline = 'middle';
-            g.fillText(p.o === 0 ? '♀' : '⚕', cx, cy + 1);
-          } else {
-            disc(g, cx, cy, r * 0.82, p.o === 0 ? COL.red : COL.blue,
-                 p.o === 0 ? COL.redDark : COL.blueDark,
-                 p.o === 0 ? '#ff8a7a' : '#86b4ff');
-            if (SS.isHome(p)) {                        // uaktivert: hol i midten
-              g.beginPath(); g.arc(cx, cy, r * 0.34, 0, Math.PI * 2);
-              g.fillStyle = COL.bg; g.fill();
-            }
-          }
+          var px = cx + (k ? CW * 0.16 : 0), py = baseY - (k ? 6 : 0);
+          if (p.t === 'k') piece(g, px, py, RH * 0.92, 'king', true, false);
+          else if (p.t === 'q') piece(g, px, py, RH * 0.80, 'woman', true, false);
+          else piece(g, px, py, RH * 0.74, p.o === 0 ? 'man' : 'woman', false, SS.isHome(p));
         });
       }
     }
 
     // botnrad: resultat + nemning + tid
-    var by = HEAD + 3 * CELL + 22;
+    var fy = HEAD + 3 * RH + 26;
     g.textAlign = 'left'; g.fillStyle = COL.ink;
-    g.font = 'bold 14px system-ui, "Segoe UI", sans-serif';
-    g.fillText(meta.footer || '', PAD, by);
+    g.font = '600 13px system-ui, "Segoe UI", sans-serif';
+    g.fillText(meta.footer || '', PAD, fy);
     g.fillStyle = COL.dim; g.font = '12px system-ui, "Segoe UI", sans-serif';
-    g.fillText(meta.stamp || '', PAD, by + 17);
+    g.fillText(meta.stamp || '', PAD, fy + 18);
     return cv;
   }
 

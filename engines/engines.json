@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "nais4",
+  "default": "nais5",
   "engines": [
     {
       "id": "classic",
@@ -141,7 +141,7 @@
       "script": "engines/nais5.js",
       "weights": "engines/nais5.weights.json",
       "lookahead": 4,
-      "note": "Trena 11 syklusar oppå NAIS.4 (235 000 prøver) på RTX 3070 Ti. Målt: sjå note når benken er ferdig. Vald som standard fyrst når han slår NAIS.4 i Nesseby."
+      "note": "Trena 11 syklusar oppå NAIS.4 (235 000 prøver, RTX 3070 Ti). Målt: 76,7 % mot NAIS.4 i Nesseby (23-7, n=30) og 97,5 % mot klassisk nivå 3 (39-1). Merk: 14-1 som Giera, 9-6 som Menn — han er klårt sterkast i Giera-setet. Standardmotor."
     }
   ]
 }

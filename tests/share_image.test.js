@@ -100,9 +100,9 @@ const server = http.createServer((req, res) => {
   const buf = Buffer.from(out.bytes);
   const cs = chunks(buf);
   const ihdr = cs.find(c => c.type === 'IHDR');
-  ok('breidd 636 px', ihdr && ihdr.data.readUInt32BE(0) === 636, ib(ihdr));
-  ok('høgd 218 px', ihdr && ihdr.data.readUInt32BE(4) === 218, ib(ihdr));
-  ok('biletet lastar i ein <img>', out.w === 636 && out.h === 218, out.w + 'x' + out.h);
+  ok('breidd 700 px', ihdr && ihdr.data.readUInt32BE(0) === 700, ib(ihdr));
+  ok('høgd 360 px', ihdr && ihdr.data.readUInt32BE(4) === 360, ib(ihdr));
+  ok('biletet lastar i ein <img>', out.w === 700 && out.h === 360, out.w + 'x' + out.h);
 
   // ---- 3. EXIF: ImageDescription = SPG ----
   const exif = cs.find(c => c.type === 'eXIf');

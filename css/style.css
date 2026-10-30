@@ -420,8 +420,24 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 dialog {
   border: 1px solid var(--line); border-radius: 18px;
   background: linear-gradient(180deg, var(--navy-2), var(--navy));
-  color: var(--ink); max-width: 560px; width: calc(100vw - 32px);
+  color: var(--ink); max-width: 560px; width: calc(100vw - 28px);
+  max-height: 88dvh; overflow: auto;
   padding: 22px 24px;
+}
+/* Sluttdialogen: knappane låg side om side i ein flex-rad og vart klemde til
+   kvar sin smale spalte med tekst på tre linjer. No eit rutenett med luft. */
+#endscore { width: min(520px, calc(100vw - 28px)); }
+#endscore h3 { margin: 0 0 6px; font-size: 1.22rem; }
+#end-reason { margin: 0 0 16px; line-height: 1.5; color: var(--muted); }
+#endscore .gamebtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; }
+#endscore .gamebtns button {
+  width: 100%; min-height: 46px; margin: 0;
+  font-size: 15px; line-height: 1.25; padding: 10px 12px;
+}
+#endscore .gamebtns button:last-child { grid-column: 1 / -1; }
+@media (max-width: 420px) {
+  #endscore .gamebtns { grid-template-columns: 1fr; }
+  #endscore .gamebtns button:last-child { grid-column: auto; }
 }
 dialog::backdrop { background: rgba(4, 8, 20, .7); backdrop-filter: blur(3px); }
 dialog h3 { margin-top: 0; color: var(--yellow); }
@@ -456,4 +472,29 @@ dialog button[data-close] { margin-top: 10px; width: 100%; }
   .hud { padding: 8px 9px; gap: 8px; margin-top: 8px; }
   .edge { font-size: 10px; padding: 2px 8px; }
   .cell .lbl { font-size: 6.5px; }
+}
+
+
+/* ------------------------------------------------------------------------
+   Skrivebord: brettet i full høgd til venstre, HUD/logg i ein kolonne til
+   høgre. Før låg heile spelet i éin 760px-spalte midt på skjermen, so eit
+   brett på 990px stod åleine i eit hav av tomrom.
+   ------------------------------------------------------------------------ */
+@media (min-width: 1024px) {
+  body::before, body::after { display: none; }
+  #game.screen {
+    display: grid;
+    grid-template-columns: auto minmax(280px, 380px);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    gap: 8px 24px; align-items: start;
+    max-width: 1760px;
+    padding: 12px 20px calc(16px + var(--safe-b));
+  }
+  #game .boardwrap { grid-column: 1; grid-row: 1 / span 4; align-self: center; padding: 24px 6px; }
+  #game .board { --cell: clamp(30px, min((100dvh - 170px) / 7.9, (100vw - 480px) / 15), 76px); }
+  #game .hud { grid-column: 2; grid-row: 1; flex-direction: column; align-items: stretch; margin-top: 0; }
+  #game #replay-bar { grid-column: 2; grid-row: 2; }
+  #game #log { grid-column: 2; grid-row: 3; max-height: 100%; overflow: auto; }
+  #game .gamebtns { grid-column: 2; grid-row: 4; margin: 0; flex-wrap: wrap; }
+  #game .gamebtns button { min-height: 38px; font-size: 0.9rem; padding: 6px 12px; }
 }
