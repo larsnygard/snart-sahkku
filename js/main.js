@@ -1354,7 +1354,10 @@
   // Last språkfila FØR appen teiknar, so ingen tekst blinkar på feil språk.
   function boot() {
     if (global.I18N) {
-      global.I18N.init().then(startApp).catch(function (e) {
+      global.I18N.init().then(function () {
+        if (global.THEME) global.THEME.init();
+        return startApp();
+      }).catch(function (e) {
         if (global.console) console.warn('i18n feila:', e);
         startApp();
       });

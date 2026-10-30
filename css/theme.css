@@ -1,0 +1,159 @@
+/* ------------------------------------------------------------------------
+   Tema for SnartSáhkku.
+
+   Alt visuelt som skal kunne bytast ligg som CSS-variablar i style.css og vert
+   overstyrt her. Eit tema er difor berre ei liste variablar — ingen duplisert
+   layout, ingen JS-teikning.
+
+   Veljast i Innstillingar (js/theme.js), lagrast i localStorage og vert sett
+   som data-theme på <html> FØR fyrste paint (inline-script i index.html), so
+   ein ikkje får eit blink av feil tema.
+   ------------------------------------------------------------------------ */
+
+/* ---- stone (standard): mørk skifer, bjørk/valnøtt, beinterningar ---- */
+html[data-theme="stone"] {
+  --bg-app:
+    radial-gradient(1200px 500px at 50% -10%, #1d3a6e 0%, transparent 60%),
+    linear-gradient(180deg, #14224a 0%, #0c1730 55%);
+  --board-img: url('../img/board-stone.jpg');
+  --board-tint: radial-gradient(130% 120% at 50% 0%, rgba(255,255,255,.07), rgba(0,0,0,.42) 72%);
+  --board-base: linear-gradient(180deg, #14171c, #0a0c10);
+  --board-border: rgba(226,235,245,.16);
+  --line-core: rgba(226,235,245,.58);
+  --line-edge: rgba(0,0,0,.55);
+}
+
+/* ---- birch: lys bjørkjehell, varm papirkjensle ---- */
+html[data-theme="birch"] {
+  --bg-app:
+    radial-gradient(1200px 520px at 50% -10%, #fffaf0 0%, transparent 65%),
+    linear-gradient(180deg, #f6efe2 0%, #e2d6c1 70%);
+  --ink: #1b2430;
+  --muted: #5b6472;
+  --line: rgba(27,36,48,.20);
+  --yellow: #a9761a;
+  --panel-bg: rgba(255,255,255,.74);
+  --panel-2: rgba(255,255,255,.55);
+  --btn-bg: linear-gradient(180deg, #fffdf8, #eee2cb);
+  --btn-big-bg: linear-gradient(180deg, #fdf7ea, #e6d8bf);
+  --dialog-bg: linear-gradient(180deg, #fdf8ee, #eee3ce);
+  --log-bg: rgba(255,255,255,.62);
+  --edge-bg: rgba(255,255,255,.82);
+  --lbl: rgba(40,50,60,.52);
+  --board-img: url('../img/board-birch.jpg');
+  --board-tint: radial-gradient(130% 120% at 50% 0%, rgba(255,255,255,.30), rgba(120,90,50,.14) 78%);
+  --board-base: linear-gradient(180deg, #f4e9d4, #dccdb2);
+  --board-border: rgba(90,64,32,.30);
+  --line-core: rgba(58,38,18,.62);
+  --line-edge: rgba(255,255,255,.55);
+  --piece-filter: drop-shadow(0 2px 3px rgba(70,45,20,.45));
+  --chip-p0-bg: rgba(204,51,51,.14);
+  --chip-p0-fg: #8c1f18;
+  --chip-p1-bg: rgba(47,102,192,.14);
+  --chip-p1-fg: #1b4585;
+  --toast-bg: rgba(255,255,255,.96);
+  --input-bg: rgba(255,255,255,.90);
+}
+
+/* ---- midnight: nesten svart basalt, gull-linjer ---- */
+html[data-theme="midnight"] {
+  --bg-app:
+    radial-gradient(900px 420px at 50% -8%, #14232f 0%, transparent 60%),
+    linear-gradient(180deg, #0a1017 0%, #05070a 65%);
+  --ink: #eaf1ff;
+  --muted: #8fa2bd;
+  --line: rgba(234,241,255,.14);
+  --yellow: #ffcf6b;
+  --panel-bg: rgba(16, 24, 34, .82);
+  --panel-2: rgba(255,255,255,.045);
+  --btn-bg: linear-gradient(180deg, #16202b, #0c1219);
+  --btn-big-bg: linear-gradient(180deg, #1b2a38, #0f1720);
+  --dialog-bg: linear-gradient(180deg, #101922, #070b10);
+  --log-bg: rgba(6,10,14,.72);
+  --edge-bg: rgba(6,10,14,.8);
+  --lbl: rgba(143,162,189,.5);
+  --board-img: url('../img/board-basalt.jpg');
+  --board-tint: radial-gradient(130% 120% at 50% 0%, rgba(120,170,200,.06), rgba(0,0,0,.62) 75%);
+  --board-base: linear-gradient(180deg, #0b0f14, #04060a);
+  --board-border: rgba(255,207,107,.22);
+  --line-core: rgba(255,215,140,.46);
+  --line-edge: rgba(0,0,0,.7);
+  --input-bg: #101820;
+}
+
+/* ---- contrast: rein svart/kvit for svaksynte ---- */
+html[data-theme="contrast"],
+html.a11y-contrast {
+  --bg-app: #000;
+  --ink: #ffffff;
+  --muted: #f2f2f2;
+  --line: #ffffff;
+  --yellow: #ffe066;
+  --panel-bg: #000;
+  --panel-2: #111;
+  --btn-bg: #000;
+  --btn-big-bg: #000;
+  --dialog-bg: #000;
+  --log-bg: #000;
+  --edge-bg: #000;
+  --lbl: rgba(255,255,255,.85);
+  --board-img: none;
+  --board-tint: none;
+  --board-base: #000;
+  --board-border: #ffffff;
+  --line-core: #ffffff;
+  --line-edge: rgba(255,255,255,.35);
+  --piece-filter: contrast(1.25) brightness(1.08) drop-shadow(0 0 1.5px #fff);
+  --chip-p0-bg: #000;
+  --chip-p0-fg: #ff9b8f;
+  --chip-p1-bg: #000;
+  --chip-p1-fg: #9ec5ff;
+  --toast-bg: #000;
+  --input-bg: #000;
+}
+
+html.a11y-contrast body::before,
+html.a11y-contrast body::after,
+html[data-theme="contrast"] body::before,
+html[data-theme="contrast"] body::after { filter: saturate(1.4) contrast(1.2); }
+
+/* Kantar og bakgrunnar må verte tydelege når kontrast er valt */
+html[data-theme="contrast"] .hud,
+html[data-theme="contrast"] .dicepanel,
+html[data-theme="contrast"] .log,
+html[data-theme="contrast"] .edge,
+html[data-theme="contrast"] button,
+html[data-theme="contrast"] dialog,
+html.a11y-contrast .hud,
+html.a11y-contrast .dicepanel,
+html.a11y-contrast .log,
+html.a11y-contrast .edge,
+html.a11y-contrast button,
+html.a11y-contrast dialog { border-width: 2px; }
+
+/* ---- stor tekst (a11y) ---- */
+html.a11y-large .log,
+html.a11y-large .chip,
+html.a11y-large .dicelabel,
+html.a11y-large .caplabel,
+html.a11y-large .edge,
+html.a11y-large .arch-note,
+html.a11y-large .engine-note,
+html.a11y-large .room-info,
+html.a11y-large .tagline,
+html.a11y-large button,
+html.a11y-large select,
+html.a11y-large input,
+html.a11y-large dialog { font-size: 1.16em; }
+html.a11y-large .cell .lbl { font-size: 8.5px; }
+
+/* ---- mindre rørsle (a11y) ---- */
+html.a11y-motion *,
+html.a11y-motion *::before,
+html.a11y-motion *::after { animation: none !important; transition: none !important; }
+
+/* Systemval: respekter «meir kontrast» og «mindre rørsle» utan at brukaren
+   må gjere noko i appen. */
+@media (prefers-contrast: more) {
+  html:not([data-theme]) { --line-core: rgba(255,255,255,.9); --board-border: rgba(255,255,255,.7); }
+}

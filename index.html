@@ -9,14 +9,30 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=1.26.0">
+<link rel="stylesheet" href="css/style.css?v=1.27.0">
+<link rel="stylesheet" href="css/theme.css?v=1.27.0">
+<script>
+/* Tema og tilgjenge-val må setjast FØR fyrste paint, elles blinkar feil tema. */
+(function () {
+  try {
+    var d = document.documentElement, s = window.localStorage;
+    var theme = s.getItem('sahkku.theme');
+    if (theme) d.setAttribute('data-theme', theme);
+    if (s.getItem('sahkku.a11yLarge') === '1') d.classList.add('a11y-large');
+    if (s.getItem('sahkku.a11yContrast') === '1') d.classList.add('a11y-contrast');
+    if (s.getItem('sahkku.a11yMotion') === '1') d.classList.add('a11y-motion');
+  } catch (e) { /* privat modus */ }
+})();
+</script>
 </head>
 <body>
+<a class="skip-link" href="#board" data-i18n="a11y.skip">Hopp til brettet</a>
 <header class="topbar">
   <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Snart<b>Sáhkku</b></span></div>
   <div class="topbtns">
     <button id="btn-net" class="ghost" data-i18n-title="nav.netTitle">🌐 <span id="net-status" data-i18n="nav.netOffline">frakoblet</span></button>
-    <button id="btn-help" class="ghost" data-i18n-title="nav.helpTitle">?</button>
+    <button id="btn-settings" class="ghost" data-i18n-title="nav.settingsTitle" data-i18n-aria="nav.settingsTitle">⚙</button>
+    <button id="btn-help" class="ghost" data-i18n-title="nav.helpTitle" data-i18n-aria="nav.helpTitle">?</button>
   </div>
 </header>
 
@@ -26,7 +42,7 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.26.0 · AGPL-3.0</span></p>
+      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.27.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden" data-i18n="menu.resume">▶ Fortsett lagret parti</button>
         <button id="btn-cpu" class="big" data-i18n="menu.playCpu">⚔︎ Spill mot CPU</button>
@@ -111,13 +127,13 @@
   <!-- SPILLSKJERM -->
   <section id="game" class="screen hidden">
     <div class="boardwrap" id="boardwrap">
-      <div class="board" id="board"></div>
+      <div class="board" id="board" role="grid" aria-label="Sáhkku-brett" data-i18n-aria="a11y.boardLabel"></div>
       <div class="edge edge-p0"><span id="label-p0" data-i18n="game.menn">Menn · olbmát</span></div>
       <div class="edge edge-p1"><span id="label-p1" data-i18n="game.koner">Koner · gálgut</span></div>
     </div>
     <div class="hud">
       <div class="turnbox">
-        <span id="turn-indicator" class="chip p0" data-i18n="game.turn">Tur:</span>
+        <span id="turn-indicator" class="chip p0" aria-live="polite" data-i18n="game.turn">Tur:</span>
         <span id="king-chip" class="chip neutral" data-i18n="game.kingFree">Kongen løs</span>
       </div>
       <div class="dicerow">
@@ -210,6 +226,29 @@
   </div>
 </dialog>
 
+<!-- INNSTILLINGAR: tema + tilgjenge -->
+<dialog id="settings" aria-labelledby="settings-title">
+  <h3 id="settings-title" data-i18n="settings.title">Innstillingar</h3>
+  <label class="opt">
+    <span data-i18n="settings.theme">Tema</span>
+    <select id="sel-theme" aria-label="Tema" data-i18n-aria="settings.theme"></select>
+  </label>
+  <label class="opt">
+    <span data-i18n="settings.largeText">Større tekst</span>
+    <input type="checkbox" id="a11y-large">
+  </label>
+  <label class="opt">
+    <span data-i18n="settings.highContrast">Høg kontrast</span>
+    <input type="checkbox" id="a11y-contrast">
+  </label>
+  <label class="opt">
+    <span data-i18n="settings.reduceMotion">Mindre rørsle</span>
+    <input type="checkbox" id="a11y-motion">
+  </label>
+  <p data-i18n="settings.note">Vala vert lagra i denne nettlesaren.</p>
+  <button data-close class="big" data-i18n="settings.close">Lukk</button>
+</dialog>
+
 <!-- REGLEPANEL -->
 <dialog id="rules">
   <h3 data-i18n="rules.title">Slik spiller du</h3>
@@ -241,6 +280,7 @@
 </dialog>
 
 <script src="js/i18n.js"></script>
+<script src="js/theme.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/share.js"></script>
 <script src="js/remote.js"></script>
@@ -255,5 +295,6 @@
 <script src="js/archive.js"></script>
 <script src="js/engines.js"></script>
 <script src="js/main.js"></script>
+<div id="sr-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
 </html>

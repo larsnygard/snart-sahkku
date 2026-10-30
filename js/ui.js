@@ -67,6 +67,22 @@
     return k;
   }
 
+  // Skjermlesar-tekst for ei rute: kva som står der, ikkje berre «H2».
+  function sideName(o) {
+    return T(o === 0 ? 'a11y.sideMenn' : 'a11y.sideKoner');
+  }
+  function cellLabel(i, occ) {
+    var sq = SS.name(i);
+    if (!occ.length) return T('a11y.cellEmpty', { sq: sq });
+    var king = occ.filter(function (p) { return p.t === 'k'; })[0];
+    if (king) return T('a11y.cellKing', { sq: sq });
+    var queen = occ.filter(function (p) { return p.t === 'q'; })[0];
+    if (queen) return T('a11y.cellQueen', { sq: sq, side: sideName(queen.o) });
+    var sol = occ.filter(function (p) { return p.t === 's'; });
+    if (sol.length === 1) return T('a11y.cellSoldier', { sq: sq, side: sideName(sol[0].o) });
+    return T('a11y.cellSoldiers', { sq: sq, n: sol.length, side: sideName(sol[0].o) });
+  }
+
   function render() {
     var st = ui.st;
     if (!st || !boardEl) return;
@@ -76,6 +92,8 @@
       var cell = doc.createElement('div');
       cell.className = 'cell';
       cell.dataset.idx = i;
+      cell.setAttribute('role', 'gridcell');
+      cell.setAttribute('tabindex', '-1');
       if (i === SS.CASTLE) cell.classList.add('castle');
       if (i === 18 || i === 26) cell.classList.add('xmark');
       var occ = SS.occ(st, i).filter(function (p) { return !p.captured; });
@@ -100,6 +118,8 @@
           cell.appendChild(stack);
         }
       }
+      cell.setAttribute('aria-label', cellLabel(i, occ));
+      cell.dataset.label = cell.getAttribute('aria-label');
       var lbl = doc.createElement('span');
       lbl.className = 'lbl';
       lbl.textContent = SS.name(i);
@@ -111,6 +131,11 @@
     });
     paintTargets();
     paintChrome();
+    // éi rute er tabbar inn til brettet; resten får fokus via piltastane
+    if (!boardEl.querySelector('.cell[tabindex="0"]')) {
+      var first = boardEl.querySelector('.cell');
+      if (first) first.setAttribute('tabindex', '0');
+    }
   }
   function paintTargets() { showTargets(); }
 
@@ -209,6 +234,7 @@
         b.className = 'die roll';
         b.textContent = '🎲';
         b.id = 'die-roll';
+        b.setAttribute('aria-label', T('a11y.roll'));
         b.title = 'Kast terningene';
         b.addEventListener('click', function () { if (ui.interactive && ui.onRoll) ui.onRoll(); });
         box.appendChild(b);
@@ -219,6 +245,7 @@
         var ph = doc.createElement('div');
         ph.className = 'die empty';
         ph.textContent = '·';
+        ph.setAttribute('aria-hidden', 'true');
         box.appendChild(ph);
         return;
       }
@@ -238,6 +265,8 @@
         el.className = 'die' + (face === 'X' ? ' X' : '') + (solo ? ' rerollable' : '');
         if (used) el.classList.add('used');
         el.textContent = face === '_' ? '·' : face;
+        el.setAttribute('role', 'img');
+        el.setAttribute('aria-label', face === '_' ? T('a11y.dieBlank') : T('a11y.die', { face: face }));
         if (solo) {
           el.title = T('ui.xRerollTitle');
           el.onclick = function () { if (ui.onReroll) ui.onReroll(ix); };
@@ -309,6 +338,7 @@
       var cell = boardEl.querySelector('[data-idx="' + t.cellIdx + '"]');
       if (!cell) return;
       cell.classList.add('target');
+      cell.setAttribute('aria-label', (cell.dataset.label || '') + ', ' + T('a11y.target'));
       var occ = SS.occ(ui.st, t.cellIdx);
       var kill = occ.some(function (q) {
         return !q.captured && q.o !== ui.st.turn && (q.t === 's' || q.t === 'q');
@@ -356,6 +386,53 @@
     showTargets();
   }
 
+  // Tastatur: piltastane flyttar fokus til ruta som ligg nærast i den retninga
+  // (uavhengig av spegelvending), Enter/romklaff spelar ruta.
+  function focusCell(cell, setTab) {
+    if (!cell) return;
+    if (setTab !== false) {
+      boardEl.querySelectorAll('.cell').forEach(function (c) { c.setAttribute('tabindex', '-1'); });
+      cell.setAttribute('tabindex', '0');
+    }
+    cell.focus();
+  }
+
+  function bindKeyboard() {
+    boardEl.addEventListener('keydown', function (e) {
+      var cell = e.target.closest ? e.target.closest('.cell') : null;
+      if (!cell || !boardEl.contains(cell)) return;
+      var key = e.key;
+      if (key === 'Enter' || key === ' ' || key === 'Spacebar') {
+        e.preventDefault();
+        var tgt = cell.classList.contains('target') ? cell : (cell.querySelector('.piece') || cell);
+        tgt.dispatchEvent(new global.MouseEvent('click', { bubbles: true }));
+        return;
+      }
+      var dirs = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+      var d = dirs[key];
+      if (!d) return;
+      e.preventDefault();
+      var home = cell.getBoundingClientRect();
+      var hx = home.left + home.width / 2, hy = home.top + home.height / 2;
+      var best = null, bestScore = Infinity;
+      boardEl.querySelectorAll('.cell').forEach(function (c) {
+        if (c === cell) return;
+        var r = c.getBoundingClientRect();
+        var dx = (r.left + r.width / 2) - hx, dy = (r.top + r.height / 2) - hy;
+        var along = dx * d[0] + dy * d[1];
+        var across = Math.abs(dx * d[1] - dy * d[0]);
+        if (along <= 1) return;
+        var score = along + across * 3;
+        if (score < bestScore) { bestScore = score; best = c; }
+      });
+      focusCell(best);
+    });
+    boardEl.addEventListener('focusin', function (e) {
+      var cell = e.target.closest ? e.target.closest('.cell') : null;
+      if (cell) focusCell(cell);
+    });
+  }
+
   function bindBoard() {
     boardEl.addEventListener('click', function (e) {
       if (!ui.interactive || !ui.st || ui.st.winner != null) return;
@@ -391,6 +468,7 @@
     initEls();
     Object.assign(ui, opts || {});
     bindBoard();
+    bindKeyboard();
     $('btn-surrender').addEventListener('click', function () {
       if (ui.onSurrender) ui.onSurrender();
     });

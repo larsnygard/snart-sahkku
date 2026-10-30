@@ -44,14 +44,39 @@
   --line: rgba(238, 242, 255, .22);
   --radius: 14px;
   --safe-b: env(safe-area-inset-bottom, 0px);
+
+  /* Tema-kontrakt (sjå css/theme.css for dei andre tema; alt som er sett her
+     kan overstyrast per tema utan at layouten må dupliserast). */
+  --bg-app:
+    radial-gradient(1200px 500px at 50% -10%, #1d3a6e 0%, transparent 60%),
+    linear-gradient(180deg, var(--navy-2) 0%, var(--navy) 55%);
+  --panel-bg: rgba(20, 34, 74, .75);
+  --panel-2: rgba(255,255,255,.03);
+  --btn-bg: linear-gradient(180deg, var(--navy-2), var(--wood));
+  --btn-big-bg: linear-gradient(180deg, #27407e, #1a2c5c);
+  --dialog-bg: linear-gradient(180deg, var(--navy-2), var(--navy));
+  --log-bg: rgba(12,23,48,.55);
+  --edge-bg: rgba(12, 23, 48, .7);
+  --lbl: rgba(159,176,208,.55);
+  --board-img: url('../img/board-stone.jpg');
+  --board-tint: radial-gradient(130% 120% at 50% 0%, rgba(255,255,255,.07), rgba(0,0,0,.42) 72%);
+  --board-base: linear-gradient(180deg, #14171c, #0a0c10);
+  --board-border: rgba(226, 235, 245, .16);
+  --line-core: rgba(226,235,245,.58);
+  --line-edge: rgba(0,0,0,.55);
+  --piece-filter: drop-shadow(0 2.5px 3px rgba(0,0,0,.55));
+  --chip-p0-bg: rgba(204,51,51,.22);
+  --chip-p0-fg: #ffb3a7;
+  --chip-p1-bg: rgba(47,102,192,.22);
+  --chip-p1-fg: #a9c9ff;
+  --toast-bg: rgba(20, 34, 74, .95);
+  --input-bg: var(--wood);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background:
-    radial-gradient(1200px 500px at 50% -10%, #1d3a6e 0%, transparent 60%),
-    linear-gradient(180deg, var(--navy-2) 0%, var(--navy) 55%);
+  background: var(--bg-app);
   color: var(--ink);
   min-height: 100svh;
   user-select: none;
@@ -82,7 +107,7 @@ body::after  { clip-path: polygon(0 100%, 100% 100%, 100% 40%, 97% 0, 94% 40%, 9
 button {
   font: inherit; color: var(--ink); cursor: pointer;
   border: 1px solid var(--line); border-radius: 12px;
-  background: linear-gradient(180deg, var(--navy-2), var(--wood));
+  background: var(--btn-bg);
   padding: 12px 16px; min-height: 44px; min-width: 44px;
   transition: transform .06s ease, filter .15s ease;
   touch-action: manipulation;
@@ -90,7 +115,7 @@ button {
 button:active { transform: scale(.96); filter: brightness(1.15); }
 button.big {
   font-size: 17px; padding: 16px; border-radius: var(--radius);
-  background: linear-gradient(180deg, #27407e, #1a2c5c);
+  background: var(--btn-big-bg);
   box-shadow: 0 4px 14px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255,255,255,.08);
 }
 button.ghost { background: transparent; padding: 9px 12px; min-height: 38px; }
@@ -115,7 +140,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 
 .difficulty { margin-top: 18px; color: var(--muted); }
 .difficulty select {
-  font: inherit; color: var(--ink); background: var(--wood);
+  font: inherit; color: var(--ink); background: var(--input-bg);
   border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; margin-left: 6px;
 }
 
@@ -123,7 +148,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .room-form { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
 .room-form input {
   flex: 1; min-width: 200px; font: inherit; color: var(--ink);
-  background: var(--wood); border: 1px solid var(--line);
+  background: var(--input-bg); border: 1px solid var(--line);
   border-radius: 12px; padding: 12px 14px; min-height: 44px;
 }
 .room-form input::placeholder { color: var(--muted); }
@@ -138,7 +163,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
   position: absolute; z-index: 3; left: 50%; transform: translateX(-50%);
   font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
   padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line);
-  background: rgba(12, 23, 48, .7);
+  background: var(--edge-bg);
 }
 .edge-p0 { bottom: 8px; }
 .edge-p1 { top: 8px; }
@@ -155,7 +180,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
   justify-content: center;
   padding: var(--pad);
   border-radius: 14px;
-  border: 1px solid rgba(226, 235, 245, .16);
+  border: 1px solid var(--board-border);
   /* Linjene ligg på CELLESENTRUM (sárgát), og vert forskyvne med boardets
      padding slik at dei treffer rutenettet på alle skjermstorleikar — før
      stod dei fast 10px skeive, som var tydelegast på mobil. */
@@ -163,13 +188,13 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
   background-image:
     repeating-linear-gradient(90deg,
       transparent 0 calc(var(--cell) * .5 - 1.5px),
-      rgba(0,0,0,.55) calc(var(--cell) * .5 - 1.5px) calc(var(--cell) * .5 - .5px),
-      rgba(226,235,245,.58) calc(var(--cell) * .5 - .5px) calc(var(--cell) * .5 + .5px),
-      rgba(0,0,0,.45) calc(var(--cell) * .5 + .5px) calc(var(--cell) * .5 + 1.5px),
+      var(--line-edge) calc(var(--cell) * .5 - 1.5px) calc(var(--cell) * .5 - .5px),
+      var(--line-core) calc(var(--cell) * .5 - .5px) calc(var(--cell) * .5 + .5px),
+      var(--line-edge) calc(var(--cell) * .5 + .5px) calc(var(--cell) * .5 + 1.5px),
       transparent calc(var(--cell) * .5 + 1.5px) calc(var(--cell) + var(--gap))),
-    radial-gradient(130% 120% at 50% 0%, rgba(255,255,255,.07), rgba(0,0,0,.42) 72%),
-    url('../img/board-stone.jpg'),
-    linear-gradient(180deg, #14171c, #0a0c10);
+    var(--board-tint),
+    var(--board-img),
+    var(--board-base);
   background-position: var(--pad) 0, 0 0, center, 0 0;
   background-size: auto, cover, cover, auto;
   background-repeat: repeat-x, no-repeat, no-repeat, no-repeat;
@@ -243,7 +268,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .cell.castle .mark { background: url('../img/castle-sun.svg') center / 78% no-repeat; opacity: .8; }
 .cell.xmark .mark { background: url('../img/mark-x.svg') center / 62% no-repeat; opacity: .7; }
 .cell.castle .mark::after, .cell.xmark .mark::after { content: none; }
-.cell .lbl { position: absolute; bottom: -3px; right: 1px; font-size: 7.5px; color: rgba(159,176,208,.55); pointer-events: none; }
+.cell .lbl { position: absolute; bottom: -3px; right: 1px; font-size: 7.5px; color: var(--lbl); pointer-events: none; }
 
 /* brikker */
 /* Brikkene er treskorne (sjå tools/make_piece_svgs.py): bjørk = menn,
@@ -258,7 +283,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
   background: center bottom / contain no-repeat;
   color: transparent;
   box-shadow: none;
-  filter: drop-shadow(0 2.5px 3px rgba(0,0,0,.55));
+  filter: var(--piece-filter);
   transition: transform .12s ease, filter .12s ease, opacity .2s;
   z-index: 2;
   touch-action: manipulation;
@@ -301,14 +326,14 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 /* ---------- HUD ---------- */
 .hud {
   display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
-  background: rgba(20, 34, 74, .75); border: 1px solid var(--line);
+  background: var(--panel-bg); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 10px 12px; margin-top: 12px;
   backdrop-filter: blur(4px);
 }
 .turnbox { display: flex; gap: 8px; flex-wrap: wrap; }
 #fen-text {
   width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px; color: var(--ink); background: var(--wood);
+  font-size: 13px; color: var(--ink); background: var(--input-bg);
   border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
   resize: vertical; min-height: 76px;
 }
@@ -335,8 +360,8 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .chip {
   font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);
 }
-.chip.p0 { background: rgba(204,51,51,.22); border-color: var(--red); color: #ffb3a7; }
-.chip.p1 { background: rgba(47,102,192,.22); border-color: var(--blue); color: #a9c9ff; }
+.chip.p0 { background: var(--chip-p0-bg); border-color: var(--red); color: var(--chip-p0-fg); }
+.chip.p1 { background: var(--chip-p1-bg); border-color: var(--blue); color: var(--chip-p1-fg); }
 .chip.neutral { color: var(--yellow); border-color: rgba(255,209,102,.5); }
 .chip.active { outline: 2px solid currentColor; }
 
@@ -369,7 +394,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .dicepanel {
   display: flex; flex-direction: column; gap: 5px;
   padding: 8px 10px; border: 1px solid var(--line); border-radius: 14px;
-  background: rgba(255,255,255,.03); opacity: .55; transition: opacity .2s, box-shadow .2s;
+  background: var(--panel-2); opacity: .55; transition: opacity .2s, box-shadow .2s;
 }
 .dicepanel.active-dice {
   opacity: 1;
@@ -410,7 +435,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 .log {
   margin-top: 10px; font-size: 13px; color: var(--muted);
   max-height: 16vh; overflow-y: auto; line-height: 1.5;
-  padding: 8px 10px; border-radius: 10px; background: rgba(12,23,48,.55);
+  padding: 8px 10px; border-radius: 10px; background: var(--log-bg);
 }
 .log .kill { color: #ff9d9d; }
 .log .king { color: var(--yellow); }
@@ -419,7 +444,7 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
 
 dialog {
   border: 1px solid var(--line); border-radius: 18px;
-  background: linear-gradient(180deg, var(--navy-2), var(--navy));
+  background: var(--dialog-bg);
   color: var(--ink); max-width: 560px; width: calc(100vw - 28px);
   max-height: 88dvh; overflow: auto;
   padding: 22px 24px;
@@ -446,7 +471,7 @@ dialog li { margin-bottom: 8px; }
 dialog button[data-close] { margin-top: 10px; width: 100%; }
 .toast {
   position: fixed; left: 50%; bottom: calc(16px + var(--safe-b)); transform: translateX(-50%);
-  background: rgba(20, 34, 74, .95); border: 1px solid var(--line);
+  background: var(--toast-bg); color: var(--ink); border: 1px solid var(--line);
   padding: 10px 18px; border-radius: 999px; font-size: 14px;
   opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 40;
 }
@@ -486,9 +511,12 @@ dialog button[data-close] { margin-top: 10px; width: 100%; }
     display: grid;
     grid-template-columns: auto minmax(280px, 380px);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
-    gap: 10px 24px; align-items: start; align-content: space-between;
-    grid-template-rows: auto auto auto auto;
-    min-height: calc(100dvh - 68px);
+    gap: 10px 24px; align-items: start;
+    /* Høgda er låst til vindauget og loggen får 1fr: då kan ikkje loggen dytte
+       sida nedanfor skjermen same kor langt partiet er. Han scrollar internt. */
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    height: calc(100dvh - var(--topbar-h, 62px));
+    overflow: hidden;
     max-width: 1760px;
     padding: 12px 20px calc(16px + var(--safe-b));
   }
@@ -496,7 +524,66 @@ dialog button[data-close] { margin-top: 10px; width: 100%; }
   #game .board { --cell: clamp(30px, min((100dvh - 170px) / 7.9, (100vw - 480px) / 15), 76px); }
   #game .hud { grid-column: 2; grid-row: 1; flex-direction: column; align-items: stretch; margin-top: 0; }
   #game #replay-bar { grid-column: 2; grid-row: 2; }
-  #game #log { grid-column: 2; grid-row: 3; align-self: start; max-height: min(46vh, 420px); overflow: auto; }
+  /* Loggen må aldri gjere sida høgare enn vindauget: han får den plassen som
+     er att når HUD (~200px), knappane (~90px) og margar er tekne, og scrollar
+     internt. (Før: max-height 46vh, som på 1080-skjerm gav 497px log + 200 +
+     90 = 787 > plassen under brettet → heile sida byrja å scrolle.) */
+  #game #log { grid-column: 2; grid-row: 3; align-self: start;
+    max-height: 100%; min-height: 0; overflow: auto; }
   #game .gamebtns { grid-column: 2; grid-row: 4; margin: 0; flex-wrap: wrap; }
   #game .gamebtns button { min-height: 38px; font-size: 0.9rem; padding: 6px 12px; }
 }
+
+
+/* ------------------------------------------------------------------------
+   Tilgjenge: skjerma tekst, «hopp til brettet», og tydeleg fokusring.
+   Fokusringen må vere synleg på alle tema, so han brukar den gule aksenten
+   med ein mørk ring utanfor (fungerer både på ljose og mørke bakgrunnar).
+   ------------------------------------------------------------------------ */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: 8px; top: 8px; z-index: 100;
+  transform: translateY(-200%);
+  background: var(--yellow); color: #1b1200;
+  padding: 10px 16px; border-radius: 10px; font-weight: 600; text-decoration: none;
+  transition: transform .15s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(0,0,0,.55);
+}
+.cell:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: -1px;
+  border-radius: 8px;
+  z-index: 5;
+}
+#board[role="grid"]:focus-visible { outline-offset: 4px; }
+
+/* Innstillingar: same form som resten av dialogane */
+#settings .opt {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+#settings .opt:last-of-type { border-bottom: none; }
+#settings .opt select { font: inherit; color: var(--ink); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-height: 40px; }
+#settings .opt input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 26px; height: 26px; border-radius: 7px; flex: 0 0 auto;
+  border: 2px solid var(--line); background: var(--panel-2);
+  display: inline-grid; place-content: center; cursor: pointer;
+}
+#settings .opt input[type="checkbox"]::after {
+  content: "✓"; font-size: 17px; line-height: 1; font-weight: 700;
+  color: var(--yellow); transform: scale(0); transition: transform .12s ease;
+}
+#settings .opt input[type="checkbox"]:checked { border-color: var(--yellow); }
+#settings .opt input[type="checkbox"]:checked::after { transform: scale(1); }
+#settings p { font-size: 0.85rem; line-height: 1.5; color: var(--muted); }
