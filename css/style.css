@@ -486,7 +486,9 @@ dialog button[data-close] { margin-top: 10px; width: 100%; }
     display: grid;
     grid-template-columns: auto minmax(280px, 380px);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
-    gap: 8px 24px; align-items: start;
+    gap: 10px 24px; align-items: start; align-content: space-between;
+    grid-template-rows: auto auto auto auto;
+    min-height: calc(100dvh - 68px);
     max-width: 1760px;
     padding: 12px 20px calc(16px + var(--safe-b));
   }
@@ -494,7 +496,7 @@ dialog button[data-close] { margin-top: 10px; width: 100%; }
   #game .board { --cell: clamp(30px, min((100dvh - 170px) / 7.9, (100vw - 480px) / 15), 76px); }
   #game .hud { grid-column: 2; grid-row: 1; flex-direction: column; align-items: stretch; margin-top: 0; }
   #game #replay-bar { grid-column: 2; grid-row: 2; }
-  #game #log { grid-column: 2; grid-row: 3; max-height: 100%; overflow: auto; }
+  #game #log { grid-column: 2; grid-row: 3; align-self: start; max-height: min(46vh, 420px); overflow: auto; }
   #game .gamebtns { grid-column: 2; grid-row: 4; margin: 0; flex-wrap: wrap; }
   #game .gamebtns button { min-height: 38px; font-size: 0.9rem; padding: 6px 12px; }
 }

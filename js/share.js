@@ -182,6 +182,16 @@
     g.fillStyle = 'rgba(255,209,102,.9)'; g.beginPath(); g.arc(x, y, r * 0.3, 0, Math.PI * 2); g.fill();
   }
 
+  // brettindeks -> pikselposisjon (rad 1 er speilmvendt, som SS.idx)
+  function cellPos(i) {
+    var row = i <= 14 ? 0 : (i <= 29 ? 1 : 2);
+    var col = row === 0 ? i : (row === 1 ? 29 - i : i - 30);
+    return {
+      x: PAD + col * CW + CW / 2,
+      y: HEAD + (2 - row) * RH + RH * 0.5
+    };
+  }
+
   function xMark(g, x, y, r) {
     g.strokeStyle = 'rgba(255,209,102,.7)'; g.lineWidth = 1.6;
     g.beginPath();
@@ -218,11 +228,13 @@
       g.beginPath(); g.moveTo(x, HEAD + 4); g.lineTo(x, HEAD + 3 * RH - 4); g.stroke();
     }
 
-    // slottet (H2) og sáhkku-merka (C2/M2)
-    var midY = HEAD + RH + RH / 2;
-    castleMark(g, PAD + 7 * CW + CW / 2, midY - RH * 0.12, 11);
-    xMark(g, PAD + 2 * CW + CW / 2, midY - RH * 0.12, 7);
-    xMark(g, PAD + 12 * CW + CW / 2, midY - RH * 0.12, 7);
+    // slottet (SS.CASTLE = 22) og sáhkku-merka (18 og 26 — same som ui.js)
+    var cp = cellPos(SS.CASTLE);
+    castleMark(g, cp.x, cp.y - RH * 0.14, 11);
+    [18, 26].forEach(function (i) {
+      var q = cellPos(i);
+      xMark(g, q.x, q.y - RH * 0.14, 7);
+    });
 
     // tittelrad
     g.fillStyle = COL.ink;
@@ -243,9 +255,9 @@
         var occ = SS.occ(st, i).filter(function (p) { return !p.captured; });
         occ.forEach(function (p, k) {
           var px = cx + (k ? CW * 0.16 : 0), py = baseY - (k ? 6 : 0);
-          if (p.t === 'k') piece(g, px, py, RH * 0.92, 'king', true, false);
-          else if (p.t === 'q') piece(g, px, py, RH * 0.80, 'woman', true, false);
-          else piece(g, px, py, RH * 0.74, p.o === 0 ? 'man' : 'woman', false, SS.isHome(p));
+          if (p.t === 'k') piece(g, px, py, RH * 0.86, 'king', true, false);
+          else if (p.t === 'q') piece(g, px, py, RH * 0.72, 'woman', true, false);
+          else piece(g, px, py, RH * 0.66, p.o === 0 ? 'man' : 'woman', false, SS.isHome(p));
         });
       }
     }
