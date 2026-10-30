@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 110" width="60" height="110">
+<defs>
+  <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4e2c2"/><stop offset=".45" stop-color="#e2c79f"/><stop offset="1" stop-color="#b98f5c"/></linearGradient>
+  <clipPath id="sil"><path d="M13,104 L20,34 L20,30 L40,30 L40,34 L47,104 Z"/></clipPath>
+</defs>
+<path d="M13,104 L20,34 L20,30 L40,30 L40,34 L47,104 Z" fill="url(#wood)" stroke="rgba(60,38,16,.62)" stroke-width="1.1"/>
+<g clip-path="url(#sil)">
+  <path d="M20,30 L13,104 L11,97 L18,24 Z" fill="#fff" opacity=".13"/>
+  <path d="M40,30 L47,104 L49,97 L42,24 Z" fill="#000" opacity=".26"/>
+  <path d="M20,30 L18,24 L42,24 L40,30 Z" fill="#fff" opacity=".26"/>
+  
+  <g stroke="#000" stroke-width=".55" opacity=".10" fill="none">
+    <path d="M23,38 C27,60 19,70 16,100"/>
+    <path d="M30,36 C29,64 31,64 30,102"/>
+    <path d="M37,38 C33,60 41,70 44,100"/>
+  </g>
+</g>
+<path d="M13,104 L20,34 L20,30 L40,30 L40,34 L47,104 Z" fill="none" stroke="rgba(60,38,16,.62)" stroke-width="1.1"/>
+
+<path d="M11,97 L13,104 L47,104 L49,97 L49,100 L47,105 L13,105 L11,100 Z" fill="#000" opacity=".3" stroke="rgba(60,38,16,.62)" stroke-width="1"/>
+</svg>
