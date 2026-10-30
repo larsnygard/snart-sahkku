@@ -293,5 +293,8 @@
   "profile.av.stallo": "Stallo",
   "profile.av.alfur": "Elf",
   "profile.av.nykur": "Nykur",
-  "toast.slowLink": "Slow connection — carry on, the host will check the move"
+  "toast.slowLink": "Slow connection — carry on, the host will check the move",
+  "settings.pieces": "Piece set",
+  "settings.piecesClassic": "Classic (tall)",
+  "settings.piecesShort": "Short (low)"
 }

@@ -5,6 +5,11 @@ One grammar for all pieces: a tapered post seen slightly from above, with a fron
 face, two chisel facets, a top face and a base bevel. Men have a flat top, women a
 V notch (the laddjogahpir horns), the king is a stepped post. Royals get a gold band.
 
+Two sets share the grammar and the viewBox; only the heights differ, so a set can
+be swapped by CSS alone (see [data-pieces] in css/style.css):
+  classic  soldiers 74/110  — tall pins
+  short    soldiers 46/110  — squat pins, wider base (easier to tell apart on a phone)
+
 Run: /usr/bin/python3 tools/make_piece_svgs.py   (writes img/piece-*.svg)
 """
 from pathlib import Path
@@ -14,8 +19,6 @@ OUT.mkdir(exist_ok=True)
 
 W, H = 60, 110          # viewBox
 BASE = 104              # where the piece stands
-HALF_TOP = 10           # half width of the front top edge
-HALF_BASE = 17          # half width of the front base edge
 
 WOODS = {
     # name: (light, mid, dark, stroke)
@@ -25,6 +28,12 @@ WOODS = {
 }
 GOLD = ("#ffe19a", "#d8a53a")
 
+# height per kind, half-width of the front edges, filename suffix
+SETS = {
+    "classic": {"man": 74, "woman": 74, "king": 88, "half_top": 10, "half_base": 17, "suffix": ""},
+    "short":   {"man": 46, "woman": 46, "king": 66, "half_top": 12, "half_base": 19, "suffix": "-short"},
+}
+
 
 def grad(gid, stops):
     return (f'<linearGradient id="{gid}" x1="0" y1="0" x2="0" y2="1">'
@@ -32,31 +41,33 @@ def grad(gid, stops):
             + "</linearGradient>")
 
 
-def piece(kind, wood, royal=False):
+def piece(kind, wood, royal=False, h=74, half_top=10, half_base=17):
     light, mid, dark, stroke = WOODS[wood]
-    top_y = BASE - (74 if kind != "king" else 88)
-    x0, x1 = 30 - HALF_TOP, 30 + HALF_TOP
-    b0, b1 = 30 - HALF_BASE, 30 + HALF_BASE
+    top_y = BASE - h
+    x0, x1 = 30 - half_top, 30 + half_top
+    b0, b1 = 30 - half_base, 30 + half_base
+    flare = top_y + max(4, round(h * 0.06))     # where the sides start to flare out
 
     if kind == "king":
-        # stepped post: wide base -> narrow shaft -> small squared cap
-        sil = (f"M{b0},{BASE} L{b0},{BASE-52} L{b0+6},{BASE-52} L{b0+6},{BASE-78} "
-               f"L{b0+9},{BASE-78} L{b0+9},{BASE-88} L{b1-9},{BASE-88} L{b1-9},{BASE-78} "
-               f"L{b1-6},{BASE-78} L{b1-6},{BASE-52} L{b1},{BASE-52} L{b1},{BASE} Z")
-        steps = [(BASE - 52, b0, b1), (BASE - 78, b0 + 6, b1 - 6), (BASE - 88, b0 + 9, b1 - 9)]
+        # stepped post: wide base -> narrow shaft -> small squared cap (ratios of h)
+        y1, y2, y3 = BASE - round(h * 0.59), BASE - round(h * 0.886), BASE - h
+        sil = (f"M{b0},{BASE} L{b0},{y1} L{b0+6},{y1} L{b0+6},{y2} "
+               f"L{b0+9},{y2} L{b0+9},{y3} L{b1-9},{y3} L{b1-9},{y2} "
+               f"L{b1-6},{y2} L{b1-6},{y1} L{b1},{y1} L{b1},{BASE} Z")
+        steps = [(y1, b0, b1), (y2, b0 + 6, b1 - 6), (y3, b0 + 9, b1 - 9)]
         tops = "".join(
             f'<path d="M{l},{y} L{l+2},{y-5} L{r-2},{y-5} L{r},{y} Z" fill="#fff" opacity=".20"/>'
             for y, l, r in steps)
         notch = ""
     elif kind == "woman":
-        nY, nMid = top_y - 36, top_y - 12
-        sil = (f"M{b0},{BASE} L{x0},{BASE-70} L{x0},{top_y} L{x0+7},{nY} L30,{nMid} "
-               f"L{x1-7},{nY} L{x1},{top_y} L{x1},{BASE-70} L{b1},{BASE} Z")
+        nY, nMid = top_y - round(h * 0.49), top_y - round(h * 0.16)
+        sil = (f"M{b0},{BASE} L{x0},{flare} L{x0},{top_y} L{x0+7},{nY} L30,{nMid} "
+               f"L{x1-7},{nY} L{x1},{top_y} L{x1},{flare} L{b1},{BASE} Z")
         notch = (f'<path d="M{x0+7},{nY} L30,{nMid} L30,{top_y} L{x0},{top_y} Z" fill="#000" opacity=".24"/>'
                  f'<path d="M{x1-7},{nY} L30,{nMid} L30,{top_y} L{x1},{top_y} Z" fill="#fff" opacity=".11"/>')
         tops = f'<path d="M{x0},{top_y} L{x0-2},{top_y-6} L{x1+2},{top_y-6} L{x1},{top_y} Z" fill="#fff" opacity=".24"/>'
     else:
-        sil = f"M{b0},{BASE} L{x0},{BASE-70} L{x0},{top_y} L{x1},{top_y} L{x1},{BASE-70} L{b1},{BASE} Z"
+        sil = f"M{b0},{BASE} L{x0},{flare} L{x0},{top_y} L{x1},{top_y} L{x1},{flare} L{b1},{BASE} Z"
         notch = ""
         tops = f'<path d="M{x0},{top_y} L{x0-2},{top_y-6} L{x1+2},{top_y-6} L{x1},{top_y} Z" fill="#fff" opacity=".26"/>'
 
@@ -66,7 +77,7 @@ def piece(kind, wood, royal=False):
             f"L{b1+2},{BASE-4} L{b1},{BASE+1} L{b0},{BASE+1} L{b0-2},{BASE-4} Z")
     band = ""
     if royal:
-        by = BASE - 40
+        by = top_y + round(h * 0.36)
         band = (f'<path d="M{x0+1},{by} L{x1-1},{by} L{x1-1},{by+7} L{x0+1},{by+7} Z" fill="{GOLD[0]}" opacity=".95"/>'
                 f'<path d="M{x0+1},{by+5} L{x1-1},{by+5} L{x1-1},{by+7} L{x0+1},{by+7} Z" fill="{GOLD[1]}"/>')
 
@@ -94,16 +105,21 @@ def piece(kind, wood, royal=False):
 '''
 
 
-FILES = {
-    "piece-birch.svg": ("man", "birch", False),
-    "piece-birch-queen.svg": ("woman", "birch", True),
-    "piece-walnut.svg": ("woman", "walnut", False),
-    "piece-walnut-queen.svg": ("woman", "walnut", True),
-    "piece-king.svg": ("king", "ebony", True),
+# file stem -> (kind, wood, royal)
+PIECES = {
+    "piece-birch": ("man", "birch", False),
+    "piece-birch-queen": ("woman", "birch", True),
+    "piece-walnut": ("woman", "walnut", False),
+    "piece-walnut-queen": ("woman", "walnut", True),
+    "piece-king": ("king", "ebony", True),
 }
 
 if __name__ == "__main__":
-    for name, (kind, wood, royal) in FILES.items():
-        p = OUT / name
-        p.write_text(piece(kind, wood, royal), encoding="utf-8")
-        print(f"{p}  {p.stat().st_size} B")
+    for setname, cfg in SETS.items():
+        for stem, (kind, wood, royal) in PIECES.items():
+            p = OUT / f"{stem}{cfg['suffix']}.svg"
+            p.write_text(piece(kind, wood, royal,
+                               h=cfg[kind],
+                               half_top=cfg["half_top"],
+                               half_base=cfg["half_base"]), encoding="utf-8")
+            print(f"{setname:8s} {p.name}  {p.stat().st_size} B")

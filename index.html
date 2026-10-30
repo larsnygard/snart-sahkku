@@ -21,6 +21,8 @@
     if (s.getItem('sahkku.a11yLarge') === '1') d.classList.add('a11y-large');
     if (s.getItem('sahkku.a11yContrast') === '1') d.classList.add('a11y-contrast');
     if (s.getItem('sahkku.a11yMotion') === '1') d.classList.add('a11y-motion');
+    var pieces = s.getItem('sahkku.pieces');
+    if (pieces) d.setAttribute('data-pieces', pieces);
   } catch (e) { /* privat modus */ }
 })();
 </script>
@@ -263,6 +265,10 @@
   <label class="opt">
     <span data-i18n="settings.theme">Tema</span>
     <select id="sel-theme" aria-label="Tema" data-i18n-aria="settings.theme"></select>
+  </label>
+  <label class="opt">
+    <span data-i18n="settings.pieces">Brikkesett</span>
+    <select id="sel-pieces" aria-label="Brikkesett" data-i18n-aria="settings.pieces"></select>
   </label>
   <label class="opt">
     <span data-i18n="settings.largeText">Større tekst</span>

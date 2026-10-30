@@ -293,5 +293,8 @@
   "profile.av.stallo": "Stallo",
   "profile.av.alfur": "Alv",
   "profile.av.nykur": "Nykur",
-  "toast.slowLink": "Sambandet er tregt — hald fram, verten sjekkar trekket"
+  "toast.slowLink": "Sambandet er tregt — hald fram, verten sjekkar trekket",
+  "settings.pieces": "Brikkesett",
+  "settings.piecesClassic": "Klassisk (høge)",
+  "settings.piecesShort": "Kort (låge)"
 }

@@ -16,6 +16,6 @@
   </g>
 </g>
 <path d="M13,104 L13,52 L19,52 L19,26 L22,26 L22,16 L38,16 L38,26 L41,26 L41,52 L47,52 L47,104 Z" fill="none" stroke="rgba(0,0,0,.8)" stroke-width="1.1"/>
-<path d="M21,64 L39,64 L39,71 L21,71 Z" fill="#ffe19a" opacity=".95"/><path d="M21,69 L39,69 L39,71 L21,71 Z" fill="#d8a53a"/>
+<path d="M21,48 L39,48 L39,55 L21,55 Z" fill="#ffe19a" opacity=".95"/><path d="M21,53 L39,53 L39,55 L21,55 Z" fill="#d8a53a"/>
 <path d="M11,97 L13,104 L47,104 L49,97 L49,100 L47,105 L13,105 L11,100 Z" fill="#000" opacity=".3" stroke="rgba(0,0,0,.8)" stroke-width="1"/>
 </svg>

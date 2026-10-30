@@ -82,6 +82,33 @@ const server = http.createServer((req, res) => {
   ok('tema overlever reload', afterReload.attr === 'birch' && afterReload.stored === 'birch',
      JSON.stringify(afterReload));
 
+  // ---- 3b. brikkesett: to sett, og det andre byter biletfila ----
+  await page.click('#btn-settings');
+  await page.waitForSelector('#settings[open]');
+  const sets = await page.$$eval('#sel-pieces option', os => os.map(o => o.value));
+  ok('to brikkesett i veljaren', sets.join(',') === 'classic,short', sets.join(','));
+  // mål biletfila på eit laust .piece-element — verkar òg før brettet finst
+  const pieceBg = () => page.evaluate(() => {
+    const el = document.createElement('div');
+    el.className = 'piece red';
+    el.style.cssText = 'position:absolute;left:-9999px;width:20px;height:40px';
+    document.body.appendChild(el);
+    const v = getComputedStyle(el).backgroundImage;
+    el.remove();
+    return v;
+  });
+  const classicBg = await pieceBg();
+  await page.selectOption('#sel-pieces', 'short');
+  const shortBg = await pieceBg();
+  ok('kort sett byter biletet', /piece-birch-short\.svg/.test(shortBg) && !/short/.test(classicBg),
+     classicBg.slice(-40) + ' -> ' + shortBg.slice(-40));
+  ok('data-pieces vert sett', (await page.evaluate(() => document.documentElement.getAttribute('data-pieces'))) === 'short');
+  await page.keyboard.press('Escape');
+  await page.reload();
+  await page.waitForFunction(() => window.THEME);
+  ok('brikkesettet overlever reload',
+     (await page.evaluate(() => document.documentElement.getAttribute('data-pieces'))) === 'short');
+
   // ---- 4. brettet er eit grid med skjermlesar-tekst ----
   await page.click('#btn-cpu');
   await page.waitForFunction(() => document.querySelectorAll('#board .cell').length === 45);

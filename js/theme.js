@@ -8,10 +8,12 @@
   var doc = global.document;
 
   var THEMES = ['stone', 'birch', 'midnight', 'contrast'];
+  var PIECES = ['classic', 'short'];          // brikkesett (sjå css/style.css)
   var K_THEME = 'sahkku.theme';
   var K_LARGE = 'sahkku.a11yLarge';
   var K_CONTRAST = 'sahkku.a11yContrast';
   var K_MOTION = 'sahkku.a11yMotion';
+  var K_PIECES = 'sahkku.pieces';
 
   function store(key, val) {
     try {
@@ -37,6 +39,20 @@
     announce(T('settings.theme') + ': ' + T('settings.theme' + id.charAt(0).toUpperCase() + id.slice(1)));
   }
 
+  function currentPieces() {
+    var v = doc.documentElement.getAttribute('data-pieces');
+    return PIECES.indexOf(v) >= 0 ? v : 'classic';
+  }
+
+  function setPieces(id) {
+    if (PIECES.indexOf(id) < 0) id = 'classic';
+    doc.documentElement.setAttribute('data-pieces', id);
+    store(K_PIECES, id);
+    var sel = doc.getElementById('sel-pieces');
+    if (sel) sel.value = id;
+    announce(T('settings.pieces') + ': ' + T('settings.pieces' + id.charAt(0).toUpperCase() + id.slice(1)));
+  }
+
   function toggle(cls, key, on) {
     doc.documentElement.classList.toggle(cls, on);
     store(key, on ? '1' : '0');
@@ -60,13 +76,23 @@
 
   function fillSelect() {
     var sel = doc.getElementById('sel-theme');
-    if (!sel || sel.options.length) return;
-    THEMES.forEach(function (id) {
-      var o = doc.createElement('option');
-      o.value = id;
-      o.textContent = label(id);
-      sel.appendChild(o);
-    });
+    if (sel && !sel.options.length) {
+      THEMES.forEach(function (id) {
+        var o = doc.createElement('option');
+        o.value = id;
+        o.textContent = label(id);
+        sel.appendChild(o);
+      });
+    }
+    var ps = doc.getElementById('sel-pieces');
+    if (ps && !ps.options.length) {
+      PIECES.forEach(function (id) {
+        var o = doc.createElement('option');
+        o.value = id;
+        o.textContent = T('settings.pieces' + id.charAt(0).toUpperCase() + id.slice(1));
+        ps.appendChild(o);
+      });
+    }
   }
 
   function refresh() {
@@ -78,6 +104,14 @@
         sel.options[i].textContent = label(sel.options[i].value);
       }
       sel.value = currentTheme();
+    }
+    var ps = doc.getElementById('sel-pieces');
+    if (ps) {
+      for (var j = 0; j < ps.options.length; j++) {
+        ps.options[j].textContent =
+          T('settings.pieces' + ps.options[j].value.charAt(0).toUpperCase() + ps.options[j].value.slice(1));
+      }
+      ps.value = currentPieces();
     }
     var l = doc.getElementById('a11y-large');
     var c = doc.getElementById('a11y-contrast');
@@ -104,6 +138,7 @@
     doc.addEventListener('change', function (e) {
       var id = e.target && e.target.id;
       if (id === 'sel-theme') setTheme(e.target.value);
+      else if (id === 'sel-pieces') setPieces(e.target.value);
       else if (id === 'a11y-large') toggle('a11y-large', K_LARGE, e.target.checked);
       else if (id === 'a11y-contrast') toggle('a11y-contrast', K_CONTRAST, e.target.checked);
       else if (id === 'a11y-motion') toggle('a11y-motion', K_MOTION, e.target.checked);
@@ -117,6 +152,7 @@
 
   global.THEME = {
     init: init, setTheme: setTheme, current: currentTheme,
+    setPieces: setPieces, currentPieces: currentPieces, pieces: PIECES,
     themes: THEMES, refresh: refresh, announce: announce
   };
 })(window);

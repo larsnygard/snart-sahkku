@@ -32,7 +32,9 @@ async function snap(page) {
 }
 
 (async () => {
-  await new Promise(r => server.listen(PORT, r));
+  const LIVE = process.env.LIVE || '';
+  const BASE = LIVE || `http://127.0.0.1:${PORT}`;
+  if (!LIVE) await new Promise(r => server.listen(PORT, r));
   const browser = await chromium.launch({
     executablePath: '/home/lars/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome',
     headless: true, args: ['--no-sandbox'],
@@ -58,7 +60,7 @@ async function snap(page) {
   await B.addInitScript(() => localStorage.setItem('sahkku.profile',
     JSON.stringify({ nick: 'Kåre', realName: 'Kåre Hansen', avatar: 'fisher' })));
 
-  await A.goto(`http://127.0.0.1:${PORT}/index.html`);
+  await A.goto(`${BASE}/index.html`);
   await A.waitForFunction(() => window.NET && window.LOBBY);
   await A.click('#btn-online');
   await A.waitForFunction(() => window.NET && NET.myId, null, { timeout: 60000 });
@@ -68,7 +70,7 @@ async function snap(page) {
   const invite = await A.$eval('#invite-code', el => el.textContent);
   console.log('A joined, invite:', invite.slice(0, 30) + '…');
 
-  await B.goto(`http://127.0.0.1:${PORT}/index.html`);
+  await B.goto(`${BASE}/index.html`);
   await B.waitForFunction(() => window.NET && window.LOBBY);
   await B.click('#btn-online');
   await B.waitForFunction(() => window.NET && NET.myId, null, { timeout: 60000 });

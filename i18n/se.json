@@ -293,5 +293,8 @@
   "profile.av.stallo": "Stállu",
   "profile.av.alfur": "Álfar",
   "profile.av.nykur": "Nykur",
-  "toast.slowLink": "Čatnas lea njozet — joatkke, verten dárkkista lihkastaga"
+  "toast.slowLink": "Čatnas lea njozet — joatkke, verten dárkkista lihkastaga",
+  "settings.pieces": "Brihttát",
+  "settings.piecesClassic": "Klassihkalaš (allagat)",
+  "settings.piecesShort": "Oanehis (vuollegat)"
 }

@@ -1,5 +1,5 @@
 // SnartSáhkku SW — cache-first for alle assets (installbar, offlinespill)
-const CACHE = 'sahkku-v72';
+const CACHE = 'sahkku-v73';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css', './css/theme.css', './js/theme.js', './js/profile.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
@@ -11,6 +11,9 @@ const ASSETS = [
   './img/board-stone.jpg', './img/board-birch.jpg', './img/board-basalt.jpg',
   './img/piece-birch.svg', './img/piece-birch-queen.svg',
   './img/piece-walnut.svg', './img/piece-walnut-queen.svg', './img/piece-king.svg',
+  './img/piece-birch-short.svg', './img/piece-birch-queen-short.svg',
+  './img/piece-walnut-short.svg', './img/piece-walnut-queen-short.svg',
+  './img/piece-king-short.svg',
   './img/castle-sun.svg', './img/mark-x.svg', './img/dice-question.svg',
   './img/avatars/avatar-troll.jpg', './img/avatars/avatar-fenris.jpg',
   './img/avatars/avatar-ratatoskr.jpg', './img/avatars/avatar-noaide.jpg',

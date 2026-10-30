@@ -639,6 +639,15 @@ dialog button[data-close] { margin-top: 10px; width: 100%; }
   .prof-avatar { width: 84px; height: 84px; border-radius: 16px; }
 }
 
+/* Brikkesett 2: kortare soldatar, breiare botn. Same grammatikk, berre andre
+   filer — setet vert valt i Innstillingar og sett som data-pieces på <html>
+   (før fyrste paint, sjå inline-scriptet i index.html). */
+html[data-pieces="short"] .piece.red   { background-image: url('../img/piece-birch-short.svg'); }
+html[data-pieces="short"] .piece.blue  { background-image: url('../img/piece-walnut-short.svg'); }
+html[data-pieces="short"] .piece.red.queen  { background-image: url('../img/piece-birch-queen-short.svg'); }
+html[data-pieces="short"] .piece.blue.queen { background-image: url('../img/piece-walnut-queen-short.svg'); }
+html[data-pieces="short"] .piece.king  { background-image: url('../img/piece-king-short.svg'); }
+
 /* Lobby: liten avatar framfor kallenamnet */
 .lobby-row { display: flex; align-items: center; gap: 8px; }
 .lobby-row .lobby-av {
