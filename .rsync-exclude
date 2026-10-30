@@ -29,3 +29,14 @@ net/.cargo/
 # deploy machinery
 .rsync-exclude
 sendsahkku.sh
+
+# Pensjonerte S-UCI-motorar: dei ligg i repoet (og i engines/engines.json), men
+# skal ikkje liggje ute på snart.com. Sjå dei i appen lokalt med ?engines=all.
+engines/ail0.[1-8].js
+engines/ail0.[1-8].weights.json
+engines/nais1.js
+engines/nais1.weights.json
+engines/nais2.js
+engines/nais2.weights.json
+engines/nais3.js
+engines/nais3.weights.json

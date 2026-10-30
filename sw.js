@@ -1,12 +1,12 @@
 // SnartSáhkku SW — cache-first for alle assets (installbar, offlinespill)
-const CACHE = 'sahkku-v67';
+const CACHE = 'sahkku-v68';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css', './css/theme.css', './js/theme.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
   './js/share.js', './js/i18n.js', './js/remote.js', './js/exif.js', './js/lobby.js',
   './i18n/nb.json', './i18n/nn.json', './i18n/se.json', './i18n/en.json',
   './js/online.js', './js/archive.js', './js/engines.js', './js/main.js',
-  './engines/engines.json', './engines/nais2.js', './icons/icon.svg',
+  './engines/engines.json', './engines/nais5.js', './icons/icon.svg',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png',
   './img/board-stone.jpg', './img/board-birch.jpg', './img/board-basalt.jpg',
   './img/piece-birch.svg', './img/piece-birch-queen.svg',

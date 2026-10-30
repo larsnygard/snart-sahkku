@@ -16,6 +16,13 @@ rsync -avz --delete \
   --exclude-from="$(git rev-parse --show-toplevel)/.rsync-exclude" \
   "$(git rev-parse --show-toplevel)/" "$HOST":"$DEST"/
 
+# Pensjonerte motorar: ligg i repoet, men skal ikkje liggje på nettet. Sidan
+# rsync --delete ikkje fjernar filer som er ekskluderte, tek vi dei bort her.
+echo -n "Fjernar pensjonerte motorar → "
+ssh -o BatchMode=yes "$HOST" "cd '$DEST/engines' && rm -f \
+  ail0.{1,2,3,4,5,6,7,8}.js ail0.{1,2,3,4,5,6,7,8}.weights.json \
+  nais{1,2,3}.js nais{1,2,3}.weights.json && echo ok"
+
 # Varnish står framfor webrota og cache-lagrar index.html lenge. Utan ein purge
 # får folk den GAMLE appen sjølv om filene på serveren er nye (han kan ikkje
 # purgast utanfrå: PURGE frå internett gjev 401/405, og 404 på enkeltfiler

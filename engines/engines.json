@@ -15,7 +15,9 @@
       "script": "engines/ail0.1.js",
       "weights": "engines/ail0.1.weights.json",
       "lookahead": 4,
-      "note": "Nevral S-UCI-motor trena med sjølvspel (sahkku-ai). Tenkjer ~0,5 s per trekk."
+      "note": "Nevral S-UCI-motor trena med sjølvspel (sahkku-ai). Tenkjer ~0,5 s per trekk.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "ail0.2",
@@ -24,7 +26,9 @@
       "script": "engines/ail0.2.js",
       "weights": "engines/ail0.2.weights.json",
       "lookahead": 4,
-      "note": "Nevral S-UCI-motor, 12 syklusar / 152 000 prøver (val-xent 0.840). Trena med same reglar som AIL0.1."
+      "note": "Nevral S-UCI-motor, 12 syklusar / 152 000 prøver (val-xent 0.840). Trena med same reglar som AIL0.1.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "ail0.3",
@@ -33,7 +37,9 @@
       "script": "engines/ail0.3.js",
       "weights": "engines/ail0.3.weights.json",
       "lookahead": 4,
-      "note": "Nevral S-UCI-motor trena med MCTS-mål (25 simuleringar per avgjerd), 3 syklusar / 156 000 prøver."
+      "note": "Nevral S-UCI-motor trena med MCTS-mål (25 simuleringar per avgjerd), 3 syklusar / 156 000 prøver.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "ail0.4",
@@ -42,7 +48,9 @@
       "script": "engines/ail0.4.js",
       "weights": "engines/ail0.4.weights.json",
       "lookahead": 4,
-      "note": "Trena mot klassisk CPU nivå 3 (ikkje sjølvspel), med MCTS-mål og nye globale trekk: utløyste (ikkje «levande») brikker, POV-relative."
+      "note": "Trena mot klassisk CPU nivå 3 (ikkje sjølvspel), med MCTS-mål og nye globale trekk: utløyste (ikkje «levande») brikker, POV-relative.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "ail0.5",
@@ -51,7 +59,9 @@
       "script": "engines/ail0.5.js",
       "weights": "engines/ail0.5.weights.json",
       "lookahead": 4,
-      "note": "Trena 12 syklusar mot klassisk CPU nivå 3 (219 000 prøver). Målt 50 % mot same CPU — jamstilt med den sterke klassiske."
+      "note": "Trena 12 syklusar mot klassisk CPU nivå 3 (219 000 prøver). Målt 50 % mot same CPU — jamstilt med den sterke klassiske.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "ail0.6",
@@ -60,7 +70,9 @@
       "script": "engines/ail0.6.js",
       "weights": "engines/ail0.6.weights.json",
       "lookahead": 4,
-      "note": "Sjølvspel med «sein dronning»-handikap + retta søk (kapslar vert krediterte). 85 % mot klassisk nivå 3, 80 % mot AIL0.5."
+      "note": "Sjølvspel med «sein dronning»-handikap + retta søk (kapslar vert krediterte). 85 % mot klassisk nivå 3, 80 % mot AIL0.5.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "ail0.7",
@@ -69,7 +81,9 @@
       "script": "engines/ail0.7.js",
       "weights": "engines/ail0.7.weights.json",
       "lookahead": 4,
-      "note": "Kongedoktrinen og terningane som inndata (konge-eige, kongeavstand, dronningrisiko, motstandarens terningfridom) + djupare søk i treningsmåla. 77,5 % mot AIL0.6, 82,5 % mot klassisk nivå 3."
+      "note": "Kongedoktrinen og terningane som inndata (konge-eige, kongeavstand, dronningrisiko, motstandarens terningfridom) + djupare søk i treningsmåla. 77,5 % mot AIL0.6, 82,5 % mot klassisk nivå 3.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "ail0.8",
@@ -78,7 +92,9 @@
       "script": "engines/ail0.8.js",
       "weights": "engines/ail0.8.weights.json",
       "lookahead": 4,
-      "note": "Lett trena (éin syklus, 200 parti) oppå AIL0.7, med materialklausa i sjølvspelet: trygge slag vert spela, so policy-måla inneheld slag. Førebels utgåve — full køyring kjem."
+      "note": "Lett trena (éin syklus, 200 parti) oppå AIL0.7, med materialklausa i sjølvspelet: trygge slag vert spela, so policy-måla inneheld slag. Førebels utgåve — full køyring kjem.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "ail0.9",
@@ -105,7 +121,9 @@
       "script": "engines/nais1.js",
       "weights": "engines/nais1.weights.json",
       "lookahead": 4,
-      "note": "Ny serie: trena 4 t oppå AIL0.10 med 50 % Nesseby-parti og éi side som spelar aggressivt (slag x2,5, framrykk x1,4). Kan begge regelsetta (flaget g[15]). 92,5 % mot klassisk nivå 3."
+      "note": "Ny serie: trena 4 t oppå AIL0.10 med 50 % Nesseby-parti og éi side som spelar aggressivt (slag x2,5, framrykk x1,4). Kan begge regelsetta (flaget g[15]). 92,5 % mot klassisk nivå 3.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "nais2",
@@ -114,7 +132,9 @@
       "script": "engines/nais2.js",
       "weights": "engines/nais2.weights.json",
       "lookahead": 4,
-      "note": "Nesseby-trena (100 % av partia) oppå NAIS.1, 4 t. Kongekapringa er no jamt fordelt (Menn 47 % / Giera 53 %, før 0/100). 95 % mot klassisk nivå 3."
+      "note": "Nesseby-trena (100 % av partia) oppå NAIS.1, 4 t. Kongekapringa er no jamt fordelt (Menn 47 % / Giera 53 %, før 0/100). 95 % mot klassisk nivå 3.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "nais3",
@@ -123,7 +143,9 @@
       "script": "engines/nais3.js",
       "weights": "engines/nais3.weights.json",
       "lookahead": 4,
-      "note": "Trena 1 t oppå NAIS.2 med to menneskeparti blanda inn (12 % av kvar batch). Lærte den konkrete leksa — sannsynet for trekket som kosta NAIS.2 dronninga gjekk frå 0,65 til 0,33, og verdien av stillinga frå -0,62 til -0,96 — men vart klart svakare: 26,7 % mot NAIS.2 i Nesseby (8-22, n=30) og 90 % mot klassisk nivå 3 (NAIS.2: 95 %). Doseringa var feil: to tapte parti i 12 % av kvar batch lærte nettet pessimisme for Koner-sida. Ikkje tilrådd for spel."
+      "note": "Trena 1 t oppå NAIS.2 med to menneskeparti blanda inn (12 % av kvar batch). Lærte den konkrete leksa — sannsynet for trekket som kosta NAIS.2 dronninga gjekk frå 0,65 til 0,33, og verdien av stillinga frå -0,62 til -0,96 — men vart klart svakare: 26,7 % mot NAIS.2 i Nesseby (8-22, n=30) og 90 % mot klassisk nivå 3 (NAIS.2: 95 %). Doseringa var feil: to tapte parti i 12 % av kvar batch lærte nettet pessimisme for Koner-sida. Ikkje tilrådd for spel.",
+      "retired": true,
+      "retiredNote": "Avvikla: ikkje lenger tilgjengeleg i appen, men ligg i repoet (og i denne manifesta) for historikk og atterspeling av gamle parti."
     },
     {
       "id": "nais4",
@@ -143,5 +165,6 @@
       "lookahead": 4,
       "note": "Trena 11 syklusar oppå NAIS.4 (235 000 prøver, RTX 3070 Ti). Målt: 76,7 % mot NAIS.4 i Nesseby (23-7, n=30) og 97,5 % mot klassisk nivå 3 (39-1). Merk: 14-1 som Giera, 9-6 som Menn — han er klårt sterkast i Giera-setet. Standardmotor."
     }
-  ]
+  ],
+  "retiredNote": "Motorar merkte med «retired» vert ikkje viste i appen og filene deira vert ikkje lasta opp (sjå .rsync-exclude). Dei ligg framleis i repoet."
 }

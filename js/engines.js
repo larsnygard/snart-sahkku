@@ -21,9 +21,26 @@
   'use strict';
   var T = function (key, vars) { return global.I18N ? global.I18N.t(key, vars) : key; };
   var MANIFEST = 'engines/engines.json';
-  var list = null;                 // [{id,name,type,…}]
+  var list = null;                 // [{id,name,type,…}] — ALLE, òg pensjonerte
   var defaultId = null;            // manifestets «default» (nyaste motor)
   var mods = {};                   // id -> {mod, ready, err}
+
+  // Pensjonerte motorar (engines.json: "retired": true) skal ikkje visast i
+  // appen, men dei må framleis kunne slåast opp med namn (arkivparti som vart
+  // spela mot AIL0.3 skal heite AIL0.3, ikkje «ail0.3»). Difor held list() på
+  // heile manifestet medan listPublic() er det veljaren får.
+  // Lokal samanlikning: legg til ?engines=all i adressa.
+  var showRetired = false;
+  try {
+    showRetired = /(?:^|[?&])engines=all(?:&|$)/.test((global.location && global.location.search) || '');
+  } catch (e) { /* inga location */ }
+
+  // Promise, som list() — kallarane gjer .then(...) på resultatet.
+  function listPublic() {
+    return fetchList().then(function () {
+      return showRetired ? list : list.filter(function (e) { return !e.retired; });
+    });
+  }
 
   function fallback() {
     return [{ id: 'classic', name: 'Klassisk CPU', type: 'classic' }];
@@ -152,6 +169,7 @@
   }
 
   global.ENG = {
+    listPublic: listPublic,
     list: fetchList, byId: byId, load: load, ready: ready, move: move, action: action,
     moveAsync: moveAsync, actionAsync: actionAsync, addRemote: addRemote,
     isRemote: function (id) { var e = byId(id); return !!(e && e.type === 'remote'); },

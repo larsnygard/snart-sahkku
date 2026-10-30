@@ -750,7 +750,7 @@
   function fillEngines() {
     var sel = $('cpu-engine');
     if (!sel || !global.ENG) { syncLevelSelect(); return; }
-    global.ENG.list().then(function (engines) {
+    (global.ENG.listPublic ? global.ENG.listPublic() : global.ENG.list()).then(function (engines) {
       sel.innerHTML = '';
       engines.forEach(function (e) {
         var o = doc.createElement('option');
