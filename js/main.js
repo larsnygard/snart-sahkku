@@ -25,7 +25,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.30.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.30.1';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -980,7 +980,12 @@
       engines.forEach(function (e) {
         var o = doc.createElement('option');
         o.value = e.id;
-        o.textContent = e.name + (e.type === 'nn' ? ' (nevral)' : '');
+        // Leggje ut-tida til den nevrale modellen vert synleg i sjølve valet,
+        // so ein veit nøyaktig kva vektfil (variant) ein spelar mot — ikkje
+        // berre i tipset. Klassisk CPU har éin variant og treng ikkje stempel.
+        o.textContent = e.name + (e.type === 'nn'
+          ? ' (nevral' + (e.lagd ? ', ' + e.lagd.slice(0, 16) : '') + ')'
+          : '');
         if (e.note) o.title = e.note;
         sel.appendChild(o);
       });
