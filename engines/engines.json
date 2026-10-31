@@ -198,8 +198,7 @@
       "script": "engines/nais8.js",
       "weights": "engines/nais8.weights.json",
       "lookahead": 4,
-      "note": "Leggje ut 2026-10-31 21:36 · Trena nais8 (sjå sahkku-ai/docs/NAIS6-PLAN.md og runs/README) — 0.0 % mot nais7 i Nesseby (12 parti, kort benk medan køyringa går). Ikkje standardmotor (slår ikkje førre modell).",
-      "lagd": "2026-10-31 21:36"
+      "note": "Trena nais8 (sjå sahkku-ai/docs/NAIS6-PLAN.md og runs/README) — 10.0 % mot nais7 i Nesseby (n=30) og 72.5 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
     }
   ],
   "retiredNote": "Motorar merkte med «retired» vert ikkje viste i appen og filene deira vert ikkje lasta opp (sjå .rsync-exclude). Dei ligg framleis i repoet."
