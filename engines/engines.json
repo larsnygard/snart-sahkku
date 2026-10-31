@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "default": "nais5",
+  "default": "nais7",
   "engines": [
     {
       "id": "classic",
@@ -164,6 +164,15 @@
       "weights": "engines/nais5.weights.json",
       "lookahead": 4,
       "note": "Trena 11 syklusar oppå NAIS.4 (235 000 prøver, RTX 3070 Ti). Målt: 76,7 % mot NAIS.4 i Nesseby (23-7, n=30) og 97,5 % mot klassisk nivå 3 (39-1). Merk: 14-1 som Giera, 9-6 som Menn — han er klårt sterkast i Giera-setet. Standardmotor."
+    },
+    {
+      "id": "nais7",
+      "name": "NAIS.7",
+      "type": "nn",
+      "script": "engines/nais7.js",
+      "weights": "engines/nais7.weights.json",
+      "lookahead": 4,
+      "note": "Trena nais7 (sjå sahkku-ai/docs/NAIS6-PLAN.md og runs/README) — 66.7 % mot nais5 i Nesseby (n=30, 30 parti) og 97.5 % mot klassisk nivå 3 (n=40). Standardmotor."
     }
   ],
   "retiredNote": "Motorar merkte med «retired» vert ikkje viste i appen og filene deira vert ikkje lasta opp (sjå .rsync-exclude). Dei ligg framleis i repoet."
