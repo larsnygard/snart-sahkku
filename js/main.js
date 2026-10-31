@@ -324,7 +324,12 @@
     var grid = $('avatar-grid');
     if (!grid || !global.PROFILE) return;
     grid.innerHTML = '';
-    global.PROFILE.avatars.forEach(function (id) {
+    // 16 bilet for denne brukaren i dag (sjå PROFILE.gallery) — asynkront, so
+    // vi tel kall og kastar svar som kjem etter eit nyare kall.
+    var token = app._avatarToken = (app._avatarToken || 0) + 1;
+    global.PROFILE.gallery().then(function (ids) {
+      if (token !== app._avatarToken) return;
+      ids.forEach(function (id) {
       var b = doc.createElement('button');
       b.type = 'button';
       b.className = 'avatar-opt';
@@ -346,6 +351,7 @@
         if (prev) { prev.src = global.PROFILE.url(id); prev.alt = global.PROFILE.avatarLabel(id); }
       });
       grid.appendChild(b);
+      });
     });
   }
 

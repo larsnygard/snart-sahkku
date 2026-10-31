@@ -41,18 +41,45 @@ const server = http.createServer((req, res) => {
   const initial = await page.evaluate(() => window.PROFILE.get());
   ok('profil finst med standardverdiar', initial && typeof initial.avatar === 'string' && initial.avatar.length > 0,
      JSON.stringify(initial));
-  const nAvatars = await page.evaluate(() => window.PROFILE.avatars.length);
-  ok('24 bilete i galleriet', nAvatars === 24, nAvatars);
+  // ---- galleriet: 16 per brukar per dag, deterministisk ----
+  const g1 = await page.evaluate(() => window.PROFILE.gallery());
+  ok('16 bilete i galleriet', g1.length === 16, g1.length);
+  const g2 = await page.evaluate(() => window.PROFILE.gallery());
+  ok('same sett ved nytt kall (same brukar/dag)', JSON.stringify(g1) === JSON.stringify(g2));
+  const uid0 = await page.evaluate(() => window.PROFILE.uid());
+  const g3 = await page.evaluate(async () => {
+    localStorage.setItem('sahkku.uid', 'annan-brukar-0123456789abcdef');
+    return window.PROFILE.gallery();
+  });
+  ok('annan brukar får anna sett', JSON.stringify(g1) !== JSON.stringify(g3));
+  await page.evaluate(u => localStorage.setItem('sahkku.uid', u), uid0);
+  const g4 = await page.evaluate(() => window.PROFILE.gallery());
+  ok('tilbake til eige sett etter uid-bytе', JSON.stringify(g1) === JSON.stringify(g4));
+  // ny dag -> nytt sett (lat som det er i morgon)
+  const gTomorrow = await page.evaluate(async () => {
+    const RealDate = window.Date;
+    const fake = RealDate.now() + 24 * 3600 * 1000;
+    window.Date = class extends RealDate {
+      constructor(...a) { super(...(a.length ? a : [fake])); }
+      static now() { return fake; }
+    };
+    const g = await window.PROFILE.gallery();
+    window.Date = RealDate;
+    return g;
+  });
+  ok('ny dag gir nytt sett', JSON.stringify(g1) !== JSON.stringify(gTomorrow));
 
   // ---- 2. profilskjermen kan opnast og fyllast ut ----
   await page.click('#btn-profile-menu');
   await page.waitForSelector('#profile:not(.hidden)');
   ok('profilskjermen opnar', true);
+  await page.waitForFunction(() => document.querySelectorAll('#avatar-grid .avatar-opt').length === 16,
+                             null, { timeout: 8000 });
   const tiles = await page.$$('#avatar-grid .avatar-opt');
-  ok('galleriet er rendra', tiles.length === 24, tiles.length);
+  ok('galleriet er rendra', tiles.length === 16, tiles.length);
   const imgsOk = await page.evaluate(() => {
     const imgs = [...document.querySelectorAll('#avatar-grid img')];
-    return imgs.length === 24 && imgs.every(i => i.naturalWidth > 0);
+    return imgs.length === 16 && imgs.every(i => i.naturalWidth > 0);
   });
   ok('alle bileta lastar', imgsOk);
 
@@ -70,7 +97,7 @@ const server = http.createServer((req, res) => {
   ok('namn lagra', saved.stored.realName === 'Lars Christian Nygård', saved.stored.realName);
   ok('bilete lagra', saved.stored.avatar && saved.stored.avatar.length > 0, saved.stored.avatar);
   ok('vist som kallenamn', saved.badge === 'Nox', saved.badge);
-  ok('topplinja viser biletet', /avatar-/.test(saved.topbarImg), saved.topbarImg);
+  ok('topplinja viser biletet', /img\/avatars\//.test(saved.topbarImg), saved.topbarImg);
 
   // ---- 3. profilen overlever reload ----
   await page.reload();
