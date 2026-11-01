@@ -1,10 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 61.5" width="48" height="61.5">
-<path d="M37,2 l-4,2 0,-4 z" fill="#ff9999" stroke="rgba(0,0,0,.5)" stroke-width=".3" stroke-linejoin="round"/>
-<path d="M9,2 l4,2 0,-4 z" fill="#ff9999" stroke="rgba(0,0,0,.5)" stroke-width=".3" stroke-linejoin="round"/>
-<path d="M13,4 l0,-4 10,16 0,10 z" fill="#ff9999" stroke="rgba(0,0,0,.5)" stroke-width=".3" stroke-linejoin="round"/>
-<path d="M33,4 l0,-4 -10,16 0,10 z" fill="#ff9999" stroke="rgba(0,0,0,.5)" stroke-width=".3" stroke-linejoin="round"/>
-<path d="M13,4 l-3,54 26,0 -3,-54 -10,22 z" fill="#ff9999" stroke="rgba(0,0,0,.5)" stroke-width=".3" stroke-linejoin="round"/>
-<path d="M37,2 l9,51 -10,5 -3,-54 z" fill="#990000" stroke="rgba(0,0,0,.5)" stroke-width=".3" stroke-linejoin="round"/>
-<path d="M9,2 l-9,51 10,5 3,-54 z" fill="#ff8f8f" stroke="rgba(0,0,0,.5)" stroke-width=".3" stroke-linejoin="round"/>
-<path d="M0,53 l0,3 10,5 26,0 10,-5 0,-3 -10,5 -26,0 z" fill="#ff9999" stroke="rgba(0,0,0,.5)" stroke-width=".3" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72" width="48" height="72">
+<defs><linearGradient id="pole" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a8a8a"/><stop offset=".5" stop-color="#bfbfbf"/><stop offset="1" stop-color="#8a8a8a"/></linearGradient><clipPath id="fig"><path d="M18.7,24 L16.6,19 L31.4,19 L29.3,24 L44.1,28 L35.7,34 L45.2,56 L41.0,60 L7.0,60 L2.8,56 L12.3,34 L3.9,28 Z M24.0,1.0 L26.5,11.0 L36.5,13.5 L26.5,16.0 L24.0,26.0 L21.5,16.0 L11.5,13.5 L21.5,11.0 Z"/></clipPath></defs>
+<rect x="22.1" y="1" width="3.8" height="70" fill="url(#pole)" stroke="#555" stroke-width=".25"/>
+<path d="M18.7,24 L16.6,19 L31.4,19 L29.3,24 L44.1,28 L35.7,34 L45.2,56 L41.0,60 L7.0,60 L2.8,56 L12.3,34 L3.9,28 Z" fill="#ff9999" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
+<path d="M24.0,1.0 L26.5,11.0 L36.5,13.5 L26.5,16.0 L24.0,26.0 L21.5,16.0 L11.5,13.5 L21.5,11.0 Z" fill="#ff9999" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
+<g clip-path="url(#fig)"><rect x="0" y="0" width="17.5" height="72" fill="#ff8f8f"/><rect x="30.5" y="0" width="17.5" height="72" fill="#990000"/></g>
+<path d="M18.7,24 L16.6,19 L31.4,19 L29.3,24 L44.1,28 L35.7,34 L45.2,56 L41.0,60 L7.0,60 L2.8,56 L12.3,34 L3.9,28 Z" fill="none" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
+<path d="M24.0,1.0 L26.5,11.0 L36.5,13.5 L26.5,16.0 L24.0,26.0 L21.5,16.0 L11.5,13.5 L21.5,11.0 Z" fill="none" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
+<path d="M17.5,19 V60" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
+<path d="M30.5,19 V60" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
+<path d="M13,34 L35,34" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
+<path d="M4,56 L8,60" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
+<path d="M44,56 L40,60" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
+<path d="M6.5,54 L41.5,54" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
+<g clip-path="url(#fig)"><rect x="0" y="54" width="48" height="3.4" fill="#ffe19a"/><rect x="0" y="34" width="48" height="2.2" fill="#ffe19a"/><rect x="30.5" y="0" width="17.5" height="72" fill="#990000" opacity=".38"/></g>
+<path d="M6.5,54 L41.5,54" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
+<path d="M5.4,57.4 L41.4,57.4" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
 </svg>

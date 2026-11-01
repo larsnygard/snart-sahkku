@@ -1,5 +1,6 @@
-/* Brikkesett «norge»: facetterte fargepostar etter mønster frå
-   sahkku.no — front i spelarfarge, lys og mørk sideflate, hakka botn. */
+/* Brikkesett «norge»: kostymfigurane på stonga, slik sahkku.no teiknar
+   dei — menn med stjernelue, koner med flat lue, dronningene litt større med
+   gullband, kongen med krone. */
 html[data-pieces="norge"] .piece.red        { background-image: url('men-p0.svg'); }
 html[data-pieces="norge"] .piece.blue       { background-image: url('men-p1.svg'); }
 html[data-pieces="norge"] .piece.red.queen  { background-image: url('queen-p0.svg'); }
