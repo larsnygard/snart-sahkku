@@ -32,7 +32,7 @@
   // Innebygde pakkar — filane ligg i repoet; manifestet deira vert lasta
   // frå manifest.json under same mappe. Lista her er beré id-ane, så
   // veljaren i Innstillingar kan fyllast før manifesta er komne.
-  var BUILTIN_PIECES = ['classic', 'short'];
+  var BUILTIN_PIECES = ['classic', 'short', 'norge'];
   var BUILTIN_THEMES = ['stone', 'birch', 'midnight', 'contrast'];
 
   var packs = { pieces: {}, themes: {} };   // importerte (frå localStorage)

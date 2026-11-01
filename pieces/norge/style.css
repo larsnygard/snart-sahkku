@@ -1,0 +1,7 @@
+/* Brikkesett «norge»: facetterte fargepostar etter mønster frå
+   sahkku.no — front i spelarfarge, lys og mørk sideflate, hakka botn. */
+html[data-pieces="norge"] .piece.red        { background-image: url('men-p0.svg'); }
+html[data-pieces="norge"] .piece.blue       { background-image: url('men-p1.svg'); }
+html[data-pieces="norge"] .piece.red.queen  { background-image: url('queen-p0.svg'); }
+html[data-pieces="norge"] .piece.blue.queen { background-image: url('queen-p1.svg'); }
+html[data-pieces="norge"] .piece.king       { background-image: url('king.svg'); }

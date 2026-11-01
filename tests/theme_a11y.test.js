@@ -88,7 +88,7 @@ const server = http.createServer((req, res) => {
   await page.click('#btn-settings');
   await page.waitForSelector('#settings[open]');
   const sets = await page.$$eval('#sel-pieces option', os => os.map(o => o.value));
-  ok('to brikkesett i veljaren', sets.join(',') === 'classic,short', sets.join(','));
+  ok('tre brikkesett i veljaren', sets.join(',') === 'classic,short,norge', sets.join(','));
   // mål biletfila på eit laust .piece-element — verkar òg før brettet finst
   const pieceBg = () => page.evaluate(() => {
     const el = document.createElement('div');
