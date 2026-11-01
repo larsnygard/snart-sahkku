@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72" width="48" height="72">
 <defs><linearGradient id="pole" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a8a8a"/><stop offset=".5" stop-color="#bfbfbf"/><stop offset="1" stop-color="#8a8a8a"/></linearGradient><clipPath id="fig"><path d="M18.7,24 L16.6,19 L31.4,19 L29.3,24 L44.1,28 L35.7,34 L45.2,56 L41.0,60 L7.0,60 L2.8,56 L12.3,34 L3.9,28 Z M12.3,24 L12.3,21.5 L15.5,20 L32.5,20 L35.7,21.5 L35.7,24 Z M17.6,20 L17.6,15.5 L19.8,13.5 L28.2,13.5 L30.4,15.5 L30.4,20 Z"/></clipPath></defs>
 <rect x="22.1" y="1" width="3.8" height="70" fill="url(#pole)" stroke="#555" stroke-width=".25"/>
-<path d="M18.7,24 L16.6,19 L31.4,19 L29.3,24 L44.1,28 L35.7,34 L45.2,56 L41.0,60 L7.0,60 L2.8,56 L12.3,34 L3.9,28 Z" fill="#e0c0f0" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
-<path d="M12.3,24 L12.3,21.5 L15.5,20 L32.5,20 L35.7,21.5 L35.7,24 Z M17.6,20 L17.6,15.5 L19.8,13.5 L28.2,13.5 L30.4,15.5 L30.4,20 Z" fill="#e0c0f0" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
-<g clip-path="url(#fig)"><rect x="0" y="0" width="17.5" height="72" fill="#f1e2f8"/><rect x="30.5" y="0" width="17.5" height="72" fill="#8129ad"/></g>
+<path d="M18.7,24 L16.6,19 L31.4,19 L29.3,24 L44.1,28 L35.7,34 L45.2,56 L41.0,60 L7.0,60 L2.8,56 L12.3,34 L3.9,28 Z" fill="#e0b8f0" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
+<path d="M12.3,24 L12.3,21.5 L15.5,20 L32.5,20 L35.7,21.5 L35.7,24 Z M17.6,20 L17.6,15.5 L19.8,13.5 L28.2,13.5 L30.4,15.5 L30.4,20 Z" fill="#e0b8f0" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
+<g clip-path="url(#fig)"><rect x="0" y="0" width="17.5" height="72" fill="#eed9f7"/><rect x="30.5" y="0" width="17.5" height="72" fill="#8925b1"/></g>
 <path d="M18.7,24 L16.6,19 L31.4,19 L29.3,24 L44.1,28 L35.7,34 L45.2,56 L41.0,60 L7.0,60 L2.8,56 L12.3,34 L3.9,28 Z" fill="none" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
 <path d="M12.3,24 L12.3,21.5 L15.5,20 L32.5,20 L35.7,21.5 L35.7,24 Z M17.6,20 L17.6,15.5 L19.8,13.5 L28.2,13.5 L30.4,15.5 L30.4,20 Z" fill="none" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
 <path d="M17.5,19 V60" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
@@ -13,7 +13,7 @@
 <path d="M44,56 L40,60" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
 <path d="M20,24 L24,32 L28,24" fill="none" stroke="#000" stroke-opacity=".6" stroke-width=".4"/>
 <path d="M6.5,54 L41.5,54" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
-<g clip-path="url(#fig)"><rect x="0" y="54" width="48" height="3.4" fill="#ffe19a"/><rect x="0" y="34" width="48" height="2.2" fill="#ffe19a"/><rect x="30.5" y="0" width="17.5" height="72" fill="#8129ad" opacity=".38"/></g>
+<g clip-path="url(#fig)"><rect x="0" y="54" width="48" height="3.4" fill="#ffe19a"/><rect x="0" y="34" width="48" height="2.2" fill="#ffe19a"/><rect x="30.5" y="0" width="17.5" height="72" fill="#8925b1" opacity=".38"/></g>
 <path d="M6.5,54 L41.5,54" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
 <path d="M5.4,57.4 L41.4,57.4" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>
 </svg>

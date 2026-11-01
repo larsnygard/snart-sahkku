@@ -11,7 +11,7 @@ runs through the middle, protruding above and below the figure. On the pole:
   dronning    same figures, slightly larger, with gold hem + collar bands
               (større og meir utsmykka)
   konge       three-pointed crown, tapered faceted body, octagonal base band,
-              steel blue (front #a8c0d4, shaded right #3a5165, navy outline)
+              steel blue (front #a8b8c8, shaded right #384860, navy outline)
 
 Facets follow sahkku.no's rule: front = player colour, left = L 78 %, right =
 L 30 %, thin black hairline. Standalone SVGs bake the tones in (their live app
@@ -40,13 +40,15 @@ def tones(hue, sat, front_l, light_l=78, dark_l=30):
     return hsl(front_l), hsl(light_l), hsl(dark_l)
 
 SIDES = {
-    "p0": tones(0, 100, 80),                       # #ff9999 — menn (rosa, som spelet)
-    # koner (lavendel, som spelet): fronten er lys frå før, så venstreflata
-    # må lystast (L 78 hos sahkku.no ville vorte mørkare enn fronten)
-    "p1": tones(280, 61.5, 84.7, light_l=93, dark_l=42),
+    # menn: spelet si rosa kjole #f89898 (hsl 0/87.3/78.4), målt frå
+    # referansebileta. Fronten er lys, så facetten må lystast/mørknast jamt.
+    "p0": tones(0, 87.3, 78.4, light_l=86, dark_l=45),
+    # koner: spelet si lavendelkjole #e0b8f0 (hsl 282.9/65.1/83.1)
+    "p1": tones(282.9, 65.1, 83.1, light_l=91, dark_l=42),
 }
 GOLD = "#ffe19a"
-KING_FRONT, KING_LIGHT, KING_DARK, KING_EDGE = "#a8c0d4", "#c8d8e6", "#3a5165", "#16324a"
+# konge: front #a8b8c8 (hsl 210/22.5/72.2), mørk høgreside #384860 (L ~29)
+KING_FRONT, KING_LIGHT, KING_DARK, KING_EDGE = "#a8b8c8", "#c1ccd8", "#354b61", "#16324a"
 POLE_FILL = ("url(#pole)", "#8c8c8c")
 
 
@@ -206,9 +208,9 @@ MANIFEST = """{
   },
   "files": ["men-p0.svg", "men-p1.svg", "queen-p0.svg", "queen-p1.svg", "king.svg"],
   "palette": {
-    "p0": "#ff9999",
-    "p1": "#e0c0f0",
-    "king": "#a8c0d4",
+    "p0": "#f89898",
+    "p1": "#e0b8f0",
+    "king": "#a8b8c8",
     "gold": "#ffe19a"
   },
   "license": "AGPL-3.0-or-later"
