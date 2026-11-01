@@ -1,0 +1,13 @@
+/* Tema «stone» (standard): mørk skifer, bjørk/valnøtt-brikker, beinterningar.
+   Sjå avtalene i css/theme.css og docs/PAKKAR.md. */
+html[data-theme="stone"] {
+  --bg-app:
+    radial-gradient(1200px 500px at 50% -10%, #1d3a6e 0%, transparent 60%),
+    linear-gradient(180deg, #14224a 0%, #0c1730 55%);
+  --board-img: url('board.jpg');
+  --board-tint: radial-gradient(130% 120% at 50% 0%, rgba(255,255,255,.07), rgba(0,0,0,.42) 72%);
+  --board-base: linear-gradient(180deg, #14171c, #0a0c10);
+  --board-border: rgba(226,235,245,.16);
+  --line-core: rgba(226,235,245,.58);
+  --line-edge: rgba(0,0,0,.55);
+}

@@ -1,0 +1,14 @@
+{
+  "format": "snartsahkku-pakke",
+  "kind": "theme",
+  "id": "contrast",
+  "builtin": true,
+  "names": {
+    "nb": "Høg kontrast",
+    "nn": "Høg kontrast",
+    "se": "Alla kontrásta",
+    "en": "High contrast"
+  },
+  "board": null,
+  "license": "AGPL-3.0-or-later"
+}

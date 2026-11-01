@@ -9,8 +9,14 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=1.27.0">
-<link rel="stylesheet" href="css/theme.css?v=1.27.0">
+<link rel="stylesheet" href="css/style.css?v=1.34.0">
+<link rel="stylesheet" href="themes/stone/style.css?v=1.34.0">
+<link rel="stylesheet" href="themes/birch/style.css?v=1.34.0">
+<link rel="stylesheet" href="themes/midnight/style.css?v=1.34.0">
+<link rel="stylesheet" href="themes/contrast/style.css?v=1.34.0">
+<link rel="stylesheet" href="pieces/classic/style.css?v=1.34.0">
+<link rel="stylesheet" href="pieces/short/style.css?v=1.34.0">
+<link rel="stylesheet" href="css/theme.css?v=1.34.0">
 <script>
 /* Tema og tilgjenge-val må setjast FØR fyrste paint, elles blinkar feil tema. */
 (function () {
@@ -45,7 +51,7 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.33.0 · AGPL-3.0</span></p>
+      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.34.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden" data-i18n="menu.resume">▶ Fortsett lagret parti</button>
         <button id="btn-cpu" class="big" data-i18n="menu.playCpu">⚔︎ Spill mot CPU</button>
@@ -283,6 +289,13 @@
     <span data-i18n="settings.reduceMotion">Mindre rørsle</span>
     <input type="checkbox" id="a11y-motion">
   </label>
+  <h3 data-i18n="packs.title">Pakkar</h3>
+  <p data-i18n="packs.hint" class="arch-note"></p>
+  <label class="opt">
+    <span data-i18n="packs.import">Importer pakke (fil)</span>
+    <input type="file" id="pack-file" accept=".sahkku-pakke,.json,application/json">
+  </label>
+  <div id="pack-list" class="arch-list"></div>
   <p data-i18n="settings.note">Vala vert lagra i denne nettlesaren.</p>
   <button data-close class="big" data-i18n="settings.close">Lukk</button>
 </dialog>
@@ -318,6 +331,7 @@
 </dialog>
 
 <script src="js/i18n.js"></script>
+<script src="js/packs.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/engine.js"></script>

@@ -1,0 +1,25 @@
+/* Tema «midnight»: nesten svart basalt, gull-linjer. */
+html[data-theme="midnight"] {
+  --bg-app:
+    radial-gradient(900px 420px at 50% -8%, #14232f 0%, transparent 60%),
+    linear-gradient(180deg, #0a1017 0%, #05070a 65%);
+  --ink: #eaf1ff;
+  --muted: #8fa2bd;
+  --line: rgba(234,241,255,.14);
+  --yellow: #ffcf6b;
+  --panel-bg: rgba(16, 24, 34, .82);
+  --panel-2: rgba(255,255,255,.045);
+  --btn-bg: linear-gradient(180deg, #16202b, #0c1219);
+  --btn-big-bg: linear-gradient(180deg, #1b2a38, #0f1720);
+  --dialog-bg: linear-gradient(180deg, #101922, #070b10);
+  --log-bg: rgba(6,10,14,.72);
+  --edge-bg: rgba(6,10,14,.8);
+  --lbl: rgba(143,162,189,.5);
+  --board-img: url('board.jpg');
+  --board-tint: radial-gradient(130% 120% at 50% 0%, rgba(120,170,200,.06), rgba(0,0,0,.62) 75%);
+  --board-base: linear-gradient(180deg, #0b0f14, #04060a);
+  --board-border: rgba(255,207,107,.22);
+  --line-core: rgba(255,215,140,.46);
+  --line-edge: rgba(0,0,0,.7);
+  --input-bg: #101820;
+}

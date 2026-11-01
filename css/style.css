@@ -58,7 +58,7 @@
   --log-bg: rgba(12,23,48,.55);
   --edge-bg: rgba(12, 23, 48, .7);
   --lbl: rgba(159,176,208,.55);
-  --board-img: url('../img/board-stone.jpg');
+  --board-img: url('../themes/stone/board.jpg');
   --board-tint: radial-gradient(130% 120% at 50% 0%, rgba(255,255,255,.07), rgba(0,0,0,.42) 72%);
   --board-base: linear-gradient(180deg, #14171c, #0a0c10);
   --board-border: rgba(226, 235, 245, .16);
@@ -288,11 +288,11 @@ button.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); 
   z-index: 2;
   touch-action: manipulation;
 }
-.piece.red   { background-image: url('../img/piece-birch.svg'); }
-.piece.blue  { background-image: url('../img/piece-walnut.svg'); }
-.piece.red.queen   { background-image: url('../img/piece-birch-queen.svg'); }
-.piece.blue.queen  { background-image: url('../img/piece-walnut-queen.svg'); }
-.piece.king  { background-image: url('../img/piece-king.svg'); }
+.piece.red   { background-image: url('../pieces/classic/men-p0.svg'); }
+.piece.blue  { background-image: url('../pieces/classic/men-p1.svg'); }
+.piece.red.queen   { background-image: url('../pieces/classic/queen-p0.svg'); }
+.piece.blue.queen  { background-image: url('../pieces/classic/queen-p1.svg'); }
+.piece.king  { background-image: url('../pieces/classic/king.svg'); }
 .piece.home { opacity: .5; filter: grayscale(.4) brightness(.92) drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
 .piece.home::after { display: none; }
 .piece.sel {
@@ -639,14 +639,9 @@ dialog button[data-close] { margin-top: 10px; width: 100%; }
   .prof-avatar { width: 84px; height: 84px; border-radius: 16px; }
 }
 
-/* Brikkesett 2: kortare soldatar, breiare botn. Same grammatikk, berre andre
-   filer — setet vert valt i Innstillingar og sett som data-pieces på <html>
-   (før fyrste paint, sjå inline-scriptet i index.html). */
-html[data-pieces="short"] .piece.red   { background-image: url('../img/piece-birch-short.svg'); }
-html[data-pieces="short"] .piece.blue  { background-image: url('../img/piece-walnut-short.svg'); }
-html[data-pieces="short"] .piece.red.queen  { background-image: url('../img/piece-birch-queen-short.svg'); }
-html[data-pieces="short"] .piece.blue.queen { background-image: url('../img/piece-walnut-queen-short.svg'); }
-html[data-pieces="short"] .piece.king  { background-image: url('../img/piece-king-short.svg'); }
+/* Brikkesetta ligg i eiga mapper (pieces/<id>/style.css) som vert lenkja
+   i index.html — og importerte tredjepartspakkar vert sprutta ut av
+   js/packs.js. Sjå docs/PAKKAR.md. */
 
 /* Lobby: liten avatar framfor kallenamnet */
 .lobby-row { display: flex; align-items: center; gap: 8px; }

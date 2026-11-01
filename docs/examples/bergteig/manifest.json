@@ -1,0 +1,26 @@
+{
+  "format": "snartsahkku-pakke",
+  "kind": "pieces",
+  "id": "bergteig",
+  "builtin": true,
+  "names": {
+    "nb": "Bergteig (flat)",
+    "nn": "Bergteig (flat)",
+    "se": "Bergteig (flat)",
+    "en": "Bergteig (flat)"
+  },
+  "files": [
+    "men-p0.svg",
+    "men-p1.svg",
+    "queen-p0.svg",
+    "queen-p1.svg",
+    "king.svg"
+  ],
+  "palette": {
+    "p0": "#e8b64c",
+    "p1": "#5f7fae",
+    "king": "#3d3a52"
+  },
+  "license": "CC-BY-4.0",
+  "author": "Damsmpel (demonstrasjon)"
+}

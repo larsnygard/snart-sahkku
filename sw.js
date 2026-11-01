@@ -1,19 +1,23 @@
 // SnartSáhkku SW — cache-first for alle assets (installbar, offlinespill)
-const CACHE = 'sahkku-v83';
+const CACHE = 'sahkku-v84';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
-  './css/style.css', './css/theme.css', './js/theme.js', './js/profile.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
+  './css/style.css', './css/theme.css', './js/packs.js', './js/theme.js', './js/profile.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
   './js/share.js', './js/i18n.js', './js/remote.js', './js/exif.js', './js/lobby.js',
   './i18n/nb.json', './i18n/nn.json', './i18n/se.json', './i18n/en.json',
   './js/online.js', './js/archive.js', './js/engines.js', './js/main.js',
   './engines/engines.json', './engines/nais5.js', './icons/icon.svg',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png',
-  './img/board-stone.jpg', './img/board-birch.jpg', './img/board-basalt.jpg',
-  './img/piece-birch.svg', './img/piece-birch-queen.svg',
-  './img/piece-walnut.svg', './img/piece-walnut-queen.svg', './img/piece-king.svg',
-  './img/piece-birch-short.svg', './img/piece-birch-queen-short.svg',
-  './img/piece-walnut-short.svg', './img/piece-walnut-queen-short.svg',
-  './img/piece-king-short.svg',
+  './themes/stone/style.css', './themes/stone/manifest.json', './themes/stone/board.jpg',
+  './themes/birch/style.css', './themes/birch/manifest.json', './themes/birch/board.jpg',
+  './themes/midnight/style.css', './themes/midnight/manifest.json', './themes/midnight/board.jpg',
+  './themes/contrast/style.css', './themes/contrast/manifest.json',
+  './pieces/classic/style.css', './pieces/classic/manifest.json',
+  './pieces/classic/men-p0.svg', './pieces/classic/men-p1.svg',
+  './pieces/classic/queen-p0.svg', './pieces/classic/queen-p1.svg', './pieces/classic/king.svg',
+  './pieces/short/style.css', './pieces/short/manifest.json',
+  './pieces/short/men-p0.svg', './pieces/short/men-p1.svg',
+  './pieces/short/queen-p0.svg', './pieces/short/queen-p1.svg', './pieces/short/king.svg',
   './img/castle-sun.svg', './img/mark-x.svg', './img/dice-question.svg',
   './net/pkg/snart_sahkku_net.js', './net/pkg/snart_sahkku_net_bg.wasm'
 ];

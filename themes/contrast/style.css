@@ -1,0 +1,36 @@
+/* Tema «contrast»: rein svart/kvit for svaksynte — òg tilgjenge-
+   klassen a11y-contrast brukar same palett. */
+html[data-theme="contrast"],
+html.a11y-contrast {
+  --bg-app: #000;
+  --ink: #ffffff;
+  --muted: #f2f2f2;
+  --line: #ffffff;
+  --yellow: #ffe066;
+  --panel-bg: #000;
+  --panel-2: #111;
+  --btn-bg: #000;
+  --btn-big-bg: #000;
+  --dialog-bg: #000;
+  --log-bg: #000;
+  --edge-bg: #000;
+  --lbl: rgba(255,255,255,.85);
+  --board-img: none;
+  --board-tint: none;
+  --board-base: #000;
+  --board-border: #ffffff;
+  --line-core: #ffffff;
+  --line-edge: rgba(255,255,255,.35);
+  --piece-filter: contrast(1.25) brightness(1.08) drop-shadow(0 0 1.5px #fff);
+  --chip-p0-bg: #000;
+  --chip-p0-fg: #ff9b8f;
+  --chip-p1-bg: #000;
+  --chip-p1-fg: #9ec5ff;
+  --toast-bg: #000;
+  --input-bg: #000;
+}
+
+html.a11y-contrast body::before,
+html.a11y-contrast body::after,
+html[data-theme="contrast"] body::before,
+html[data-theme="contrast"] body::after { filter: saturate(1.4) contrast(1.2); }

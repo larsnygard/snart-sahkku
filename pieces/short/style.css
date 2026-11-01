@@ -1,0 +1,7 @@
+/* Brikkesett «kort»: låge soldatar med breiare botn — lettare å skilje på
+   liten skjerm. Same grammatikk som «classic», berre andre høgder. */
+html[data-pieces="short"] .piece.red        { background-image: url('men-p0.svg'); }
+html[data-pieces="short"] .piece.blue       { background-image: url('men-p1.svg'); }
+html[data-pieces="short"] .piece.red.queen  { background-image: url('queen-p0.svg'); }
+html[data-pieces="short"] .piece.blue.queen { background-image: url('queen-p1.svg'); }
+html[data-pieces="short"] .piece.king       { background-image: url('king.svg'); }

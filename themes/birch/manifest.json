@@ -1,0 +1,14 @@
+{
+  "format": "snartsahkku-pakke",
+  "kind": "theme",
+  "id": "birch",
+  "builtin": true,
+  "names": {
+    "nb": "Bjørk (lys)",
+    "nn": "Bjørk (lys)",
+    "se": "Biehkka (čuovgat)",
+    "en": "Birch (light)"
+  },
+  "board": "board.jpg",
+  "license": "AGPL-3.0-or-later"
+}

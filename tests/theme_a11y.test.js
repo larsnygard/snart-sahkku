@@ -47,11 +47,13 @@ const server = http.createServer((req, res) => {
   ok('fire tema i veljaren', opts.length === 4 && opts.join(',') === 'stone,birch,midnight,contrast', opts.join(','));
   ok('standardtema er stone', (await page.$eval('#sel-theme', s => s.value)) === 'stone');
 
-  // ---- 2. kvart tema set variablane sine ----
+  // ---- 2. kvart tema set variablane sine (temaet ligg i themes/<id>/style.css) ----
+  // Merknad: custom propertyar vert ikkje relativiserte i computed style —
+  // url('board.jpg') vert løyst mot stilarket sin URL fyrst ved måling.
   const expect = {
-    stone: { board: 'board-stone', ink: '#eef2ff' },
-    birch: { board: 'board-birch', ink: '#1b2430' },
-    midnight: { board: 'board-basalt', ink: '#eaf1ff' },
+    stone: { board: 'board.jpg', ink: '#eef2ff' },
+    birch: { board: 'board.jpg', ink: '#1b2430' },
+    midnight: { board: 'board.jpg', ink: '#eaf1ff' },
     contrast: { board: 'none', ink: '#ffffff' },
   };
   for (const [id, want] of Object.entries(expect)) {
@@ -100,7 +102,7 @@ const server = http.createServer((req, res) => {
   const classicBg = await pieceBg();
   await page.selectOption('#sel-pieces', 'short');
   const shortBg = await pieceBg();
-  ok('kort sett byter biletet', /piece-birch-short\.svg/.test(shortBg) && !/short/.test(classicBg),
+  ok('kort sett byter biletet', /pieces\/short\/men-p0\.svg/.test(shortBg) && /pieces\/classic\/men-p0\.svg/.test(classicBg),
      classicBg.slice(-40) + ' -> ' + shortBg.slice(-40));
   ok('data-pieces vert sett', (await page.evaluate(() => document.documentElement.getAttribute('data-pieces'))) === 'short');
   await page.keyboard.press('Escape');

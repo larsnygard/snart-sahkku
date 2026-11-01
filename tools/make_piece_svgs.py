@@ -10,12 +10,12 @@ be swapped by CSS alone (see [data-pieces] in css/style.css):
   classic  soldiers 68/110  — tall pins, wider body
   short    soldiers 46/110  — squat pins, wider base (easier to tell apart on a phone)
 
-Run: /usr/bin/python3 tools/make_piece_svgs.py   (writes img/piece-*.svg)
+Run: /usr/bin/python3 tools/make_piece_svgs.py
+Writes pieces/<set>/<fil>.svg — sjå docs/PAKKAR.md for kva filnamna tyder.
 """
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / "img"
-OUT.mkdir(exist_ok=True)
+ROOT = Path(__file__).resolve().parent.parent
 
 W, H = 60, 110          # viewBox
 BASE = 104              # where the piece stands
@@ -28,10 +28,10 @@ WOODS = {
 }
 GOLD = ("#ffe19a", "#d8a53a")
 
-# height per kind, half-width of the front edges, filename suffix
+# height per kind, half-width of the front edges, folder name
 SETS = {
-    "classic": {"man": 60, "woman": 60, "king": 74, "half_top": 13, "half_base": 22, "suffix": ""},
-    "short":   {"man": 46, "woman": 46, "king": 66, "half_top": 12, "half_base": 19, "suffix": "-short"},
+    "classic": {"man": 60, "woman": 60, "king": 74, "half_top": 13, "half_base": 22},
+    "short":   {"man": 46, "woman": 46, "king": 66, "half_top": 12, "half_base": 19},
 }
 
 
@@ -105,19 +105,21 @@ def piece(kind, wood, royal=False, h=74, half_top=10, half_base=17):
 '''
 
 
-# file stem -> (kind, wood, royal)
+# utnamn -> (kind, wood, royal)  — namna er pakkekontrakten (docs/PAKKAR.md)
 PIECES = {
-    "piece-birch": ("man", "birch", False),
-    "piece-birch-queen": ("woman", "birch", True),
-    "piece-walnut": ("woman", "walnut", False),
-    "piece-walnut-queen": ("woman", "walnut", True),
-    "piece-king": ("king", "ebony", True),
+    "men-p0":    ("man", "birch", False),
+    "queen-p0":  ("woman", "birch", True),
+    "men-p1":    ("woman", "walnut", False),
+    "queen-p1":  ("woman", "walnut", True),
+    "king":      ("king", "ebony", True),
 }
 
 if __name__ == "__main__":
     for setname, cfg in SETS.items():
+        out = ROOT / "pieces" / setname
+        out.mkdir(parents=True, exist_ok=True)
         for stem, (kind, wood, royal) in PIECES.items():
-            p = OUT / f"{stem}{cfg['suffix']}.svg"
+            p = out / f"{stem}.svg"
             p.write_text(piece(kind, wood, royal,
                                h=cfg[kind],
                                half_top=cfg["half_top"],

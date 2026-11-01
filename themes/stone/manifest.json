@@ -1,0 +1,14 @@
+{
+  "format": "snartsahkku-pakke",
+  "kind": "theme",
+  "id": "stone",
+  "builtin": true,
+  "names": {
+    "nb": "Stein (mørk)",
+    "nn": "Stein (mørk)",
+    "se": "Geađgi (seavdnjat)",
+    "en": "Stone (dark)"
+  },
+  "board": "board.jpg",
+  "license": "AGPL-3.0-or-later"
+}

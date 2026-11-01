@@ -66,6 +66,8 @@ dronninger*):
 
 ```
 index.html css/ js/            appen: engine (SS), cpu, ui, main, online, nn-adapter
+pieces/<id>/ themes/<id>/      brikkesett og drakter — éi mappe = éin design (docs/PAKKAR.md)
+docs/PAKKAR.md                 korleis ein lagar, deler og importerer designpakker
 engines/                       sahkku-ref.js (Node, S-UCI) + sahkku-nn.js (nevral, browser)
 manifest.webmanifest sw.js     PWA-manifest og service worker
 net/                           iroh-P2P-modulen (Rust, wasm-pack)

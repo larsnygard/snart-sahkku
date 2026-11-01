@@ -1,0 +1,31 @@
+/* Tema «birch»: lys bjørkjehell, varm papirkjensle. */
+html[data-theme="birch"] {
+  --bg-app:
+    radial-gradient(1200px 520px at 50% -10%, #fffaf0 0%, transparent 65%),
+    linear-gradient(180deg, #f6efe2 0%, #e2d6c1 70%);
+  --ink: #1b2430;
+  --muted: #5b6472;
+  --line: rgba(27,36,48,.20);
+  --yellow: #a9761a;
+  --panel-bg: rgba(255,255,255,.74);
+  --panel-2: rgba(255,255,255,.55);
+  --btn-bg: linear-gradient(180deg, #fffdf8, #eee2cb);
+  --btn-big-bg: linear-gradient(180deg, #fdf7ea, #e6d8bf);
+  --dialog-bg: linear-gradient(180deg, #fdf8ee, #eee3ce);
+  --log-bg: rgba(255,255,255,.62);
+  --edge-bg: rgba(255,255,255,.82);
+  --lbl: rgba(40,50,60,.52);
+  --board-img: url('board.jpg');
+  --board-tint: radial-gradient(130% 120% at 50% 0%, rgba(255,255,255,.30), rgba(120,90,50,.14) 78%);
+  --board-base: linear-gradient(180deg, #f4e9d4, #dccdb2);
+  --board-border: rgba(90,64,32,.30);
+  --line-core: rgba(58,38,18,.62);
+  --line-edge: rgba(255,255,255,.55);
+  --piece-filter: drop-shadow(0 2px 3px rgba(70,45,20,.45));
+  --chip-p0-bg: rgba(204,51,51,.14);
+  --chip-p0-fg: #8c1f18;
+  --chip-p1-bg: rgba(47,102,192,.14);
+  --chip-p1-fg: #1b4585;
+  --toast-bg: rgba(255,255,255,.96);
+  --input-bg: rgba(255,255,255,.90);
+}

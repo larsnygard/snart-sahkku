@@ -1,0 +1,11 @@
+/* Brikkesett «klassisk» — høge, smale soldatar, tradisjonell Lágesvuotna-
+   silhuett. Brikkene er genererte av tools/make_piece_svgs.py.
+
+   Reglane er USPEIDDE: klassisk er standardsettet som gjeld altfor <html>
+   ikkje har data-pieces, og alle andre sett — innebygde og importerte —
+   overstyrer med meir spesifikke [data-pieces]-reglar. Sjå docs/PAKKAR.md. */
+.piece.red        { background-image: url('men-p0.svg'); }
+.piece.blue       { background-image: url('men-p1.svg'); }
+.piece.red.queen  { background-image: url('queen-p0.svg'); }
+.piece.blue.queen { background-image: url('queen-p1.svg'); }
+.piece.king       { background-image: url('king.svg'); }

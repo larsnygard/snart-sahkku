@@ -1,0 +1,14 @@
+{
+  "format": "snartsahkku-pakke",
+  "kind": "theme",
+  "id": "midnight",
+  "builtin": true,
+  "names": {
+    "nb": "Midnatt",
+    "nn": "Midnatt",
+    "se": "Gaskaija",
+    "en": "Midnight"
+  },
+  "board": "board.jpg",
+  "license": "AGPL-3.0-or-later"
+}

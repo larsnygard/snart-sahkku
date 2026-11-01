@@ -25,7 +25,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.33.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.34.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -1201,13 +1201,49 @@
     // Importerer frå RÅ BYTES og avgjer formatet på innhaldet — ikkje på
     // endinga eller fyrste teiknet. ZIP, JSON, SPG og BILETE (SPG i EXIF) går
     // gjennom same vegen, so filveljaren, delingsruta og «opne med» deler henne.
+    // .sahkku-pakke (brikkesett/tema) vert skild og send til THEME.importPack.
+    function looksLikePack(obj) {
+      return obj && obj.format === 'snartsahkku-pakke' &&
+             (obj.kind === 'pieces' || obj.kind === 'theme');
+    }
+    // Zip-pakke: manifest.json på rota + SVG-filer (SVG er tekst, så zip-
+    // lesaren i zip.js klarer henne; brettbilete må vere data-URL i
+    // manifestet for at zip-spor skal fungere — sjå docs/PAKKAR.md).
+    function packFromZip(obj, files) {
+      if (obj.kind === 'pieces') {
+        obj.svg = obj.svg || {};
+        files.forEach(function (f) {
+          var m = /([a-z-]+\.(?:men|queen)[-a-z0-9]*\.svg|men-p0\.svg|men-p1\.svg|queen-p0\.svg|queen-p1\.svg|king\.svg)$/i.exec(f.name);
+          var base = f.name.split('/').pop().replace(/\.svg$/i, '');
+          if (/^(men-p0|men-p1|queen-p0|queen-p1|king)$/.test(base) && !obj.svg[base]) {
+            obj.svg[base] = f.text;
+          }
+        });
+      }
+      return JSON.stringify(obj);
+    }
     function importBytes(bytes, done) {
       done = done || function () {};
       if (bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b &&
           bytes[2] === 0x03 && bytes[3] === 0x04) {              // PK\x03\x04 = zip
-        global.ARCH.importSpgz(bytes).then(done, function (err) {
-          UI.toast('Zip: ' + err.message);
-        });
+        global.ZIP.read(bytes).then(function (files) {
+          var mf = null;
+          files.forEach(function (f) {
+            if (/manifest\.json$/i.test(f.name) && !mf) mf = f;
+          });
+          if (mf) {
+            try {
+              var obj = JSON.parse(mf.text);
+              if (looksLikePack(obj)) {
+                return THEME.importPack(packFromZip(obj, files))
+                  .then(function () { return null; }, function () { return null; });
+              }
+            } catch (err) { /* ikkje ein pakke — gå vidare til SPGZ */ }
+          }
+          return global.ARCH.importSpgz(bytes).then(done, function (err) {
+            UI.toast('Zip: ' + err.message);
+          });
+        }, function (err) { UI.toast('Zip: ' + err.message); });
         return;
       }
       // Bilete: PNG (89 50 4E 47) eller JPEG (FF D8) — les EXIF og ta SPG der
@@ -1221,6 +1257,7 @@
       var txt = new TextDecoder('utf-8').decode(bytes).replace(/^\uFEFF/, '');
       var obj = null;
       try { obj = JSON.parse(txt); } catch (err) { obj = null; }
+      if (looksLikePack(obj)) { THEME.importPack(txt); return; }
       if (obj && (obj.games || Array.isArray(obj) || obj.steps || obj.fens)) {
         done(global.ARCH.importBundle(obj));
         return;
@@ -1587,6 +1624,8 @@
   function boot() {
     if (global.I18N) {
       global.I18N.init().then(function () {
+        if (global.PACKS) return global.PACKS.init().catch(function () {});
+      }).then(function () {
         if (global.THEME) global.THEME.init();
     wireProfile();
     wireOnlineSelfHeal();
