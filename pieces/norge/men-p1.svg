@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72" width="48" height="72">
 <defs><linearGradient id="pole" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a8a8a"/><stop offset=".5" stop-color="#bfbfbf"/><stop offset="1" stop-color="#8a8a8a"/></linearGradient><clipPath id="fig"><path d="M19.0,24 L17.0,19 L31.0,19 L29.0,24 L43.0,28 L35.0,34 L44.0,56 L40.0,60 L8.0,60 L4.0,56 L13.0,34 L5.0,28 Z M13.0,24 L13.0,21.5 L16.0,20 L32.0,20 L35.0,21.5 L35.0,24 Z M18.0,20 L18.0,15.5 L20.0,13.5 L28.0,13.5 L30.0,15.5 L30.0,20 Z"/></clipPath></defs>
 <rect x="22.1" y="1" width="3.8" height="70" fill="url(#pole)" stroke="#555" stroke-width=".25"/>
-<path d="M19.0,24 L17.0,19 L31.0,19 L29.0,24 L43.0,28 L35.0,34 L44.0,56 L40.0,60 L8.0,60 L4.0,56 L13.0,34 L5.0,28 Z" fill="#f9731d" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
-<path d="M13.0,24 L13.0,21.5 L16.0,20 L32.0,20 L35.0,21.5 L35.0,24 Z M18.0,20 L18.0,15.5 L20.0,13.5 L28.0,13.5 L30.0,15.5 L30.0,20 Z" fill="#f9731d" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
-<g clip-path="url(#fig)"><rect x="0" y="0" width="17.5" height="72" fill="#fcbb92"/><rect x="30.5" y="0" width="17.5" height="72" fill="#953d04"/></g>
+<path d="M19.0,24 L17.0,19 L31.0,19 L29.0,24 L43.0,28 L35.0,34 L44.0,56 L40.0,60 L8.0,60 L4.0,56 L13.0,34 L5.0,28 Z" fill="#e0c0f0" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
+<path d="M13.0,24 L13.0,21.5 L16.0,20 L32.0,20 L35.0,21.5 L35.0,24 Z M18.0,20 L18.0,15.5 L20.0,13.5 L28.0,13.5 L30.0,15.5 L30.0,20 Z" fill="#e0c0f0" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
+<g clip-path="url(#fig)"><rect x="0" y="0" width="17.5" height="72" fill="#f1e2f8"/><rect x="30.5" y="0" width="17.5" height="72" fill="#8129ad"/></g>
 <path d="M19.0,24 L17.0,19 L31.0,19 L29.0,24 L43.0,28 L35.0,34 L44.0,56 L40.0,60 L8.0,60 L4.0,56 L13.0,34 L5.0,28 Z" fill="none" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
 <path d="M13.0,24 L13.0,21.5 L16.0,20 L32.0,20 L35.0,21.5 L35.0,24 Z M18.0,20 L18.0,15.5 L20.0,13.5 L28.0,13.5 L30.0,15.5 L30.0,20 Z" fill="none" stroke="#000" stroke-opacity=".6" stroke-width=".4" stroke-linejoin="round"/>
 <path d="M17.5,19 V60" fill="none" stroke="#000" stroke-opacity=".55" stroke-width=".35"/>

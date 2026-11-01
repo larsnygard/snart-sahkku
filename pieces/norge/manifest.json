@@ -12,7 +12,7 @@
   "files": ["men-p0.svg", "men-p1.svg", "queen-p0.svg", "queen-p1.svg", "king.svg"],
   "palette": {
     "p0": "#ff9999",
-    "p1": "#f9731d",
+    "p1": "#e0c0f0",
     "king": "#a8c0d4",
     "gold": "#ffe19a"
   },

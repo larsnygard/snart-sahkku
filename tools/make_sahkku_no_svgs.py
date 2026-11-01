@@ -33,15 +33,17 @@ FH = 72                      # figure viewBox height (pole included)
 CX = 24
 BASE = 60                    # feet line
 
-def tones(hue, sat, front_l):
+def tones(hue, sat, front_l, light_l=78, dark_l=30):
     def hsl(l):
         r, g, b = hls_to_rgb(hue / 360, l / 100, sat / 100)
         return "#%02x%02x%02x" % (round(r * 255), round(g * 255), round(b * 255))
-    return hsl(front_l), hsl(78), hsl(30)
+    return hsl(front_l), hsl(light_l), hsl(dark_l)
 
 SIDES = {
-    "p0": tones(0, 100, 80),            # #ff9999 — menn
-    "p1": tones(23.448, 94.8, 54.5),    # #f9731d — koner
+    "p0": tones(0, 100, 80),                       # #ff9999 — menn (rosa, som spelet)
+    # koner (lavendel, som spelet): fronten er lys frå før, så venstreflata
+    # må lystast (L 78 hos sahkku.no ville vorte mørkare enn fronten)
+    "p1": tones(280, 61.5, 84.7, light_l=93, dark_l=42),
 }
 GOLD = "#ffe19a"
 KING_FRONT, KING_LIGHT, KING_DARK, KING_EDGE = "#a8c0d4", "#c8d8e6", "#3a5165", "#16324a"
@@ -205,7 +207,7 @@ MANIFEST = """{
   "files": ["men-p0.svg", "men-p1.svg", "queen-p0.svg", "queen-p1.svg", "king.svg"],
   "palette": {
     "p0": "#ff9999",
-    "p1": "#f9731d",
+    "p1": "#e0c0f0",
     "king": "#a8c0d4",
     "gold": "#ffe19a"
   },
