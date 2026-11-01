@@ -1,0 +1,20 @@
+{
+  "format": "snartsahkku-pakke",
+  "kind": "pieces",
+  "id": "spelet",
+  "builtin": true,
+  "names": {
+    "nb": "Spillet (plagg på stonga)",
+    "nn": "Spelet (plagg på stonga)",
+    "se": "Speal (biktasiid stongojin)",
+    "en": "The game (garments on poles)"
+  },
+  "files": ["men-p0.svg", "men-p1.svg", "queen-p0.svg", "queen-p1.svg", "king.svg"],
+  "palette": {
+    "p0": "#f89898",
+    "p1": "#e0b8f0",
+    "king": "#a8b8c8",
+    "gold": "#ffe19a"
+  },
+  "license": "AGPL-3.0-or-later"
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 80" width="48" height="80">
+<rect x="22.7" y="0" width="2.7" height="80" fill="#a8a8a8" stroke="#6f6f6f" stroke-width=".2"/>
+<path d="M17.8,17.6 L15.8,16.8 L8.6,18.4 L10.6,33.6 L15.8,33.6 L10.6,70.4 L23.0,73.6 L35.0,70.4 L29.8,33.6 L37.4,33.6 L39.4,18.4 L29.8,16.8 L27.8,17.6 L23.0,30.4 Z" fill="#e0b8f0" stroke="#000000" stroke-width=".45" stroke-opacity=".75" stroke-linejoin="round"/>
+<path d="M18.7,19.2 L23.0,28.8 L26.9,19.2" fill="none" stroke="#000000" stroke-width=".38" stroke-opacity=".7"/>
+<path d="M15.8,17.6 L15.8,33.6" fill="none" stroke="#000000" stroke-width=".38" stroke-opacity=".7"/>
+<path d="M29.8,17.6 L29.8,33.6" fill="none" stroke="#000000" stroke-width=".38" stroke-opacity=".7"/>
+<path d="M15.8,33.6 L29.8,33.6" fill="none" stroke="#000000" stroke-width=".38" stroke-opacity=".7"/>
+<path d="M13.9,35.2 L11.5,69.6" fill="none" stroke="#000000" stroke-width=".38" stroke-opacity=".7"/>
+<path d="M32.2,35.2 L34.1,69.6" fill="none" stroke="#000000" stroke-width=".38" stroke-opacity=".7"/>
+<path d="M11.0,68.8 L23.0,72.0 L34.6,68.8" fill="none" stroke="#000000" stroke-width=".38" stroke-opacity=".7"/>
+</svg>

@@ -1,0 +1,8 @@
+/* Brikkesett «spelet»: plagga på stonga, hakket ut av opphavsspelet
+   til sahkku.no — rosa avskorege kjeglar (menn), lavendelkjolar
+   (koner), blågrå krone (konge). */
+html[data-pieces="spelet"] .piece.red        { background-image: url('men-p0.svg'); }
+html[data-pieces="spelet"] .piece.blue       { background-image: url('men-p1.svg'); }
+html[data-pieces="spelet"] .piece.red.queen  { background-image: url('queen-p0.svg'); }
+html[data-pieces="spelet"] .piece.blue.queen { background-image: url('queen-p1.svg'); }
+html[data-pieces="spelet"] .piece.king       { background-image: url('king.svg'); }

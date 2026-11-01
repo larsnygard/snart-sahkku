@@ -1,5 +1,5 @@
 // SnartSáhkku SW — cache-first for alle assets (installbar, offlinespill)
-const CACHE = 'sahkku-v89';
+const CACHE = 'sahkku-v90';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css', './css/theme.css', './js/packs.js', './js/theme.js', './js/profile.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
@@ -21,6 +21,9 @@ const ASSETS = [
   './pieces/norge/style.css', './pieces/norge/manifest.json',
   './pieces/norge/men-p0.svg', './pieces/norge/men-p1.svg',
   './pieces/norge/queen-p0.svg', './pieces/norge/queen-p1.svg', './pieces/norge/king.svg',
+  './pieces/spelet/style.css', './pieces/spelet/manifest.json',
+  './pieces/spelet/men-p0.svg', './pieces/spelet/men-p1.svg',
+  './pieces/spelet/queen-p0.svg', './pieces/spelet/queen-p1.svg', './pieces/spelet/king.svg',
   './img/castle-sun.svg', './img/mark-x.svg', './img/dice-question.svg',
   './net/pkg/snart_sahkku_net.js', './net/pkg/snart_sahkku_net_bg.wasm'
 ];
