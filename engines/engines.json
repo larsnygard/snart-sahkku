@@ -207,8 +207,8 @@
       "script": "engines/nais9.js",
       "weights": "engines/nais9.weights.json",
       "lookahead": 4,
-      "lagd": "2026-11-01 18:24",
-      "note": "Leggje ut 2026-11-01 18:24 · Trena nais9 (sjå sahkku-ai/docs og runs/README) — 8.3 % mot nais7 i Nesseby (12 parti, kort benk medan køyringa går). Ikkje standardmotor (slår ikkje førre modell)."
+      "lagd": "2026-11-02 02:20",
+      "note": "Leggje ut 2026-11-02 02:20 · Trena nais9 (sjå sahkku-ai/docs og runs/README) — 0.0 % mot nais7 i Nesseby (12 parti, kort benk medan køyringa går). Ikkje standardmotor (slår ikkje førre modell)."
     }
   ],
   "retiredNote": "Motorar merkte med «retired» vert ikkje viste i appen og filene deira vert ikkje lasta opp (sjå .rsync-exclude). Dei ligg framleis i repoet."

@@ -833,7 +833,7 @@ var M = {};
 var SS = (typeof globalThis !== 'undefined' ? globalThis : this).SS;
 
 // ==================== FEATURES + ACTIONS (mirrors features.py) ============
-var N_PLANES = 16, N_GLOBAL = 16;   // fylt inn av export.py
+var N_PLANES = 16, N_GLOBAL = 18;   // fylt inn av export.py
 var REL_BASE = 0, MOVE_BASE = 180, SPEC_BASE = 180 + 8100;
 var CLASSES = ['M', 'K', 'Q', 'k'];
 var FIRST_PASS = [[], []];
@@ -916,6 +916,20 @@ function encodeState(st) {
   }
   g[14] = DICE_USE_PROB[us.mask];                 // friheit i neste kast
   g[15] = st.nesseby ? 1 : 0;                     // regelmodus (Nesseby av/på)
+  // g[16]/g[17] = bonderisiko: kor stor del av kvar side sine utløyste soldatar
+  // som står der motstandaren kan slå dei i neste trekk. `caps` er alt rekna ut
+  // for fienden; vi treng same tabell for mi eiga side.
+  var usMe = usableAndCapture(st, me);
+  var expMe = 0, expFoe = 0;
+  for (var si = 0; si < st.pieces.length; si++) {
+    var q = st.pieces[si];
+    if (q.t !== 's' || !q.released || q.captured) continue;
+    var sq = SS.soldierAt(q.o, q.at);
+    if (q.o === me) { if (us.caps[sq]) expMe++; }
+    else { if (usMe.caps[sq]) expFoe++; }
+  }
+  g[16] = expMe / 15;
+  g[17] = expFoe / 15;
   return { planes: pl, glob: g };
 }
 
