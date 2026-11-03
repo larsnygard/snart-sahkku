@@ -1,11 +1,11 @@
 // SnartSáhkku SW — cache-first for alle assets (installbar, offlinespill)
-const CACHE = 'sahkku-v93';
+const CACHE = 'sahkku-v94';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css', './css/theme.css', './js/packs.js', './js/theme.js', './js/profile.js', './js/engine.js', './js/fen.js', './js/spg.js', './js/zip.js', './js/cpu.js', './js/ui.js',
   './js/share.js', './js/i18n.js', './js/remote.js', './js/exif.js', './js/lobby.js',
   './i18n/nb.json', './i18n/nn.json', './i18n/se.json', './i18n/en.json',
-  './js/online.js', './js/archive.js', './js/engines.js', './js/main.js',
+  './js/online.js', './js/archive.js', './js/engines.js', './js/main.js', './js/evalworker.js',
   './engines/engines.json', './engines/nais5.js', './icons/icon.svg',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png',
   './themes/stone/style.css', './themes/stone/manifest.json', './themes/stone/board.jpg',

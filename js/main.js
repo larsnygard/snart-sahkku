@@ -25,7 +25,7 @@
     nesseby: true      // Nesseby-regelen er PÅ som standard (valfri, kan kryssast av)
 
   };
-  var APP_VERSION = 'v1.39.0';   // hald i takt med index.html sin versjonstekst
+  var APP_VERSION = 'v1.40.0';   // hald i takt med index.html sin versjonstekst
   var AC_KEY = 'sahkku.autocast';
   function readAutocast() {
     try { return global.localStorage.getItem(AC_KEY) === '1'; } catch (e) { return false; }
@@ -420,6 +420,7 @@
     app.archived = false;
     app.fens = [];                 // FEN etter kvar endring (arkiv/avspeling)
     UI.clearLog();
+    hideEval();
     op.rolls.forEach(function (r, ix) {
       if (op.rolls.length > 1) UI.log(T('log.opening', { n: ix + 1, p0: r.p0.join(' '), p1: r.p1.join(' ') }));
     });
@@ -961,6 +962,76 @@
   function engName(id) { return global.ENG ? global.ENG.name(id) : id; }
   function engReady() { return global.ENG && global.ENG.ready(app.engine); }
 
+  // ---------- stillingsvurdering (S-UCI scorefen) ----------
+  // Knappen viser kva NN-motoren meiner om stillinga slik ho står no: talet
+  // er frå sida som skal trekke (positivt = ho står best), og er net + det
+  // materialet motoren blandar inn. Klassisk CPU kan ikkje svare; då låner
+  // vi standardmotoren frå manifestet, so knappen verkar i alle modus.
+  function evalSideName(st) {
+    var s = st.turn === 0 ? T('game.menn') : T('game.koner');
+    return String(s).split(' · ')[0];      // «Menn · olbmát» -> «Menn»
+  }
+
+  // Kandidatar i prioritert rekkjefylgje: den valde NN-motoren, standard-
+  // motoren, so resten. Gamle eksportarar (før KAISER.1) har ikkje scoreFen,
+  // so vi må kunne falle vidare til ein motor som faktisk kan svare.
+  function evalCandidates() {
+    if (!global.ENG) return Promise.resolve([]);
+    var out = [];
+    function add(id) { if (id && out.indexOf(id) < 0) out.push(id); }
+    add(app.evalEngine);                                  // hugsar kven som svara sist
+    if (app.engine !== 'classic' && global.ENG.type(app.engine) === 'nn') add(app.engine);
+    add(global.ENG.defaultId && global.ENG.defaultId());
+    return (global.ENG.listPublic ? global.ENG.listPublic() : global.ENG.list())
+      .then(function (ls) {
+        // Nyaste sist i manifestet — prøv dei fyrst, for gamle eksportarar
+        // (før KAISER.1) manglar scoreFen heilt.
+        (ls || []).slice().reverse().forEach(function (e) { if (e.type === 'nn') add(e.id); });
+        return out.filter(function (id) { return global.ENG.type(id) === 'nn'; });
+      });
+  }
+
+  function hideEval() {
+    var bar = $('eval-bar');
+    if (bar) { bar.classList.add('hidden'); bar.textContent = ''; }
+  }
+
+  var evalReq = 0;                 // siste førespurnad (gamle svar vert kasta)
+
+  function showEval() {
+    var bar = $('eval-bar');
+    if (!app.st || !bar) return;
+    if (!bar.classList.contains('hidden')) { hideEval(); return; }   // trykk = toggle
+    var ref = app.st, fen = SS.toFEN(ref), st = ref;
+    var req = ++evalReq;
+    bar.textContent = '⏳ …';
+    bar.classList.remove('hidden');
+    evalCandidates().then(function (ids) {
+      return ids.reduce(function (p, id) {
+        return p.then(function (hit) {
+          if (hit) return hit;
+          // Worker: UI held fram medan søket går (kan ta fleire sekund i kastfasen).
+          return global.ENG.evalAsync(id, fen, 1, 1200).then(function (sc) {
+            return (sc === null || !isFinite(sc)) ? null : { id: id, sc: sc };
+          }, function () { return null; });
+        });
+      }, Promise.resolve(null));
+    }).then(function (hit) {
+      if (req !== evalReq || bar.classList.contains('hidden')) return;
+      if (!hit) { hideEval(); UI.toast(T('game.evalNoEngine')); return; }
+      app.evalEngine = hit.id;                   // neste trykk går rett til han
+      var txt = engName(hit.id) + ': ' + (hit.sc >= 0 ? '+' : '') + hit.sc.toFixed(2) +
+                ' (' + evalSideName(st) + ', d1)';
+      bar.textContent = '📊 ' + txt;
+      UI.log(T('game.eval') + ' — ' + txt);
+    }).catch(function (e) {
+      if (req !== evalReq) return;
+      if (global.console) console.warn('vurdering feila:', e);
+      hideEval();
+      UI.toast(T('game.evalNoEngine'));
+    });
+  }
+
   // Testkrok: let testane drive den verkelege settle-/kaste-vegen
   global.__settle = settleAndContinue;
   global.__fileStamp = fileStamp;
@@ -1369,6 +1440,7 @@
       if (!resumeGame()) { UI.toast(T('toast.noSavedGame')); show('menu'); }
     });
     $('btn-spg').addEventListener('click', exportSpg);
+    $('btn-eval').addEventListener('click', showEval);
     $('btn-export-spg').addEventListener('click', exportSpg);
     $('btn-fen').addEventListener('click', function () {
       if (!app.st) return;

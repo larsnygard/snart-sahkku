@@ -53,7 +53,7 @@
     <div class="hero">
       <img src="icons/icon.svg" alt="Sáhkku-brett" class="hero-icon">
       <h1>Lágesvuotna-sáhkku</h1>
-      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.39.0 · AGPL-3.0</span></p>
+      <p class="tagline"><span data-i18n="app.tagline">Det gamle samiske spillet fra Laksefjorden — med dronninger.</span> <span class="ver">v1.40.0 · AGPL-3.0</span></p>
       <div class="menu-grid">
         <button id="btn-resume" class="big hidden" data-i18n="menu.resume">▶ Fortsett lagret parti</button>
         <button id="btn-cpu" class="big" data-i18n="menu.playCpu">⚔︎ Spill mot CPU</button>
@@ -212,12 +212,14 @@
       <button id="btn-share-rev" class="ghost" data-i18n-title="review.shareTitle" data-i18n="review.share">🖼 Del</button>
       <button id="btn-replay-back" class="ghost" data-i18n="review.back">Til arkivet</button>
     </div>
+    <div id="eval-bar" class="eval-bar hidden" aria-live="polite"></div>
     <div id="log" class="log" aria-live="polite"></div>
     <div class="gamebtns">
       <button id="btn-menu" class="ghost" data-i18n="game.menu">Meny</button>
       <button id="btn-leave" class="ghost hidden" data-i18n-title="game.leaveTitle" data-i18n="game.leave">🚪 Forlat</button>
       <button id="btn-spg" class="ghost" data-i18n-title="game.spgTitle" data-i18n="game.spg">📜 Notasjon</button>
       <button id="btn-fen" class="ghost" data-i18n-title="game.copyFenTitle" data-i18n="game.copyFen">📋 Kopier FEN</button>
+      <button id="btn-eval" class="ghost" data-i18n-title="game.evalTitle" data-i18n="game.eval">📊 Vurdering</button>
       <button id="btn-surrender" class="ghost" data-i18n="game.surrender">Gi seg</button>
     </div>
   </section>

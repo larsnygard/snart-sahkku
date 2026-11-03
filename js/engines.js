@@ -163,9 +163,72 @@
     var e = byId(id);
     return e ? e.name : id;
   }
+
+  // Stillingsvurdering (S-UCI scorefen): net + materiale, frå sida som skal
+  // trekke si side. null når motoren ikkje er ein NN-motor som kan svare.
+  function evalFen(id, fen, depth, nodes) {
+    var m = mods[id];
+    if (!m || !m.ready || !m.mod || !m.mod.exported ||
+        typeof m.mod.exported.scoreFen !== 'function') return null;
+    try { return m.mod.exported.scoreFen(fen, depth || 0, nodes || 1500); }
+    catch (e) { return null; }
+  }
+
+  function materialSum(id, st) {
+    var m = mods[id];
+    if (!m || !m.ready || !m.mod || !m.mod.exported ||
+        typeof m.mod.exported.materialSum !== 'function') return null;
+    try { return m.mod.exported.materialSum(st); }
+    catch (e) { return null; }
+  }
+
   function type(id) {
     var e = byId(id);
     return e ? (e.type || 'classic') : 'classic';
+  }
+  // Stillingsvurdering utan å blokkere UI: kvar motor får sin eigen Worker
+  // (js/evalworker.js) som lastar scriptet + vektene og svarar på score-førespurnader.
+  var workers = {};   // id -> {w, ready, seq, pending}
+  function evalAsync(id, fen, depth, nodes) {
+    var e = byId(id);
+    if (!e || e.type !== 'nn') return Promise.reject(new Error('ikkje ein NN-motor'));
+    var slot = workers[id];
+    if (!slot) {
+      var w = new Worker('js/evalworker.js');
+      slot = workers[id] = { w: w, seq: 0, pending: {} };
+      slot.ready = new Promise(function (resolve, reject) {
+        var settled = false;
+        w.addEventListener('message', function (ev) {
+          var m = ev.data || {};
+          if (m.type === 'ready') { settled = true; resolve(true); return; }
+          if (m.type === 'score') {
+            var cb = slot.pending[m.id];
+            if (cb) { delete slot.pending[m.id]; cb.resolve(m.value); }
+            return;
+          }
+          if (m.type === 'error') {
+            var p = m.id != null ? slot.pending[m.id] : null;
+            if (p) { delete slot.pending[m.id]; p.reject(new Error(m.error)); }
+            else if (!settled) { settled = true; reject(new Error(m.error)); }
+            return;
+          }
+        });
+        w.addEventListener('error', function (ev) {
+          if (!settled) { settled = true; reject(new Error(ev.message || 'worker-feil')); }
+        });
+        w.postMessage({ type: 'load', script: new URL(e.script, document.baseURI).href,
+                        weights: new URL(e.weights, document.baseURI).href,
+                        lookahead: e.lookahead });
+      });
+    }
+    return slot.ready.then(function () {
+      return new Promise(function (resolve, reject) {
+        var n = ++slot.seq;
+        slot.pending[n] = { resolve: resolve, reject: reject };
+        slot.w.postMessage({ type: 'score', id: n, fen: fen, depth: depth || 0,
+                             nodes: nodes || 1500 });
+      });
+    });
   }
 
   global.ENG = {
@@ -175,6 +238,7 @@
     isRemote: function (id) { var e = byId(id); return !!(e && e.type === 'remote'); },
     // standardmotor frå manifestet (til dømes den nyaste modellen), elles null
     defaultId: function () { return defaultId; },
-    name: name, type: type, error: function (id) { return mods[id] && mods[id].err; }
+    name: name, type: type, error: function (id) { return mods[id] && mods[id].err; },
+    evalFen: evalFen, materialSum: materialSum, evalAsync: evalAsync
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
