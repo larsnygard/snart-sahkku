@@ -201,16 +201,6 @@
       "note": "Trena nais8 (sjå sahkku-ai/docs/NAIS6-PLAN.md og runs/README) — 10.0 % mot nais7 i Nesseby (n=30) og 72.5 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
     },
     {
-      "id": "nais9",
-      "name": "NAIS.9",
-      "type": "nn",
-      "script": "engines/nais9.js",
-      "weights": "engines/nais9.weights.json",
-      "lookahead": 4,
-      "lagd": "2026-11-03 22:34",
-      "note": "Leggje ut 2026-11-03 22:34 · Trena nais9 (sjå sahkku-ai/docs og runs/README) — 0.0 % mot nais7 i Nesseby (n=30) og 82.5 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
-    },
-    {
       "id": "blanka1",
       "name": "BLANKA.1",
       "type": "nn",
@@ -239,6 +229,16 @@
       "lookahead": 4,
       "lagd": "2026-11-04 22:56",
       "note": "Leggje ut 2026-11-04 22:56 · Trena kaiser1 (sjå sahkku-ai/docs og runs/README) — 6.7 % mot nais7 i Nesseby (n=30) og 15.0 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
+    },
+    {
+      "id": "nais9",
+      "name": "NAIS.9",
+      "type": "nn",
+      "script": "engines/nais9.js",
+      "weights": "engines/nais9.weights.json",
+      "lookahead": 4,
+      "lagd": "2026-11-04 23:01",
+      "note": "Leggje ut 2026-11-04 23:01 · Trena nais9 (sjå sahkku-ai/docs og runs/README) — 3.3 % mot nais7 i Nesseby (n=30) og 17.5 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
     }
   ],
   "retiredNote": "Motorar merkte med «retired» vert ikkje viste i appen og filene deira vert ikkje lasta opp (sjå .rsync-exclude). Dei ligg framleis i repoet."
