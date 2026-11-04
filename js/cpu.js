@@ -1,26 +1,25 @@
 // SnartSáhkku — CPU: FLOKK, deterministisk regelstyrt spelar
 //
-// Bygd 2026-11-02 på alt lært i AIL/NAIS-treninga (sjå ../sahkku-ai:
-// straffar-proben, Nesseby-analysen, paritetstestane). FLOKK spelar utan
-// tilfeldige tal: same stilling + same terningar = same trekk, kvar gong.
-//
-// Dei seks reglane (Lars 2026-11-02):
-//  1. Dronninga vert IKKJE aktivert når mi saldatstyrke < 3 OG fienden
-//     har meir enn 5 aktive.
-//  2. Hald 3–6 soldatar aktive, og gå dei fram som ein JAMN FLOKK: jamn
-//     avstand i tallsyklusen, ikkje klistra i hop, ikkje kløyvd i to hoper.
-//  3. Kapra kongen: trekk han attende, og bruk han til slag berre når han
-//     ETTER slaget har minst 5 i avstand til nærmaste fiendtsoldat.
-//  4. Kongen held seg heime på heimrekkja i sikkerheit; slår loddrett
-//     berre når landingsfeltet er trygt.
-//  5. Soldatar slår fiendebrikker når rádet er for det.
-//  6. Heilt deterministisk: ingen kast, inga støy — fyrste beste trekk i
-//     lovlige-rekkjefylgje vinn.
+// Bygd 2026-11-02, reglane skrivne om 2026-11-04 etter Lars sitt oppsett:
+//  1. Dronninga vert IKKJE aktivert når ein har meir enn 3 soldatar —
+//     aktive eller heimeståande, alle i live tel. (Utan dronning i spel
+//     kan ho heller ikkje takast.)
+//  2. Bruk X til å LØYSJE soldatar til 6 er aktive; etter det er løysing
+//     ikkje lenger noko mål i seg sjølv.
+//  3. Set aldri soldatar på same felt når det er mogleg å late vera:
+//     stabling er éin kapring for fienden.
+//  4. Hald flokken SAMAN og gå fram som ein flokk — tett på kvarandre,
+//     den bakarste soldaten får gå fyrst.
+//  5. Soldatar slår ALLTID når dei kan (hard regel). Slag med
+//     dronning/konge er mjuke preferansar.
+//  6. Kongen held seg ATTERST: attende til heimrekkja, aldri ut i banen.
+//  7. Kongen slår berre når han etter slaget kan attende til trygg grunn
+//     med ei terning han framleis har — elles er slaget forbode.
 //
 // Nivå i CPU.pick(st, level):
 //   1 = tilfeldig (gamal «Lett»-reserve)
 //   2 = gamal greedy-poieng med litt støy (gamal «Litt hardere», uendra)
-//   3 = FLOKK (ny, deterministisk — «Tøff»)
+//   3 = FLOKK (regelstyrt — «Tøff»)
 (function (global) {
   'use strict';
   var SS = global.SS;
@@ -124,28 +123,36 @@
     }
     return true;
   }
-  // jamn flokk: poeng på syklusavstandane mellom dei aktive soldatane.
-  // Heimen (t ≥ 60) er ein eigen stabel — han tel ikkje med i flokkjamnen.
-  // Jamn avstand = alle gapa mellom min 2 og max 60/n (flokkens naturlege steg).
-  function flockEvenness(st, me) {
-    var act = activeSoldiers(st, me).filter(function (x) { return x.at < 60; }), s = 0, i;
-    if (act.length < 2) return 0;
-    var n = act.length, maxGap = 60 / n;
-    var ts = act.map(function (x) { return SS.mod(x.at, 60); })
-                .sort(function (a, b) { return a - b; });
-    var gaps = [];
-    for (i = 1; i < ts.length; i++) gaps.push(ts[i] - ts[i - 1]);
-    gaps.push(60 - ts[ts.length - 1] + ts[0]);
-    for (i = 0; i < gaps.length; i++) {
-      if (gaps[i] < 2) s -= 150;              // klistra i hop: lette å slå attom
-      else if (gaps[i] > maxGap) s -= 25;     // kløyvd: flokken heng ikkje i hop
+  // avstand mellom to soldatar i tallsyklusen (0–29, syklisk over 60)
+  function cycleDist(a, b) {
+    var d = Math.abs(SS.mod(a, 60) - SS.mod(b, 60));
+    return Math.min(d, 60 - d);
+  }
+  // terningverdi: X=1, II=2, III=3, blank=0
+  function dieValue(f) {
+    return f === 'X' ? 1 : f === 'II' ? 2 : f === 'III' ? 3 : 0;
+  }
+  function hasUnusedDie(st, v) {
+    for (var i = 0; i < 3; i++) if (!st.used[i] && dieValue(st.dice[i]) === v) return true;
+    return false;
+  }
+  // kongen si attenderetning: menn (side 0) heim rad 0 = 'B', giera rad 2 = 'F'
+  function retreatDir(me) { return homeRow(me) === 0 ? 'B' : 'F'; }
+  // Regel 7: kan kongen på sq kome seg ATTENDE til trygg grunn med ei
+  // terning han framleis har etter slaget?
+  function canRetreatSafe(st, me, sq) {
+    var d = retreatDir(me);
+    for (var v = 1; v <= 3; v++) {
+      if (!hasUnusedDie(st, v)) continue;
+      var dest = pathAlong(sq, d, v);
+      if (dest >= 0 && kingSafe(st, dest, me)) return true;
     }
-    return s;
+    return false;
   }
 
   // ---------- FLOKK-poieng ----------
   // Hard regel (±HARD) = skal regelbunden brytast nokon gong. Mjuk
-  // preferanse (±300-åra) = kvar vi går fram når reglane ikkje seier noko.
+  // preferanse = kvar vi går fram når reglane ikkje seier noko.
   // Trekket vert køyrd på ein kopi; poiengtet reknast på STILLINGA ETTER.
   function flokkScore(st, mv) {
     var me = st.turn, foe = 1 - me;
@@ -156,83 +163,106 @@
 
     if (copy.winner === me) return 1000000;
 
-    var myActNow = activeSoldiers(st, me).length;     // FØR trekket
-    var foeAct = activeSoldiers(st, foe).length;
-    var thr = threatZone(st, me);                     // fienden sin landingsradius NO
-    landSq = SS.moveDest(st, mv);                     // landingsfeltet for alle trekk
+    var actBefore = activeSoldiers(st, me);
+    var myActNow = actBefore.length;                                   // FØR trekket
+    var mySoldNow = SS.soldiers(st, me).filter(function (x) { return !x.captured; }).length;
+    var thr = threatZone(st, me);                                      // fienden sin landingsradius NO
+    landSq = SS.moveDest(st, mv);                                      // landingsfeltet for alle trekk
 
-    // ---- regel 1: dronninga kem ikkje tidleg ----
+    // ---- regel 1: dronninga vert IKKJE aktivert med meir enn 3 soldatar
+    //      (aktive eller heimeståande — alle som er i live tel) ----
     if (p.t === 'q' && mv.kind === 'rel') {
-      if (myActNow < 3 && foeAct > 5) s -= HARD;
-      else s += 120;                                  // seint løp: rett investering
+      if (mySoldNow > 3) s -= HARD;
+      else s += 120;                                                   // seint nok: rett investering
     }
 
-    // ---- regel 5: soldaten slår når rádet er for det ----
+    // ---- regel 5: soldaten slår ALLTID når han kan ----
+    var struckByKing = false;
     for (i = 0; i < ev.length; i++) {
       var e = ev[i];
       if (e.type === 'kill') {
         var q = SS.piece(copy, e.pid);
-        s += (p.t === 's') ? (q && q.t === 'q' ? 1200 : 900)
-                           : (p.t === 'k' ? 800 : 950);
+        var isQueen = q && q.t === 'q';
+        if (p.t === 's') s += HARD + (isQueen ? 1200 : 900);           // hard regel
+        else if (p.t === 'k') { s += isQueen ? 1200 : 950; struckByKing = true; }
+        else s += isQueen ? 1200 : 950;                                // dronninga: mjukt
       }
-      if (e.type === 'king') s += 1400;               // Nesseby: soldaten kaprar kongen
+      if (e.type === 'king') s += HARD + 1400;                         // Nesseby: kapra kongen
     }
 
-    // ---- regel 3 + 4: kongen si rørsle ----
+    // ---- regel 6 + 7: kongen si rørsle ----
     if (p.t === 'k' && p.o === me) {
       var kk = SS.king(copy);
       landSq = SS.atIdx(copy, kk);
       var struck = false;
       for (i = 0; i < ev.length; i++) if (ev[i].type === 'kill' && ev[i].by === me) struck = true;
       if (struck) {
-        // regel 3: kongen slår berre om han ETTER slaget har ≥ 5 i avstand
-        // til nærmaste fiendsoldat (ikkje utsett for attmøte). Berre
-        // soldatar og fiendedronninga tel — flokken sin sone er ikkje farleg.
-        if (!kingSafe(copy, landSq, me)) s -= HARD;
+        // regel 7: slaget er berre lov når kongen ETTER slaget kan attende
+        // til trygg grunn med ei terning han framleis har.
+        if (!kingSafe(copy, landSq, me) || !canRetreatSafe(copy, me, landSq)) s -= HARD;
       } else if (mv.kind === 'mv' && (mv.dir === 'F' || mv.dir === 'B') &&
                  !kingSafe(st, landSq, me)) {
-        // regel 4: loddrett slag berre når landingsfeltet er trygt
-        s -= HARD;
+        s -= HARD;                                                     // loddrett berre trygt
       }
-      // regel 4: heime på heimrekkja er tryggast; trekke attende er framgang
+      // regel 6: kongen høyrer til ATTERST — heimrekkja er målet
       var rowBefore = SS.pt(SS.atIdx(st, p)).row, rowAfter = SS.pt(landSq).row;
       var hr = homeRow(me);
-      if (rowAfter === hr) s += 300;
-      if (Math.abs(rowAfter - hr) < Math.abs(rowBefore - hr)) s += 120;   // retreat
-      if (rowAfter !== hr && rowBefore === hr) s -= 150;                  // går ut i banen
+      if (rowAfter === hr) s += 1000;                                  // på heimrekkja: tryggast
+      if (Math.abs(rowAfter - hr) < Math.abs(rowBefore - hr)) s += 800;         // attende
+      if (rowAfter !== hr && rowBefore === hr) s -= 800;                        // ut i banen
     }
 
-    // ---- regel 2: 3–6 aktive, jamn flokk fram mot fienden ----
-    var nAct = activeSoldiers(copy, me).length;
-    if (nAct < 3) s -= (3 - nAct) * 60;
-    if (nAct > 6) s -= (nAct - 6) * 40;
+    // ---- regel 2: bruk X til å LØYSJE soldatar til 6 er aktive ----
+    if (mv.kind === 'rel' && p.t === 's') {
+      s += (myActNow < 6) ? 3000 : -100;
+    }
+
+    // ---- regel 3: set ikkje soldatar på same felt (stabling = éin kapring) ----
+    if (p.t === 's' && mv.kind === 'mv') {
+      var here = SS.occ(copy, landSq), stacked = 0;
+      for (i = 0; i < here.length; i++) {
+        var z = here[i];
+        if (z.id !== p.id && z.t === 's' && z.o === me) stacked++;
+      }
+      if (stacked) s -= 400;
+    }
+
+    // ---- regel 4: hald flokken SAMAN, gå fram som ein flokk ----
     if (p.t === 's') {
-      landSq = SS.moveDest(st, mv);
-      if (mv.kind === 'rel') s += (myActNow < 3 ? 150 : 60);   // rom i flokken: løys
-      s += (mv.kind === 'rel' ? 1 : mv.v) * 15;                // framdrift i flokken
-      if (p.released && thr[SS.atIdx(st, p)] && !thr[landSq]) s += 200;  // rømmer frå trusa felt
-      if (p.released && thr[landSq]) s -= 250;                 // land i trusselssona
+      s += (mv.kind === 'rel' ? 1 : mv.v) * 15;                        // framdrift
+      if (p.released && thr[SS.atIdx(st, p)] && !thr[landSq]) s += 200;  // rømmer frå trusla felt
+      if (p.released && thr[landSq]) s -= 250;                         // land i trusselssona
+      var moved = SS.piece(copy, mv.pid);
+      if (moved && !moved.captured) {
+        var pals = activeSoldiers(copy, me).filter(function (x) { return x.id !== moved.id; });
+        var near = -1;
+        for (i = 0; i < pals.length; i++) {
+          var dd = cycleDist(moved.at, pals[i].at);
+          if (near < 0 || dd < near) near = dd;
+        }
+        if (near >= 0) s -= Math.min(near, 10) * 25;                   // tett på flokken = betre
+      }
+      // flokken går fram saman: den BAKARSTE soldaten får gå fyrst
+      var minAt = Infinity;
+      for (i = 0; i < actBefore.length; i++) if (actBefore[i].at < minAt) minAt = actBefore[i].at;
+      if (p.released && p.at === minAt) s += 80;
     }
-    s += flockEvenness(copy, me);
-    s -= flockEvenness(st, me);                                  // berre endringa tel
 
-    // ---- eiga dronning: i spill, men ikkje åleine i faret ----
+    // ---- eiga dronning: i spel, men ikkje åleine i faret ----
     var myQ = SS.queen(st, me);
     if (myQ) {
-      if (!SS.queen(copy, me)) s -= 40000;                       // tapt: katastrofe
+      if (!SS.queen(copy, me)) s -= 40000;                             // tapt: katastrofe
       if (p.t === 'q' && p.released) {
-        if (thr[landSq] && nAct < 4) s -= 350;                   // treng flokken rundt seg
-        s += 30;                                                 // ho skal vera i spel
+        var nAct = activeSoldiers(copy, me).length;
+        if (thr[landSq] && nAct < 4) s -= 350;                         // treng flokken rundt seg
+        s += 30;                                                       // ho skal vera i spel
       }
     }
     // eigen konge i landingsfaret til fienden etter trekket: utsett
     var kAfter = SS.king(copy);
     if (kAfter.o === me && thr[kAfter.at] && p.t !== 'k') s -= 350;
-    // fienden sin konge i fare: jakta han ikkje heim (han er ein trofé)
-    if (kAfter.o === foe && dist(SS.atIdx(st, SS.king(st)), kAfter.at) < 99) {
-      // kongen til fienden står ledig — flokken kan gå mot han
-      s += 20;
-    }
+    // fienden sin konge står ledig — flokken kan gå mot han
+    if (kAfter.o === foe) s += 20;
     return s;
   }
 
