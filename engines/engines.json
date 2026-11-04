@@ -219,6 +219,16 @@
       "lookahead": 4,
       "lagd": "2026-11-03 22:34",
       "note": "Leggje ut 2026-11-03 22:34 · Trena nais9 (sjå sahkku-ai/docs og runs/README) — 0.0 % mot nais7 i Nesseby (n=30) og 82.5 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
+    },
+    {
+      "id": "blanka1",
+      "name": "BLANKA.1",
+      "type": "nn",
+      "script": "engines/blanka1.js",
+      "weights": "engines/blanka1.weights.json",
+      "lookahead": 4,
+      "lagd": "2026-11-04 19:46",
+      "note": "Leggje ut 2026-11-04 19:46 · Trena blanka1 (sjå sahkku-ai/docs og runs/README) — 0.0 % mot nais7 i Nesseby (12 parti, kort benk medan køyringa går). Ikkje standardmotor (slår ikkje førre modell)."
     }
   ],
   "retiredNote": "Motorar merkte med «retired» vert ikkje viste i appen og filene deira vert ikkje lasta opp (sjå .rsync-exclude). Dei ligg framleis i repoet."
