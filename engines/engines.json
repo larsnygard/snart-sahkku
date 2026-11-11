@@ -221,16 +221,6 @@
       "note": "Leggje ut 2026-11-04 21:45 · Trena blanka2 på 3070-boksen (3 syklusar, 400 parti kvar) mot klassisk FLOKK nivå 3 — 10 941 samples, val-policy-xent 1.13. Benk kjem etter publisering. Ikkje standardmotor."
     },
     {
-      "id": "kaiser1",
-      "name": "KAISER.1",
-      "type": "nn",
-      "script": "engines/kaiser1.js",
-      "weights": "engines/kaiser1.weights.json",
-      "lookahead": 4,
-      "lagd": "2026-11-10 23:06",
-      "note": "Leggje ut 2026-11-10 23:06 · Trena kaiser1 (sjå sahkku-ai/docs og runs/README) — 6.7 % mot nais7 i Nesseby (n=30) og 15.0 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
-    },
-    {
       "id": "nais9",
       "name": "NAIS.9",
       "type": "nn",
@@ -239,6 +229,16 @@
       "lookahead": 4,
       "lagd": "2026-11-10 23:13",
       "note": "Leggje ut 2026-11-10 23:13 · Trena nais9 (sjå sahkku-ai/docs og runs/README) — 3.3 % mot nais7 i Nesseby (n=30) og 17.5 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
+    },
+    {
+      "id": "kaiser1",
+      "name": "KAISER.1",
+      "type": "nn",
+      "script": "engines/kaiser1.js",
+      "weights": "engines/kaiser1.weights.json",
+      "lookahead": 4,
+      "lagd": "2026-11-11 23:06",
+      "note": "Leggje ut 2026-11-11 23:06 · Trena kaiser1 (sjå sahkku-ai/docs og runs/README) — 6.7 % mot nais7 i Nesseby (n=30) og 15.0 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
     }
   ],
   "retiredNote": "Motorar merkte med «retired» vert ikkje viste i appen og filene deira vert ikkje lasta opp (sjå .rsync-exclude). Dei ligg framleis i repoet."
