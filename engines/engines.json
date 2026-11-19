@@ -241,16 +241,6 @@
       "note": "Leggje ut 2026-11-15 · BLANKA.4 — første økt med NATTLEGGJA (analysis/blanka3_overnight/FINDINGS.md, P1–P3): blanda reglar (50 % Nesseby), 50 % kampar mot FLOKK L3, avmetta verdimål (z 0.75/±0.9) og side-augmentering (Giera-sia lærer av Menn-sia). 8 syklusar × 400 parti frå blanka3. S-UCI 37/37, nett-paritet 25/25. Benk (klassisk + Nesseby L3) går — ikkje standardmotor enno."
     },
     {
-      "id": "kaiser1",
-      "name": "KAISER.1",
-      "type": "nn",
-      "script": "engines/kaiser1.js",
-      "weights": "engines/kaiser1.weights.json",
-      "lookahead": 4,
-      "lagd": "2026-11-18 23:01",
-      "note": "Leggje ut 2026-11-18 23:01 · Trena kaiser1 (sjå sahkku-ai/docs og runs/README) — 6.7 % mot nais7 i Nesseby (n=30) og 15.0 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
-    },
-    {
       "id": "nais9",
       "name": "NAIS.9",
       "type": "nn",
@@ -259,6 +249,16 @@
       "lookahead": 4,
       "lagd": "2026-11-18 23:06",
       "note": "Leggje ut 2026-11-18 23:06 · Trena nais9 (sjå sahkku-ai/docs og runs/README) — 3.3 % mot nais7 i Nesseby (n=30) og 17.5 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
+    },
+    {
+      "id": "kaiser1",
+      "name": "KAISER.1",
+      "type": "nn",
+      "script": "engines/kaiser1.js",
+      "weights": "engines/kaiser1.weights.json",
+      "lookahead": 4,
+      "lagd": "2026-11-19 22:59",
+      "note": "Leggje ut 2026-11-19 22:59 · Trena kaiser1 (sjå sahkku-ai/docs og runs/README) — 6.7 % mot nais7 i Nesseby (n=30) og 15.0 % mot klassisk nivå 3 (n=40). Ikkje standardmotor (slår ikkje førre modell)."
     }
   ],
   "retiredNote": "Motorar merkte med «retired» vert ikkje viste i appen og filene deira vert ikkje lasta opp (sjå .rsync-exclude). Dei ligg framleis i repoet."
